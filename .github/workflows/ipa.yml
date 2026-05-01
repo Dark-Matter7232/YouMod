@@ -231,13 +231,6 @@ jobs:
         with:
           path: YouMod
 
-      - name: Cache Open in YouTube
-        id: cache-openyt
-        uses: actions/cache@v5
-        with:
-          path: OpenYouTubeSafariExtension
-          key: OpeninYT-${{ env.OPENYT_COMMIT }}
-
       - name: Clone Open in YouTube (Safari Extension)
         if: ${{ steps.cache-openyt.outputs.cache-hit != 'true' }}
         run: |
