@@ -12,6 +12,7 @@ static const NSInteger TweakSection = 'ytmo';
 
 @interface YTSettingsSectionItemManager (YouMod)
 - (void)updateYouModSectionWithEntry:(id)entry;
+- (void)updateSponsorBlockSectionWithEntry:(id)entry;
 @end
 
 static NSBundle *YouModBundle() {
@@ -289,6 +290,16 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
     icon3.iconType = 658;
     playergroup.settingIcon = icon3;
     [sectionItems addObject:playergroup];
+
+    // Section: SponsorBlock
+    YTSettingsSectionItem *sponsorblockgroup = [YTSettingsSectionItemClass itemWithTitle:@"SponsorBlock" accessibilityIdentifier:nil detailTextBlock:nil selectBlock:^BOOL (YTSettingsCell *cell, NSUInteger arg1) {
+        [self updateSponsorBlockSectionWithEntry:entry];
+        return YES;
+    }];
+    YTIIcon *iconSB = [%c(YTIIcon) new];
+    iconSB.iconType = 530;
+    sponsorblockgroup.settingIcon = iconSB;
+    [sectionItems addObject:sponsorblockgroup];
 
     // Section 5
     // Shorts

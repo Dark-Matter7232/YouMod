@@ -134,6 +134,23 @@
 #define HidePlayInNextQueue @"YouModHidePlayInNextQueue"
 #define HideLikeDislikeVotes @"YouModHideLikeDislikeVotes"
 
+// SponsorBlock
+#define SBEnabled @"YouModSBEnabled"
+#define SBShowButton @"YouModSBShowButton"
+#define SBShowNotifications @"YouModSBShowNotifications"
+#define SBAudioNotification @"YouModSBAudioNotification"
+#define SBSegmentsInFeed @"YouModSBSegmentsInFeed"
+#define SBSegmentsInMiniPlayer @"YouModSBSegmentsInMiniPlayer"
+#define SBShowDuration @"YouModSBShowDuration"
+#define SBMinDuration @"YouModSBMinDuration"
+#define SBSkipAlertDuration @"YouModSBSkipAlertDuration"
+#define SBUnskipAlertDuration @"YouModSBUnskipAlertDuration"
+
+#define SB_ACTION_KEY(cat) [NSString stringWithFormat:@"YouModSBAction_%@", cat]
+#define SB_COLOR_KEY(cat) [NSString stringWithFormat:@"YouModSBColor_%@", cat]
+
+#define FLOAT_FOR_KEY(k) [[NSUserDefaults standardUserDefaults] floatForKey:k]
+
 #define YT_BUNDLE_ID @"com.google.ios.youtube"
 #define YT_NAME @"YouTube"
 
@@ -244,3 +261,57 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 @property (nonatomic, strong, readwrite) YTFineScrubberFilmstripView *fineScrubberFilmstrip;
 - (CGFloat)scrubXForScrubRange:(CGFloat)scrubRange;
 @end
+
+// SponsorBlock action modes
+typedef NS_ENUM(NSInteger, SBSegmentAction) {
+    SBSegmentActionDisable = 0,
+    SBSegmentActionAutoSkip = 1,
+    SBSegmentActionAsk = 2,
+    SBSegmentActionDisplay = 3,
+    SBSegmentActionSkipTo = 4
+};
+
+@interface SBSegment : NSObject
+@property (nonatomic, strong) NSString *UUID;
+@property (nonatomic, strong) NSString *category;
+@property (nonatomic, assign) float startTime;
+@property (nonatomic, assign) float endTime;
+@property (nonatomic, strong) NSString *actionType;
++ (instancetype)segmentWithUUID:(NSString *)UUID category:(NSString *)category start:(float)start end:(float)end action:(NSString *)actionType;
+- (SBSegmentAction)configuredAction;
+- (UIColor *)segmentColor;
+@end
+
+@interface SBRequest : NSObject
++ (void)fetchSegmentsForVideoID:(NSString *)videoID completion:(void (^)(NSArray<SBSegment *> *segments))completion;
+@end
+
+@interface SBSkipNotificationView : UIView
+@property (nonatomic, strong) UILabel *messageLabel;
+@property (nonatomic, strong) UIButton *actionButton;
+@property (nonatomic, copy) void (^onAction)(void);
++ (instancetype)showInView:(UIView *)parentView message:(NSString *)message buttonTitle:(NSString *)buttonTitle action:(void (^)(void))action duration:(NSTimeInterval)duration;
+- (void)dismiss;
+@end
+
+@interface YTPlayerViewController (SponsorBlock)
+@property (nonatomic, strong) NSString *sbLastVideoID;
+@property (nonatomic, strong) NSArray<SBSegment *> *sbSegments;
+@property (nonatomic, strong) NSMutableSet<NSString *> *sbSkippedSegments;
+@property (nonatomic, strong) SBSkipNotificationView *sbNotificationView;
+@property (nonatomic, strong) UIButton *sbOverlayButton;
+@property (nonatomic, assign) BOOL sbEnabledForVideo;
+- (void)sbPerformSkip:(SBSegment *)segment;
+- (void)sbShowAskNotification:(SBSegment *)segment;
+- (void)sbSkipToHighlight;
+@end
+
+@interface YTSegmentableInlinePlayerBarView : UIView
+@end
+
+@interface YTSegmentableInlinePlayerBarView (SponsorBlock)
+@property (nonatomic, strong) NSArray<UIView *> *sbMarkerViews;
+- (void)sbRenderSegments:(NSArray<SBSegment *> *)segments;
+- (void)sbClearSegments;
+@end
+
