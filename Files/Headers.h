@@ -29,6 +29,7 @@
 #import <YouTubeHeader/YTVarispeedSwitchControllerOption.h>
 #import <YouTubeHeader/YTMultiSizeViewController.h>
 #import <YouTubeHeader/YTInlinePlayerBarContainerView.h>
+#import <MediaPlayer/MediaPlayer.h>
 #import <dlfcn.h>
 
 // For Settings.x
