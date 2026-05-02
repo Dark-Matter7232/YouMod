@@ -12,6 +12,7 @@
 #import <YouTubeHeader/YTPivotBarItemView.h>
 #import <YouTubeHeader/YTActionSheetAction.h>
 #import <YouTubeHeader/YTIMenuItemSupportedRenderers.h>
+#import <YouTubeHeader/YTMainAppVideoPlayerOverlayView.h>
 #import <YouTubeHeader/YTMainAppVideoPlayerOverlayViewController.h>
 #import <YouTubeHeader/YTVideoQualitySwitchOriginalController.h>
 #import <YouTubeHeader/YTVideoQualitySwitchRedesignedController.h>
@@ -29,6 +30,10 @@
 #import <YouTubeHeader/YTVarispeedSwitchControllerOption.h>
 #import <YouTubeHeader/YTMultiSizeViewController.h>
 #import <YouTubeHeader/YTInlinePlayerBarContainerView.h>
+#import <YouTubeHeader/YTSingleVideoTime.h>
+#import <YouTubeHeader/YTSingleVideoController.h>
+#import <YouTubeHeader/YTPlayerView.h>
+#import <YouTubeHeader/YTLabel.h>
 #import <MediaPlayer/MediaPlayer.h>
 #import <dlfcn.h>
 
@@ -72,16 +77,23 @@
 #define HidePrevButton @"YouModHidePrevButton"
 #define HideNextButton @"YouModHideNextButton"
 #define RemoveDarkOverlay @"YouModRemoveDarkOverlay"
+#define RemoveAmbiant @"YouModRemoveAmbiantColors"
 #define HideEndScreenCards @"YouModHideEndScreenCards"
 #define HideSuggestedVideo @"YouModHideSuggestedVideoOnFinish"
 #define HidePaidPromoOverlay @"YouModHidePaidPromoOverlay"
 #define HideWaterMark @"YouModHideWaterMark"
 #define GestureControls @"YouModEnableGesturesControls"
+#define GestureActivationArea @"YouModGestureActivationArea"
+#define LeftSideGesture @"YouModLeftSideGesture"
+#define RightSideGesture @"YouModRightSideGesture"
+#define GestureHUD @"YouModGestureHUD"
 #define DisablesDoubleTap @"YouModDisablesDoubleTap"
 #define DisablesLongHold @"YouModDisablesLongHold"
 #define AutoExitFullScreen @"YouModAutoExitFullScreen"
+#define DisablesCaptions @"YouModAutoDisablesCaptions"
 #define DisablesShowRemaining @"YouModDisablesShowRemainingTime"
 #define AlwaysShowRemaining @"YouModAlwaysShowRemainingTime"
+#define ShowExtraTimeRemaining @"YouModShowExtraTimeRemaining"
 #define HideFullAction @"YouModHideFullScreenAction"
 #define HideFullvidTitle @"YouModHideFullscreenVideoTitle"
 #define StopAutoplayVideo @"YouModStopAutoplayVideo"
@@ -133,6 +145,7 @@
 #define HideStartupAni @"YouModHideStartupAnimations"
 #define HidePlayInNextQueue @"YouModHidePlayInNextQueue"
 #define HideLikeDislikeVotes @"YouModHideLikeDislikeVotes"
+// #define CustomStartup @"YouModUseCustomVideoStartup"
 
 #define YT_BUNDLE_ID @"com.google.ios.youtube"
 #define YT_NAME @"YouTube"
@@ -151,6 +164,10 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 @interface YTRightNavigationButtons (YouMod)
 @property (nonatomic, strong) YTQTMButton *notificationButton;
 @property (nonatomic, strong) YTQTMButton *searchButton;
+@end
+
+@interface YTMainAppVideoPlayerOverlayView (YouMod)
+@property (nonatomic, strong) YTQTMButton *playbackRouteButton;
 @end
 
 @interface YTNavigationBarTitleView : UIView
@@ -176,8 +193,12 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 
 @interface YTPlayerViewController (YouMod) <UIGestureRecognizerDelegate>
 @property (nonatomic, retain) UIPanGestureRecognizer *YouModPanGesture;
+@property (nonatomic, retain) UILabel *YouModGestureHUD;
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer;
 - (void)YouModAutoFullscreen;
+- (void)YouModTurnOffCaptions;
+- (void)setActiveCaptionTrack:(id)arg1 source:(long long)arg2;
+- (void)setPlaybackRate:(float)rate;
 @end
 
 @interface SSOConfiguration : NSObject
@@ -242,5 +263,10 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 @interface YTInlinePlayerBarContainerView (YouMod)
 @property UIPanGestureRecognizer *scrubGestureRecognizer;
 @property (nonatomic, strong, readwrite) YTFineScrubberFilmstripView *fineScrubberFilmstrip;
+@property (nonatomic, strong, readwrite) NSString *endTimeString;
 - (CGFloat)scrubXForScrubRange:(CGFloat)scrubRange;
+@end
+
+@interface YTSingleVideoController (YouMod)
+@property (nonatomic, assign, readonly) CGFloat totalMediaTime;
 @end
