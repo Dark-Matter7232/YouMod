@@ -137,7 +137,7 @@ UIColor *SBColorFromHex(NSString *hexString) {
     @try {
         if (!IS_ENABLED(SBEnabled)) return;
         if (!videoID || videoID.length == 0) return;
-        if ([self.sbLastVideoID isEqualToString:videoID]) return;
+        if ([self.sbLastVideoID isEqualToString:videoID] && self.sbSegments.count > 0) return;
         self.sbLastVideoID = videoID;
 
         self.sbEnabledForVideo = YES;
@@ -171,7 +171,7 @@ UIColor *SBColorFromHex(NSString *hexString) {
 
         NSString *videoID = [self contentVideoID];
         if (!videoID) return;
-        if ([self.sbLastVideoID isEqualToString:videoID]) return;
+        if ([self.sbLastVideoID isEqualToString:videoID] && self.sbSegments.count > 0) return;
         self.sbLastVideoID = videoID;
 
         __weak typeof(self) weakSelf = self;

@@ -188,6 +188,53 @@ static const CGFloat kSBMarkerHeight = 4.0;
 
 %end
 
+#pragma mark - YTInlinePlayerBarContainerView Hook (Marker Positioning & Visibility)
+
+%hook YTInlinePlayerBarContainerView
+%property (nonatomic, strong) UIView *sbMarkerContainer;
+
+- (void)layoutSubviews {
+    %orig;
+    UIView *container = self.sbMarkerContainer;
+    if (!container || container.subviews.count == 0) return;
+
+    CGFloat barWidth = self.bounds.size.width;
+    CGFloat barHeight = self.bounds.size.height;
+    if (barWidth <= 0 || barHeight <= 0) return;
+
+    container.frame = CGRectMake(0, 0, barWidth, barHeight);
+
+    for (UIView *marker in container.subviews) {
+        NSArray *data = objc_getAssociatedObject(marker, @selector(sbSegmentData));
+        if (!data || data.count < 2) continue;
+
+        CGFloat startFrac = [data[0] floatValue];
+        CGFloat endFrac = [data[1] floatValue];
+        CGFloat x = startFrac * barWidth;
+        CGFloat w = (endFrac - startFrac) * barWidth;
+        if (w < 2.0) w = 2.0;
+
+        marker.frame = CGRectMake(x, barHeight - kSBMarkerHeight, w, kSBMarkerHeight);
+    }
+}
+
+- (void)setAlpha:(CGFloat)alpha {
+    %orig;
+    self.sbMarkerContainer.alpha = alpha;
+}
+
+- (void)setHidden:(BOOL)hidden {
+    %orig;
+    self.sbMarkerContainer.hidden = hidden;
+}
+
+- (void)setPlayerBarAlpha:(CGFloat)alpha {
+    %orig;
+    self.sbMarkerContainer.alpha = alpha;
+}
+
+%end
+
 // YTModularPlayerBarView hook removed — class may not exist in YT 21.17.3
 // Seek bar markers will use YTInlinePlayerBarContainerView directly instead
 
@@ -226,9 +273,19 @@ static const CGFloat kSBMarkerHeight = 4.0;
         YTInlinePlayerBarContainerView *containerView = barController.playerBar;
         if (!containerView) return;
 
+        // Get or create marker container
+        UIView *markerContainer = containerView.sbMarkerContainer;
+        if (!markerContainer) {
+            markerContainer = [[UIView alloc] initWithFrame:containerView.bounds];
+            markerContainer.userInteractionEnabled = NO;
+            markerContainer.clipsToBounds = YES;
+            containerView.sbMarkerContainer = markerContainer;
+            [containerView addSubview:markerContainer];
+        }
+
         // Remove old markers
-        for (UIView *sub in [containerView.subviews copy]) {
-            if (sub.tag == 9900) [sub removeFromSuperview];
+        for (UIView *sub in [markerContainer.subviews copy]) {
+            [sub removeFromSuperview];
         }
 
         if (!segments || segments.count == 0) return;
@@ -239,6 +296,8 @@ static const CGFloat kSBMarkerHeight = 4.0;
         CGFloat barWidth = containerView.bounds.size.width;
         CGFloat barHeight = containerView.bounds.size.height;
         if (barWidth <= 0) return;
+
+        markerContainer.frame = CGRectMake(0, 0, barWidth, barHeight);
 
         for (SBSegment *segment in segments) {
             SBSegmentAction action = [segment configuredAction];
@@ -253,9 +312,9 @@ static const CGFloat kSBMarkerHeight = 4.0;
             UIView *marker = [[UIView alloc] initWithFrame:CGRectMake(x, barHeight - kSBMarkerHeight, w, kSBMarkerHeight)];
             marker.backgroundColor = [segment segmentColor];
             marker.userInteractionEnabled = NO;
-            marker.tag = 9900;
+            objc_setAssociatedObject(marker, @selector(sbSegmentData), @[@(startFrac), @(endFrac)], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
-            [containerView addSubview:marker];
+            [markerContainer addSubview:marker];
         }
     } @catch (NSException *e) {}
 }

@@ -259,6 +259,7 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 @interface YTInlinePlayerBarContainerView (YouMod)
 @property UIPanGestureRecognizer *scrubGestureRecognizer;
 @property (nonatomic, strong, readwrite) YTFineScrubberFilmstripView *fineScrubberFilmstrip;
+@property (nonatomic, strong) UIView *sbMarkerContainer;
 - (CGFloat)scrubXForScrubRange:(CGFloat)scrubRange;
 @end
 
