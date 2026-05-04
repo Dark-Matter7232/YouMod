@@ -411,7 +411,7 @@ void YouModHandleYTLiteTimeUpdate(YTPlayerViewController *player, YTSingleVideoC
     %orig;
     if (!IS_ENABLED(CopyWithTimestamp)) return;
     CGFloat mediaTimeIn = self.mediaTime;
-    NSString vidID = self.videoID;
+    NSString *vidID = self.videoID;
     if (vidID.length)
         UIPasteboard.generalPasteboard.string = [NSString stringWithFormat:@"https://www.youtube.com/watch?v=%@&t=%lds", vidID, (long)mediaTimeIn];
 }

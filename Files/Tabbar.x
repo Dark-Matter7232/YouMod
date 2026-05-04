@@ -63,27 +63,6 @@
 }
 %end
 
-/*
-    if ([[self.renderer pivotIdentifier] isEqualToString:@"FEwhat_to_watch"] && !objc_getAssociatedObject(self, @selector(YouModToggleLibraryTab:))) {
-        UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(YouModToggleLibraryTab:)];
-        longPress.minimumPressDuration = 0.3;
-        [self addGestureRecognizer:longPress];
-        objc_setAssociatedObject(self, @selector(YouModToggleLibraryTab:), @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    }
-}
-
-%new
-- (void)YouModToggleLibraryTab:(UILongPressGestureRecognizer *)gesture {
-    if (gesture.state != UIGestureRecognizerStateBegan) return;
-    BOOL hidden = !IS_ENABLED(HideLibraryTab);
-    [[NSUserDefaults standardUserDefaults] setBool:hidden forKey:HideLibraryTab];
-    [[NSUserDefaults standardUserDefaults] synchronize];
-    if ([%c(YTToastResponderEvent) respondsToSelector:@selector(eventWithMessage:firstResponder:)]) {
-        [[%c(YTToastResponderEvent) eventWithMessage:hidden ? @"Library tab hidden" : @"Library tab shown" firstResponder:self] send]; // use self - why it crashes?
-    }
-}
-*/
-
 BOOL isTabSelected = NO;
 %hook YTPivotBarViewController
 - (void)viewDidAppear:(BOOL)animated {
