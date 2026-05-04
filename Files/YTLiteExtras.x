@@ -623,7 +623,7 @@ static void YouModSponsorBlockHandleTime(YTPlayerViewController *player, NSTimeI
         NSString *title = YouModSponsorBlockCategoryTitle(category);
 
         if (isHighlight) {
-            if (currentTime < start - 0.5 && currentTime > 1.0 && (action == YouModSponsorBlockActionSkip || action == YouModSponsorBlockActionSkipToSegment)) {
+            if (currentTime < start - 0.5 && currentTime > 1.0 && action == YouModSponsorBlockActionSkipToSegment) {
                 NSString *skipKey = [NSString stringWithFormat:@"%@:%@:poi", videoID ?: @"", segment[@"uuid"] ?: segment[@"start"]];
                 NSString *lastSkipKey = objc_getAssociatedObject(player, @selector(YouModSponsorBlockHandleTime));
                 if ([skipKey isEqualToString:lastSkipKey]) continue;
@@ -639,7 +639,7 @@ static void YouModSponsorBlockHandleTime(YTPlayerViewController *player, NSTimeI
         }
 
         if (end <= start) continue;
-        if (currentTime >= start - 0.1 && currentTime < end - 0.1) {
+        if (currentTime >= start && currentTime < end - 0.25) {
             NSString *skipKey = [NSString stringWithFormat:@"%@:%@:%.3f", videoID ?: @"", segment[@"uuid"] ?: category, end];
             NSString *lastSkipKey = objc_getAssociatedObject(player, @selector(YouModSponsorBlockFetchIfNeeded));
             if ([skipKey isEqualToString:lastSkipKey]) return;
@@ -1298,19 +1298,6 @@ static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMai
 }
 %end
 
-%hook YTPlayerViewController
-- (void)seekToTime:(double)time {
-    %orig;
-    if (IS_ENABLED(SponsorBlockEnabled))
-        YouModSponsorBlockHandleTime(self, time);
-}
-
-- (void)seekToTime:(double)time toleranceBefore:(double)before toleranceAfter:(double)after {
-    %orig;
-    if (IS_ENABLED(SponsorBlockEnabled))
-        YouModSponsorBlockHandleTime(self, time);
-}
-%end
 
 %hook YTSpeedmasterController
 - (void)speedmasterDidLongPressWithRecognizer:(UILongPressGestureRecognizer *)gesture {
