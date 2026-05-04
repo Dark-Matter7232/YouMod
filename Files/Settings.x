@@ -112,7 +112,7 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
     NSArray *holdSpeedLabels = @[@"Disabled", @"Default", @"0.25x", @"0.5x", @"0.75x", @"1.0x", @"1.25x", @"1.5x", @"1.75x", @"2.0x", @"3.0x", @"4.0x", @"5.0x"];
     NSArray *defaultSpeedLabels = @[@"0.25x", @"0.5x", @"0.75x", @"1.0x", @"1.25x", @"1.5x", @"1.75x", @"2.0x", @"3.0x", @"4.0x", @"5.0x"];
     NSArray *qualityLabels = @[@"Default", @"Best", @"2160p60", @"2160p", @"1440p60", @"1440p", @"1080p60", @"1080p", @"720p60", @"720p", @"480p", @"360p"];
-    NSArray *sponsorBlockActions = @[@"Disable", @"Auto-skip", @"Ask", @"Display only", @"Skip to segment"];
+    NSArray *sponsorBlockActions = @[@"Disable", @"Auto-skip", @"Ask", @"Display only"];
     NSArray *sponsorBlockColors = @[@"Default", @"Red", @"Orange", @"Yellow", @"Green", @"Cyan", @"Blue", @"Purple", @"Gray"];
     NSArray *sponsorBlockCategories = @[
         @{@"id": @"sponsor", @"title": @"Sponsor", @"description": @"Paid promotion, sponsor reads, and paid product/service mentions.", @"defaultAction": @1},
@@ -170,7 +170,6 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
             selectBlock:^BOOL (YTSettingsCell *cell, NSUInteger arg1) {
                 NSMutableArray <YTSettingsSectionItem *> *rows = [NSMutableArray array];
                 for (NSUInteger i = 0; i < sponsorBlockActions.count; i++) {
-                    if (i == 4 && ![category[@"id"] isEqualToString:@"poi_highlight"]) continue;
                     NSUInteger selectedIndex = i;
                     [rows addObject:[YTSettingsSectionItemClass checkmarkItemWithTitle:sponsorBlockActions[i] titleDescription:nil selectBlock:^BOOL (YTSettingsCell *cell, NSUInteger arg1) {
                         [[NSUserDefaults standardUserDefaults] setInteger:selectedIndex forKey:key];

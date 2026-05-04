@@ -208,7 +208,6 @@ typedef NS_ENUM(NSInteger, YouModSponsorBlockAction) {
     YouModSponsorBlockActionSkip = 1,
     YouModSponsorBlockActionAsk = 2,
     YouModSponsorBlockActionDisplay = 3,
-    YouModSponsorBlockActionSkipToSegment = 4,
 };
 
 static __weak YTPlayerViewController *YouModSponsorBlockCurrentPlayer = nil;
@@ -250,7 +249,7 @@ static YouModSponsorBlockAction YouModSponsorBlockActionForCategory(NSString *ca
     NSDictionary *info = YouModSponsorBlockCategoryInfo(category);
     NSString *key = YouModSponsorBlockActionKey(category);
     NSInteger action = [[NSUserDefaults standardUserDefaults] objectForKey:key] ? INTFORVAL(key) : [info[@"defaultAction"] integerValue];
-    if (action < YouModSponsorBlockActionDisable || action > YouModSponsorBlockActionSkipToSegment)
+    if (action < YouModSponsorBlockActionDisable || action > YouModSponsorBlockActionDisplay)
         action = YouModSponsorBlockActionDisable;
     return (YouModSponsorBlockAction)action;
 }
@@ -623,14 +622,6 @@ static void YouModSponsorBlockHandleTime(YTPlayerViewController *player, NSTimeI
         NSString *title = YouModSponsorBlockCategoryTitle(category);
 
         if (isHighlight) {
-            if (currentTime < start - 0.5 && currentTime > 1.0 && action == YouModSponsorBlockActionSkipToSegment) {
-                NSString *skipKey = [NSString stringWithFormat:@"%@:%@:poi", videoID ?: @"", segment[@"uuid"] ?: segment[@"start"]];
-                NSString *lastSkipKey = objc_getAssociatedObject(player, @selector(YouModSponsorBlockHandleTime));
-                if ([skipKey isEqualToString:lastSkipKey]) continue;
-                objc_setAssociatedObject(player, @selector(YouModSponsorBlockHandleTime), skipKey, OBJC_ASSOCIATION_COPY_NONATOMIC);
-                YouModSponsorBlockCompleteSkip(player, segment, start, [NSString stringWithFormat:@"Jumped to %@", title]);
-                return;
-            }
             if (action == YouModSponsorBlockActionAsk && currentTime < start - 0.5 && currentTime > 1.0) {
                 YouModSponsorBlockPrompt(player, segment, YES);
                 return;
