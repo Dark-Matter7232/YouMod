@@ -101,6 +101,32 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
     NSArray *holdSpeedLabels = @[@"Disabled", @"Default", @"0.25x", @"0.5x", @"0.75x", @"1.0x", @"1.25x", @"1.5x", @"1.75x", @"2.0x", @"3.0x", @"4.0x", @"5.0x"];
     NSArray *defaultSpeedLabels = @[@"0.25x", @"0.5x", @"0.75x", @"1.0x", @"1.25x", @"1.5x", @"1.75x", @"2.0x", @"3.0x", @"4.0x", @"5.0x"];
     NSArray *qualityLabels = @[@"Default", @"Best", @"2160p60", @"2160p", @"1440p60", @"1440p", @"1080p60", @"1080p", @"720p60", @"720p", @"480p", @"360p"];
+    YTSettingsSectionItem *(^pickerItem)(NSString *, NSString *, NSArray *, NSString *) = ^YTSettingsSectionItem *(NSString *title, NSString *navTitle, NSArray *labels, NSString *key) {
+        return [YTSettingsSectionItemClass itemWithTitle:title
+            accessibilityIdentifier:nil
+            detailTextBlock:^NSString *() {
+                NSInteger index = INTFORVAL(key);
+                if (index < 0 || index >= (NSInteger)labels.count) index = 0;
+                return labels[index];
+            }
+            selectBlock:^BOOL (YTSettingsCell *cell, NSUInteger arg1) {
+                NSMutableArray <YTSettingsSectionItem *> *rows = [NSMutableArray array];
+                for (NSUInteger i = 0; i < labels.count; i++) {
+                    NSUInteger selectedIndex = i;
+                    [rows addObject:[YTSettingsSectionItemClass checkmarkItemWithTitle:labels[i] titleDescription:nil selectBlock:^BOOL (YTSettingsCell *cell, NSUInteger arg1) {
+                        [[NSUserDefaults standardUserDefaults] setInteger:selectedIndex forKey:key];
+                        [[NSUserDefaults standardUserDefaults] synchronize];
+                        [settingsViewController reloadData];
+                        return YES;
+                    }]];
+                }
+                NSInteger selected = INTFORVAL(key);
+                if (selected < 0 || selected >= (NSInteger)labels.count) selected = 0;
+                YTSettingsPickerViewController *picker = [[%c(YTSettingsPickerViewController) alloc] initWithNavTitle:navTitle pickerSectionTitle:nil rows:rows selectedItemIndex:selected parentResponder:[self parentResponder]];
+                [settingsViewController pushViewController:picker];
+                return YES;
+            }];
+    };
 
     // Tweak Version (at the top)
     // Thanks to the original codes from YTweaks by fosterbarnes - https://github.com/fosterbarnes/YTweaks/blob/e921591a89b87256a2b37c4788bd99282f70d9c2/Settings.x
