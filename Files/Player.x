@@ -45,15 +45,6 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
 - (void)setNextButtonHidden:(BOOL)arg { IS_ENABLED(HideNextButton) ? %orig(YES) : %orig; }
 
 - (BOOL)titleViewHidden { return IS_ENABLED(HideFullvidTitle) ? YES : %orig; }
-- (void)setOverlayVisible:(BOOL)visible {
-    %orig;
-    if (!IS_ENABLED(PauseOnOverlay)) return;
-    YTPlayerViewController *player = [self valueForKey:@"playerViewController"] ?: [self valueForKey:@"_playerViewController"];
-    if (visible && [player respondsToSelector:@selector(pause)])
-        [player performSelector:@selector(pause)];
-    else if (!visible && [player respondsToSelector:@selector(play)])
-        [player performSelector:@selector(play)];
-}
 %end
 
 %hook YTAutonavEndscreenController
