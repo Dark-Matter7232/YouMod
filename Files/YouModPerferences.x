@@ -52,28 +52,6 @@ static NSBundle *YouModBundle() {
     NSURL *selectedFileURL = urls.firstObject;
     if (!selectedFileURL) return;
 
-    // Check if this is a SponsorBlock ID import
-    if (objc_getAssociatedObject(controller, @selector(importSponsorBlockIDFromVC:))) {
-        NSDictionary *importedData = [NSDictionary dictionaryWithContentsOfURL:selectedFileURL];
-        NSString *importedID = importedData[@"SponsorBlockUserID"];
-        if (!importedID.length) {
-            YTAlertView *alertView = [%c(YTAlertView) infoDialog];
-            alertView.title = LOC(@"ERROR");
-            alertView.subtitle = @"No SponsorBlock user ID found in the selected file.";
-            [alertView show];
-            return;
-        }
-        YTAlertView *alertView = [%c(YTAlertView) confirmationDialogWithAction:^{
-            [[NSUserDefaults standardUserDefaults] setObject:importedID forKey:SponsorBlockUserID];
-            [[NSUserDefaults standardUserDefaults] synchronize];
-            [[%c(YTToastResponderEvent) eventWithMessage:@"SponsorBlock user ID restored from file" firstResponder:nil] send];
-        } actionTitle:LOC(@"YES")];
-        alertView.title = @"Replace user ID?";
-        alertView.subtitle = @"This will replace your current SponsorBlock user ID with the one from the file. Your voting history and submissions will transfer. Make sure you trust this file.";
-        [alertView show];
-        return;
-    }
-
     NSDictionary *importedData = [NSDictionary dictionaryWithContentsOfURL:selectedFileURL];
     // Vaild plist check
     if (!importedData || ![importedData isKindOfClass:[NSDictionary class]]) {
