@@ -332,7 +332,7 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 @interface YTMainAppVideoPlayerOverlayViewController (YouMod)
 @property (nonatomic, strong, readwrite) YTPlayerBarController *playerBarController;
 @property (nonatomic, strong, readonly) NSString *videoID;
-@property (nonatomic, strong, readonly) CGFloat *mediaTime;
+- (CGFloat)mediaTime;
 @end
 
 @interface YTInlinePlayerBarContainerView (YouMod)
