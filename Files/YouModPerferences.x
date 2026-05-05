@@ -51,6 +51,7 @@ static NSBundle *YouModBundle() {
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     NSURL *selectedFileURL = urls.firstObject;
     if (!selectedFileURL) return;
+
     NSDictionary *importedData = [NSDictionary dictionaryWithContentsOfURL:selectedFileURL];
     // Vaild plist check
     if (!importedData || ![importedData isKindOfClass:[NSDictionary class]]) {

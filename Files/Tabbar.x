@@ -21,9 +21,27 @@
         if ([pID isEqualToString:@"FEsubscriptions"] && IS_ENABLED(HideSubscriptTab)) {
             [indicesToRemove addIndex:i];
         }
+        /*
+        if ([pID isEqualToString:@"FElibrary"] && IS_ENABLED(HideLibraryTab)) {
+            [indicesToRemove addIndex:i];
+        }
+        if ([pID isEqualToString:@"FEshorts"] && IS_ENABLED(RestoreExploreTab)) {
+            [indicesToRemove addIndex:i];
+        }
+        */
     }
     // Remove them all at once so the layout doesn't break
     [items removeObjectsAtIndexes:indicesToRemove];
+    /* Disabled - YouTube fully removed this tab from server-side
+    NSUInteger exploreIndex = [items indexOfObjectPassingTest:^BOOL(YTIPivotBarSupportedRenderers *renderers, NSUInteger idx, BOOL *stop) {
+        return [[[renderers pivotBarItemRenderer] pivotIdentifier] isEqualToString:[%c(YTIBrowseRequest) browseIDForExploreTab]];
+    }];
+    if (exploreIndex == NSNotFound && (IS_ENABLED(RestoreExploreTab) || IS_ENABLED(AddExploreTab))) {
+        YTIPivotBarSupportedRenderers *exploreTab = [%c(YTIPivotBarRenderer) pivotSupportedRenderersWithBrowseId:[%c(YTIBrowseRequest) browseIDForExploreTab] title:@"Explore" iconType:292];
+        NSUInteger insertIndex = MIN((NSUInteger)1, items.count);
+        [items insertObject:exploreTab atIndex:insertIndex];
+    }
+    */
     %orig(renderer);
 }
 %end
@@ -45,11 +63,16 @@
 }
 %end
 
-// Startup Tab
 BOOL isTabSelected = NO;
 %hook YTPivotBarViewController
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
+    if (IS_ENABLED(ShortsOnlyMode)) {
+        [self selectItemWithPivotIdentifier:@"FEshorts"];
+        if ([self.parentViewController respondsToSelector:@selector(hidePivotBar)])
+            [self.parentViewController performSelector:@selector(hidePivotBar)];
+        return;
+    }
     if (!isTabSelected) {
         NSArray *pivotIdentifiers = @[@"FEwhat_to_watch", @"FEshorts", @"FEsubscriptions", @"FElibrary"];
         [self selectItemWithPivotIdentifier:pivotIdentifiers[INTFORVAL(DefaultTab)]]; // Set int here

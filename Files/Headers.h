@@ -9,6 +9,7 @@
 #import <YouTubeHeader/YTWatchController.h>
 #import <YouTubeHeader/YTIMenuConditionalServiceItemRenderer.h>
 #import <YouTubeHeader/YTIPivotBarRenderer.h>
+#import <YouTubeHeader/YTIBrowseRequest.h>
 #import <YouTubeHeader/YTPivotBarItemView.h>
 #import <YouTubeHeader/YTActionSheetAction.h>
 #import <YouTubeHeader/YTIMenuItemSupportedRenderers.h>
@@ -35,7 +36,10 @@
 #import <YouTubeHeader/YTPlayerView.h>
 #import <YouTubeHeader/YTLabel.h>
 #import <YouTubeHeader/YTCommonColorPalette.h>
+#import <YouTubeHeader/MLFormat.h>
+#import <YouTubeHeader/MLQuickMenuVideoQualitySettingFormatConstraint.h>
 #import <MediaPlayer/MediaPlayer.h>
+#import <objc/runtime.h>
 #import <dlfcn.h>
 
 // For Settings.x
@@ -108,6 +112,19 @@
 #define DisableHints @"YouModDisableHints"
 #define ForceMiniPlayer @"YouModForceMiniPlayer"
 #define AlwaysShowSeekbar @"YouModAlwaysShowSeekbar"
+#define PersistentProgressBar @"YouModPersistentProgressBar"
+#define StockVolumeHUD @"YouModStockVolumeHUD"
+#define RedProgressBar @"YouModRedProgressBar"
+#define PauseOnOverlay @"YouModPauseOnOverlay"
+#define NoTwoFingerSnapToChapter @"YouModNoTwoFingerSnapToChapter"
+#define NoFreeZoom @"YouModNoFreeZoom"
+#define VideoEndTime @"YouModVideoEndTime"
+#define Use24HourTime @"YouModUse24HourTime"
+#define CopyWithTimestamp @"YouModCopyWithTimestamp"
+#define HoldToSpeedIndex @"YouModHoldToSpeedIndex"
+#define DefaultPlaybackRateIndex @"YouModDefaultPlaybackRateIndex"
+#define AutoQualityWiFiIndex @"YouModAutoQualityWiFiIndex"
+#define AutoQualityCellularIndex @"YouModAutoQualityCellularIndex"
 #define HideLikeButton @"YouModHideLikeButton"
 #define HideDisLikeButton @"YouModHideDisLikeButton"
 #define HideShareButton @"YouModHideShareButton"
@@ -115,7 +132,11 @@
 #define HideClipButton @"YouModHideClipButton"
 #define HideRemixButton @"YouModHideRemixButton"
 #define HideSaveButton @"YouModHideSaveButton"
-// Shorts
+
+#define DownloadManager @"YouModDownloadManager"
+#define DownloadSaveToPhotos @"YouModDownloadSaveToPhotos"
+#define DownloadPreferDRCAudio @"YouModDownloadPreferDRCAudio"
+
 #define HideShortsLikeButton @"YouModHideShortsLikeButton"
 #define HideShortsDisLikeButton @"YouModHideShortsDisLikeButton"
 #define HideShortsCommentButton @"YouModHideShortsCommentButton"
@@ -132,7 +153,23 @@
 #define HideShortsToVideo @"YouModHideShortsToVideo"
 #define EnablesShortsQuality @"YouModEnablesShortsQuality"
 #define ShowShortsSeekbar @"YouModShowShortsSeekbar"
-// Tab bar
+#define ShortsOnlyMode @"YouModShortsOnlyMode"
+#define AutoSkipShorts @"YouModAutoSkipShorts"
+#define ShortsToRegular @"YouModShortsToRegular"
+#define ResumeShorts @"YouModResumeShorts"
+#define PinchToFullscreenShorts @"YouModPinchToFullscreenShorts"
+#define HideShortsLogo @"YouModHideShortsLogo"
+#define HideShortsSearchButton @"YouModHideShortsSearchButton"
+#define HideShortsCameraButton @"YouModHideShortsCameraButton"
+#define HideShortsMoreButton @"YouModHideShortsMoreButton"
+#define HideShortsAvatar @"YouModHideShortsAvatar"
+#define HideShortsChannelName @"YouModHideShortsChannelName"
+#define HideShortsDescription @"YouModHideShortsDescription"
+#define HideShortsAudioTrack @"YouModHideShortsAudioTrack"
+#define HideShortsPromoCards @"YouModHideShortsPromoCards"
+#define HideShortsThanks @"YouModHideShortsThanks"
+#define HideShortsSource @"YouModHideShortsSource"
+
 #define DefaultTab @"YouModDefaultStartupTab"
 #define HideTabIndi @"YouModHideTabIndicators"
 #define HideTabLabels @"YouModHideTabLabels"
@@ -140,7 +177,8 @@
 #define HideShortsTab @"YouModHideShortsTab"
 #define HideCreateButton @"YouModHideCreateButton"
 #define HideSubscriptTab @"YouModHideSubscriptionsTab"
-// Miscellaneous
+// #define HideLibraryTab @"YouModHideLibraryTab"
+
 #define BackgroundPlayback @"YouModEnablesBackgroundPlayback"
 #define DisablesShortsPiP @"YouModTrytoDisablesShortsPiP"
 #define BlockUpgradeDialogs @"YouModBlockUpgradeDialogs"
@@ -151,7 +189,26 @@
 #define HideStartupAni @"YouModHideStartupAnimations"
 #define HidePlayInNextQueue @"YouModHidePlayInNextQueue"
 #define HideLikeDislikeVotes @"YouModHideLikeDislikeVotes"
-// #define CustomStartup @"YouModUseCustomVideoStartup"
+#define NativeShare @"YouModNativeShare"
+#define CopyVideoInfoPanel @"YouModCopyVideoInfoPanel"
+#define PostManager @"YouModPostManager"
+#define SaveProfilePhoto @"YouModSaveProfilePhoto"
+#define CommentManager @"YouModCommentManager"
+#define FixAlbums @"YouModFixAlbums"
+#define RemoveDownloadMenu @"YouModRemoveDownloadMenu"
+#define RemoveWatchLaterMenu @"YouModRemoveWatchLaterMenu"
+#define RemoveSaveToPlaylistMenu @"YouModRemoveSaveToPlaylistMenu"
+#define RemoveShareMenu @"YouModRemoveShareMenu"
+#define RemoveNotInterestedMenu @"YouModRemoveNotInterestedMenu"
+#define RemoveDontRecommendMenu @"YouModRemoveDontRecommendMenu"
+#define RemoveReportMenu @"YouModRemoveReportMenu"
+#define HideContinueWatching @"YouModHideContinueWatching"
+#define HideRelatedWatchNexts @"YouModHideRelatedWatchNexts"
+#define StickSortComments @"YouModStickSortComments"
+#define HideSortComments @"YouModHideSortComments"
+#define PlaylistOldMinibar @"YouModPlaylistOldMinibar"
+#define DisableRTL @"YouModDisableRTL"
+#define SleepTimerEnabled @"YouModSleepTimerEnabled"
 
 #define YT_BUNDLE_ID @"com.google.ios.youtube"
 #define YT_NAME @"YouTube"
@@ -194,7 +251,13 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 @end
 
 @interface YTPivotBarViewController : UIViewController
+@property (nonatomic, weak, readwrite) UIViewController *parentViewController;
 - (void)selectItemWithPivotIdentifier:(id)pivotIndentifier;
+@end
+
+@interface YTAppViewController : UIViewController
+- (void)hidePivotBar;
+- (void)showPivotBar;
 @end
 
 @interface YTPlayerViewController (YouMod) <UIGestureRecognizerDelegate>
@@ -264,6 +327,8 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 
 @interface YTMainAppVideoPlayerOverlayViewController (YouMod)
 @property (nonatomic, strong, readwrite) YTPlayerBarController *playerBarController;
+- (NSString *)videoID;
+- (CGFloat)mediaTime;
 @end
 
 @interface YTInlinePlayerBarContainerView (YouMod)
@@ -275,4 +340,13 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 
 @interface YTSingleVideoController (YouMod)
 @property (nonatomic, assign, readonly) CGFloat totalMediaTime;
+@end
+
+@interface YTReelContentView : UIView
+@end
+
+@interface YTImageZoomNode : NSObject
+@end
+
+@interface YTEngagementPanelView : UIView
 @end
