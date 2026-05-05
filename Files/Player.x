@@ -1,7 +1,10 @@
 #import "Headers.h"
 
+extern void YouModDownloadSetCurrentPlayer(YTPlayerViewController *player);
+
 float playbackRate = 1.0;
 
+/*
 static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoController *video, YTSingleVideoTime *time) {
     if (!IS_ENABLED(ShowExtraTimeRemaining)) return;
 
@@ -29,6 +32,7 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
         [durationLabel sizeToFit];
     }
 }
+*/
 
 %hook YTMainAppControlsOverlayView
 // Hide autoplay Switch
@@ -79,6 +83,7 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     %orig;
     if (IS_ENABLED(HideCastButtonPlayer)) self.playbackRouteButton.hidden = YES;    
 }
+- (BOOL)isFullscreenActionsVisible { return IS_ENABLED(HideFullAction) ? NO : %orig; }
 %end
 
 // No Endscreen Cards
@@ -149,8 +154,6 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
 
 // Disable Fullscreen Actions
 %hook YTFullscreenActionsView
-- (BOOL)enabled { return IS_ENABLED(HideFullAction) ? NO : %orig; }
-- (void)setEnabled:(BOOL)arg1 { IS_ENABLED(HideFullAction) ? %orig(NO) : %orig; }
 - (CGSize)sizeThatFits:(CGSize)size { return IS_ENABLED(HideFullAction) ? CGSizeMake(1, 35) : %orig; }
 %end
 
@@ -175,27 +178,40 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
 - (void)showConfirmAlert { IS_ENABLED(HideContentWarning) ? [self confirmAlertDidPressConfirm] : %orig; }
 %end
 
-/*
+// Always show seekbar
 %hook YTInlinePlayerBarContainerView
-- (void)setPlayerBarAlpha:(CGFloat)alpha { %orig(1.0); } // Force seek bar i guess
+- (void)setPlayerBarAlpha:(CGFloat)alpha { IS_ENABLED(AlwaysShowSeekbar) ? %orig(1.0) : %orig; }
 %end
-*/
 
 // Portrait Fullscreen
 %hook YTWatchViewController
 - (unsigned long long)allowedFullScreenOrientations { return IS_ENABLED(PortFull) ? UIInterfaceOrientationMaskAllButUpsideDown : %orig; }
 %end
 
-// Disable Snap To Chapter (https://github.com/qnblackcat/uYouPlus/blob/main/uYouPlus.xm#L457-464) - GOT REMOVED
-// %hook YTSegmentableInlinePlayerBarView
-// - (void)didMoveToWindow { %orig; if (ytlBool(@"dontSnapToChapter")) self.enableSnapToChapter = NO; }
-// %end
+/* Disable Snap To Chapter (https://github.com/qnblackcat/uYouPlus/blob/main/uYouPlus.xm#L457-464) - GOT REMOVED
+%hook YTSegmentableInlinePlayerBarView
+- (void)didMoveToWindow { %orig; if (ytlBool(@"dontSnapToChapter")) self.enableSnapToChapter = NO; }
+%end
 
-/*
 %hook YTModularPlayerBarController
 - (void)setEnableSnapToChapter:(BOOL)arg { %orig(NO); } // idk this works or not
 %end
 */
+
+// Replace previous/next buttons with back and forward
+%hook YTColdConfig
+- (BOOL)replaceNextPaddleWithFastForwardButtonForSingletonVods { return IS_ENABLED(ReplacePrevNextButtons) ? YES : %orig; }
+- (BOOL)replacePreviousPaddleWithRewindButtonForSingletonVods { return IS_ENABLED(ReplacePrevNextButtons) ? YES : %orig; }
+%end
+
+%group ForceMiniPlayer
+%hook YTIMiniplayerRenderer
+%new
+- (BOOL)hasMinimizedEndpoint { return NO; }
+%new
+- (BOOL)hasPlaybackMode { return NO; }
+%end
+%end
 
 // Extra speed - adapted from YouSpeed
 %group Speed
@@ -278,19 +294,37 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
 %end
 %end
 
+// Disable Hints
+%hook YTSettings
+- (BOOL)areHintsDisabled { return IS_ENABLED(DisableHints) ? YES : %orig; }
+- (void)setHintsDisabled:(BOOL)arg1 { IS_ENABLED(DisableHints) ? %orig(YES) : %orig; }
+%end
+
+%hook YTSettingsImpl
+- (BOOL)areHintsDisabled { return IS_ENABLED(DisableHints) ? YES : %orig; }
+- (void)setHintsDisabled:(BOOL)arg1 { IS_ENABLED(DisableHints) ? %orig(YES) : %orig; }
+%end
+
+%hook YTUserDefaults
+- (BOOL)areHintsDisabled { return IS_ENABLED(DisableHints) ? YES : %orig; }
+- (void)setHintsDisabled:(BOOL)arg1 { IS_ENABLED(DisableHints) ? %orig(YES) : %orig; }
+%end
+
 %hook YTPlayerViewController
 - (void)loadWithPlayerTransition:(id)arg1 playbackConfig:(id)arg2 {
     %orig;
+    YouModDownloadSetCurrentPlayer(self);
     if (IS_ENABLED(AutoFullScreen)) [self performSelector:@selector(YouModAutoFullscreen) withObject:nil afterDelay:0.75];
     // if (ytlBool(@"shortsToRegular")) [self performSelector:@selector(shortsToRegular) withObject:nil afterDelay:0.75];
-    if (IS_ENABLED(DisablesCaptions)) [self performSelector:@selector(YouModTurnOffCaptions) withObject:nil afterDelay:0.75];
+    if (IS_ENABLED(DisablesCaptions)) [self performSelector:@selector(YouModTurnOffCaptions) withObject:nil afterDelay:1.0];
 }
 
 - (void)prepareToLoadWithPlayerTransition:(id)arg1 expectedLayout:(id)arg2 {
     %orig;
+    YouModDownloadSetCurrentPlayer(self);
     if (IS_ENABLED(AutoFullScreen)) [self performSelector:@selector(YouModAutoFullscreen) withObject:nil afterDelay:0.75];
     // if (ytlBool(@"shortsToRegular")) [self performSelector:@selector(shortsToRegular) withObject:nil afterDelay:0.75];
-    if (IS_ENABLED(DisablesCaptions)) [self performSelector:@selector(YouModTurnOffCaptions) withObject:nil afterDelay:0.75];
+    if (IS_ENABLED(DisablesCaptions)) [self performSelector:@selector(YouModTurnOffCaptions) withObject:nil afterDelay:1.0];
 }
 
 %new
@@ -306,6 +340,7 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     [watchController showFullScreen];
 }
 
+/*
 - (void)singleVideo:(YTSingleVideoController *)video currentVideoTimeDidChange:(YTSingleVideoTime *)time {
     %orig;
     YouModAddEndTime(self, video, time);
@@ -315,6 +350,7 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     %orig;
     YouModAddEndTime(self, video, time);
 }
+*/
 
 - (void)setPlaybackRate:(float)rate {
     playbackRate = rate;
@@ -561,10 +597,19 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
         } else if (controlType == 3) {
             float speedSensitivity = 8.0; 
             float speedDelta = (-adjustedTranslation / self.view.bounds.size.height) * speedSensitivity;
-            float newSpeed = fmaxf(fminf(initialSpeed + speedDelta, 10.0), 0.25);
-            [self setPlaybackRate:newSpeed];
+            float rawSpeed = initialSpeed + speedDelta;
+            float clampedSpeed = fmaxf(fminf(rawSpeed, 10.0), 0.25);
+            // Quantize to 0.25x increments (e.g., 1.12 -> 1.0, 1.38 -> 1.25)
+            float steppedSpeed = roundf(clampedSpeed * 4.0) / 4.0;
+
+            // Only update if the stepped value has actually changed
+            static float lastUpdatedSpeed = 0;
+            if (steppedSpeed != lastUpdatedSpeed) {
+                [self setPlaybackRate:steppedSpeed];
+                lastUpdatedSpeed = steppedSpeed;
+            }
             symbolName = @"speedometer";
-            percentString = [NSString stringWithFormat:@" %.2fx", newSpeed];
+            percentString = [NSString stringWithFormat:@" %.2fx", steppedSpeed];
         }
 
         if (IS_ENABLED(GestureHUD) && symbolName) {
@@ -611,7 +656,7 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     if (IS_ENABLED(OldQualityPicker)) {
         %init(OldVideoQuality);
     }
-    if (IS_ENABLED(ExtraSpeed)) {
+    if (IS_ENABLED(ExtraSpeed) || IS_ENABLED(GestureControls)) {
         %init(Speed);
     }
     if (IS_ENABLED(HidePaidPromoOverlay)) {
@@ -619,5 +664,8 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     }
     if (IS_ENABLED(GestureControls)) {
         %init(Gestures);
+    }
+    if (IS_ENABLED(ForceMiniPlayer)) {
+        %init(ForceMiniPlayer);
     }
 }
