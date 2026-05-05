@@ -32,6 +32,8 @@
 "AUTO_CLEARCACHE_DESC" = "Автоматически очищать кэш приложения при запуске.";
 
 "APPEARANCE" = "Внешний вид";
+"OLED_THEME" = "OLED dark mode";
+"OLED_THEME_DESC" = "Uses pure black (OLED) color for the app dark theme.";
 "OLED_KEYBOARD" = "OLED-клавиатура";
 "OLED_KEYBOARD_DESC" = "Использовать для клавиатуры чисто чёрный цвет в тёмной теме.";
 
@@ -78,6 +80,8 @@
 "HIDE_PREV_BUTTON_DESC" = "Скрыть кнопку «Назад/Предыдущее» в интерфейсе видео.";
 "HIDE_NEXT_BUTTON" = "Скрыть кнопку «Далее/Пропустить»";
 "HIDE_NEXT_BUTTON_DESC" = "Скрыть кнопку «Далее/Пропустить» в интерфейсе видео.";
+"REPLACE_PREVNEXT_BUTTONS" = "Replace Previous/Next buttons";
+"REPLACE_PREVNEXT_BUTTONS_DESC" = "Replaces the Previous and Next video buttons in the player with Rewind and Fast Forward buttons.";
 "REMOVE_DARK_OVERLAY" = "Убрать тёмное затемнение";
 "REMOVE_DARK_OVERLAY_DESC" = "Убрать тёмное затемнение из интерфейса видео.";
 "HIDE_END_SCREEN" = "Скрыть конечные карточки";
@@ -144,6 +148,12 @@
 "OLD_QUALITY_PICKER_DESC" = "Вернуть классическое меню выбора качества видео, в котором сразу отображаются все разрешения.";
 "EXTRA_SPEED" = "Extra speed options";
 "EXTRA_SPEED_DESC" = "Adds more video playback speed options up to 10x.";
+"DISABLE_HINTS" = "Disable hints";
+"DISABLE_HINTS_DESC" = "Disable the tutorial hints and interactive pop-ups.";
+"FORCE_MINIPLAYER" = "Force miniplayer";
+"FORCE_MINIPLAYER_DESC" = "Allows all videos, including those made for kids, to play in the miniplayer when dismissing the player.";
+"FORCE_SEEKBAR" = "Always show progress bar";
+"FORCE_SEEKBAR_DESC" = "Ensures the progress bar (seekbar) remains visible at all times while in fullscreen mode.";
 "HIDE_LIKE_BUTTON" = "Скрыть кнопку «Нравится»";
 "HIDE_LIKE_BUTTON_DESC" = "Скрыть кнопку «Нравится» на панели действий под видео.";
 "HIDE_DISLIKE_BUTTON" = "Скрыть кнопку «Не нравится»";

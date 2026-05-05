@@ -34,6 +34,7 @@
 #import <YouTubeHeader/YTSingleVideoController.h>
 #import <YouTubeHeader/YTPlayerView.h>
 #import <YouTubeHeader/YTLabel.h>
+#import <YouTubeHeader/YTCommonColorPalette.h>
 #import <MediaPlayer/MediaPlayer.h>
 #import <dlfcn.h>
 
@@ -53,6 +54,7 @@
 // Cache
 #define AutoClearCache @"YouModAutoClearCache"
 // Appearance
+#define OLEDTheme @"YouModEnablesOLEDTheme"
 #define OLEDKeyboard @"YouModEnablesOLEDKeyboard"
 // Navigation bar
 #define HideYTLogo @"YouModHideYTLogo"
@@ -65,7 +67,7 @@
 #define HideSubbar @"YouModHideSubbar"
 #define HideGenMusicShelf @"YouModHideGenMusicShelf"
 #define HideFeedPost @"YouModHideFeedPost"
-// #define HideShortsShelf @"YouModHideShortsShelf"
+#define HideShortsShelf @"YouModHideShortsShelf"
 #define HideSearchHis @"YouModHideSearchHistoryAndSuggestions"
 #define HideSubButton @"YouModHideSubscribeButton"
 #define HideShoppingButton @"YouModHideShoppingButton"
@@ -76,6 +78,7 @@
 #define HideCastButtonPlayer @"YouModHideCastButtonPlayer"
 #define HidePrevButton @"YouModHidePrevButton"
 #define HideNextButton @"YouModHideNextButton"
+#define ReplacePrevNextButtons @"YouModReplacePrevNextButtons"
 #define RemoveDarkOverlay @"YouModRemoveDarkOverlay"
 #define RemoveAmbiant @"YouModRemoveAmbiantColors"
 #define HideEndScreenCards @"YouModHideEndScreenCards"
@@ -102,6 +105,9 @@
 #define PortFull @"YouModPortraitFullscreen"
 #define OldQualityPicker @"YouModUseOldQualityPicker"
 #define ExtraSpeed @"YouModAddExtraSpeed"
+#define DisableHints @"YouModDisableHints"
+#define ForceMiniPlayer @"YouModForceMiniPlayer"
+#define AlwaysShowSeekbar @"YouModAlwaysShowSeekbar"
 #define HideLikeButton @"YouModHideLikeButton"
 #define HideDisLikeButton @"YouModHideDisLikeButton"
 #define HideShareButton @"YouModHideShareButton"

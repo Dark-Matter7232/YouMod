@@ -32,6 +32,8 @@
 "AUTO_CLEARCACHE_DESC" = "앱을 켤 때마다 쌓여있는 캐시를 자동으로 지워서 용량을 확보합니다.";
 
 "APPEARANCE" = "화면 및 테마";
+"OLED_THEME" = "OLED dark mode";
+"OLED_THEME_DESC" = "Uses pure black (OLED) color for the app dark theme.";
 "OLED_KEYBOARD" = "OLED 키보드 테마";
 "OLED_KEYBOARD_DESC" = "다크 모드 사용 시 키보드 배경을 완전한 검은색(OLED 블랙)으로 바꿉니다.";
 
@@ -78,6 +80,8 @@
 "HIDE_PREV_BUTTON_DESC" = "재생바 옆에 있는 이전 영상으로 가기 버튼을 숨깁니다.";
 "HIDE_NEXT_BUTTON" = "다음 영상 버튼 숨기기";
 "HIDE_NEXT_BUTTON_DESC" = "재생바 옆에 있는 다음 영상으로 가기 버튼을 숨깁니다.";
+"REPLACE_PREVNEXT_BUTTONS" = "Replace Previous/Next buttons";
+"REPLACE_PREVNEXT_BUTTONS_DESC" = "Replaces the Previous and Next video buttons in the player with Rewind and Fast Forward buttons.";
 "REMOVE_DARK_OVERLAY" = "어두운 음영 효과 제거";
 "REMOVE_DARK_OVERLAY_DESC" = "영상을 터치하거나 일시정지할 때 화면이 어두워지는 효과를 없앱니다.";
 "HIDE_END_SCREEN" = "종료 화면 추천 카드 숨기기";
@@ -143,6 +147,12 @@
 "OLD_QUALITY_PICKER_DESC" = "화질 설정 메뉴를 1080p, 720p 같은 해상도 목록이 바로 뜨는 예전 직관적인 방식으로 되돌립니다.";
 "EXTRA_SPEED" = "추가 재생 속도 옵션";
 "EXTRA_SPEED_DESC" = "최대 10배속까지 더 세밀하고 빠른 배속 옵션들을 추가해 줍니다.";
+"DISABLE_HINTS" = "Disable hints";
+"DISABLE_HINTS_DESC" = "Disable the tutorial hints and interactive pop-ups.";
+"FORCE_MINIPLAYER" = "Force miniplayer";
+"FORCE_MINIPLAYER_DESC" = "Allows all videos, including those made for kids, to play in the miniplayer when dismissing the player.";
+"FORCE_SEEKBAR" = "Always show progress bar";
+"FORCE_SEEKBAR_DESC" = "Ensures the progress bar (seekbar) remains visible at all times while in fullscreen mode.";
 "HIDE_LIKE_BUTTON" = "좋아요 버튼 숨기기";
 "HIDE_LIKE_BUTTON_DESC" = "영상 아래쪽 메뉴에서 좋아요 버튼을 숨깁니다.";
 "HIDE_DISLIKE_BUTTON" = "싫어요 버튼 숨기기";

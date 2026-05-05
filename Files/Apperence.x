@@ -8,6 +8,32 @@ static BOOL isDarkMode(UIView *view) {
     return view._viewControllerForAncestor.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark;
 }
 
+// OLED theme (uYouEnhanced)
+%group OLEDTheme
+%hook YTColor
++ (UIColor *)black0 { return [UIColor blackColor]; }
++ (UIColor *)black1 { return [UIColor blackColor]; }
++ (UIColor *)black2 { return [UIColor blackColor]; }
++ (UIColor *)black3 { return [UIColor blackColor]; }
++ (UIColor *)black4 { return [UIColor blackColor]; }
+%end
+
+%hook YTCommonColorPalette
+- (UIColor *)baseBackground { return self.pageStyle == 1 ? [UIColor blackColor] : %orig; }
+- (UIColor *)brandBackgroundSolid { return self.pageStyle == 1 ? [UIColor blackColor] : %orig; }
+- (UIColor *)brandBackgroundPrimary { return self.pageStyle == 1 ? [UIColor blackColor] : %orig; }
+- (UIColor *)brandBackgroundSecondary { return self.pageStyle == 1 ? [[UIColor blackColor] colorWithAlphaComponent:0.9] : %orig; }
+- (UIColor *)raisedBackground { return self.pageStyle == 1 ? [UIColor blackColor] : %orig; }
+- (UIColor *)staticBrandBlack { return self.pageStyle == 1 ? [UIColor blackColor] : %orig; }
+- (UIColor *)generalBackgroundA { return self.pageStyle == 1 ? [UIColor blackColor] : %orig; }
+%end
+
+%hook YTInnerTubeCollectionViewController
+- (UIColor *)backgroundColor:(NSInteger)pageStyle { return pageStyle == 1 ? [UIColor blackColor] : %orig; }
+%end
+%end
+
+%group OLEDKeyboard
 %hook UIKeyboard
 - (void)displayLayer:(id)arg1 {
     %orig;
@@ -56,8 +82,13 @@ static BOOL isDarkMode(UIView *view) {
     }
 }
 %end
+%end
 
 %ctor {
-    if (!IS_ENABLED(OLEDKeyboard)) return;
-    %init;
+    if (IS_ENABLED(OLEDTheme)) {
+        %init(OLEDTheme);
+    }
+    if (IS_ENABLED(OLEDKeyboard)) {
+        %init(OLEDKeyboard);
+    }
 }

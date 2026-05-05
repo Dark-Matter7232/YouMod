@@ -176,27 +176,40 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
 - (void)showConfirmAlert { IS_ENABLED(HideContentWarning) ? [self confirmAlertDidPressConfirm] : %orig; }
 %end
 
-/*
+// Always show seekbar
 %hook YTInlinePlayerBarContainerView
-- (void)setPlayerBarAlpha:(CGFloat)alpha { %orig(1.0); } // Force seek bar i guess
+- (void)setPlayerBarAlpha:(CGFloat)alpha { IS_ENABLED(AlwaysShowSeekbar) ? %orig(1.0) : %orig; }
 %end
-*/
 
 // Portrait Fullscreen
 %hook YTWatchViewController
 - (unsigned long long)allowedFullScreenOrientations { return IS_ENABLED(PortFull) ? UIInterfaceOrientationMaskAllButUpsideDown : %orig; }
 %end
 
-// Disable Snap To Chapter (https://github.com/qnblackcat/uYouPlus/blob/main/uYouPlus.xm#L457-464) - GOT REMOVED
-// %hook YTSegmentableInlinePlayerBarView
-// - (void)didMoveToWindow { %orig; if (ytlBool(@"dontSnapToChapter")) self.enableSnapToChapter = NO; }
-// %end
+/* Disable Snap To Chapter (https://github.com/qnblackcat/uYouPlus/blob/main/uYouPlus.xm#L457-464) - GOT REMOVED
+%hook YTSegmentableInlinePlayerBarView
+- (void)didMoveToWindow { %orig; if (ytlBool(@"dontSnapToChapter")) self.enableSnapToChapter = NO; }
+%end
 
-/*
 %hook YTModularPlayerBarController
 - (void)setEnableSnapToChapter:(BOOL)arg { %orig(NO); } // idk this works or not
 %end
 */
+
+// Replace previous/next buttons with back and forward
+%hook YTColdConfig
+- (BOOL)replaceNextPaddleWithFastForwardButtonForSingletonVods { return IS_ENABLED(ReplacePrevNextButtons) ? YES : %orig; }
+- (BOOL)replacePreviousPaddleWithRewindButtonForSingletonVods { return IS_ENABLED(ReplacePrevNextButtons) ? YES : %orig; }
+%end
+
+%group ForceMiniPlayer
+%hook YTIMiniplayerRenderer
+%new
+- (BOOL)hasMinimizedEndpoint { return NO; }
+%new
+- (BOOL)hasPlaybackMode { return NO; }
+%end
+%end
 
 // Extra speed - adapted from YouSpeed
 %group Speed
@@ -277,6 +290,22 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
 }
 
 %end
+%end
+
+// Disable Hints
+%hook YTSettings
+- (BOOL)areHintsDisabled { return IS_ENABLED(DisableHints) ? YES : %orig; }
+- (void)setHintsDisabled:(BOOL)arg1 { IS_ENABLED(DisableHints) ? %orig(YES) : %orig; }
+%end
+
+%hook YTSettingsImpl
+- (BOOL)areHintsDisabled { return IS_ENABLED(DisableHints) ? YES : %orig; }
+- (void)setHintsDisabled:(BOOL)arg1 { IS_ENABLED(DisableHints) ? %orig(YES) : %orig; }
+%end
+
+%hook YTUserDefaults
+- (BOOL)areHintsDisabled { return IS_ENABLED(DisableHints) ? YES : %orig; }
+- (void)setHintsDisabled:(BOOL)arg1 { IS_ENABLED(DisableHints) ? %orig(YES) : %orig; }
 %end
 
 %hook YTPlayerViewController
@@ -631,5 +660,8 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     }
     if (IS_ENABLED(GestureControls)) {
         %init(Gestures);
+    }
+    if (IS_ENABLED(ForceMiniPlayer)) {
+        %init(ForceMiniPlayer);
     }
 }
