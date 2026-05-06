@@ -33,7 +33,7 @@
 
 "DOWNLOADING" = "Downloading";
 "DOWNLOAD_MANAGER" = "Download Manager";
-"DOWNLOAD_MANAGER_DESC" = "Replaces YouTube's video downloader with YouMod one. With ablity to downloading videos, audios, captions, and thumbnails";
+"DOWNLOAD_MANAGER_DESC" = "Replaces YouTube's video downloader with YouMod one. With ablity to downloading videos, audios, captions, and thumbnails.";
 "DOWNLOAD_SAVE_PHOTOS" = "Automatically save to Photos";
 "DOWNLOAD_SAVE_PHOTOS_DESC" = "Automatically saves downloaded videos and images directly to your Photos app.";
 "DOWNLOAD_DRC_AUDIO" = "Prefer DRC Audio";
@@ -156,8 +156,6 @@
 "OLD_QUALITY_PICKER_DESC" = "Reverts the video quality selection menu to the classic version (lists all resolutions immediately).";
 "EXTRA_SPEED" = "Extra speed options";
 "EXTRA_SPEED_DESC" = "Adds more video playback speed options up to 10x.";
-"DISABLE_HINTS" = "Disable hints";
-"DISABLE_HINTS_DESC" = "Disable the tutorial hints and interactive pop-ups.";
 "FORCE_MINIPLAYER" = "Force miniplayer";
 "FORCE_MINIPLAYER_DESC" = "Allows all videos, including those made for kids, to play in the miniplayer when dismissing the player.";
 "FORCE_SEEKBAR" = "Always show progress bar";
@@ -178,6 +176,8 @@
 "HIDE_SAVE_BUTTON_DESC" = "Hide Save button in the action bar under the video overlay.";
 
 "SHORTS" = "Shorts";
+"HIDE_SHORTS_HEADER" = "Hide Shorts header";
+"HIDE_SHORTS_HEADER_DESC" = "Hide Shorts header that is on top of the Shorts player.";
 "HIDE_SHORTS_LIKE_BUTTON" = "Hide Like button";
 "HIDE_SHORTS_LIKE_BUTTON_DESC" = "Hide the Like button in the Shorts player.";
 "HIDE_SHORTS_DISLIKE_BUTTON" = "Hide Dislike button";
@@ -210,6 +210,8 @@
 "ENABLES_SHORTS_QUALITY_DESC" = "Force enable the video quality selection menu in Shorts.";
 "SHOW_SHORTS_SEEKBAR" = "Always show seekbar";
 "SHOW_SHORTS_SEEKBAR_DESC" = "Ensure the progress/seek bar is always visible at the bottom of the Shorts player.";
+"SHORTS_TO_REGULAR" = "Shorts to regular videos";
+"SHORTS_TO_REGULAR_DESC" = "Opens Shorts videos as regular videos.";
 
 "TABBAR" = "Tab bar";
 "DEFAULT_TAB" = "Default startup tab";
@@ -227,8 +229,21 @@
 "HIDE_SHORTS_TAB_DESC" = "Hide Shorts tab in the tab bar.";
 "HIDE_CREATE_BUTTON" = "Hide Create button";
 "HIDE_CREATE_BUTTON_DESC" = "Hide Create button in the tab bar.";
-"HIDE_SUBSCRIPT_TAB" = "Hide Subscriptions tab";
-"HIDE_SUBSCRIPT_TAB_DESC" = "Hide Subscriptions tab in the tab bar.";
+"ADDS_HISTORY_TAB" = "Adds History tab";
+"ADDS_HISTORY_TAB_DESC" = "Adds History tab in the tab bar.";
+"ADDS_GAMING_TAB" = "Adds Gaming tab";
+"ADDS_GAMING_TAB_DESC" = "Adds Gaming tab in the tab bar.";
+"ADDS_SPORTS_TAB" = "Adds Sports tab";
+"ADDS_SPORTS_TAB_DESC" = "Adds Sports tab in the tab bar.";
+"ADDS_TRENDING_TAB" = "Adds Trending tab";
+"ADDS_TRENDING_TAB_DESC" = "Adds Trending tab in the tab bar.";
+"ADDS_NOTI_TAB" = "Adds Notifications tab";
+"ADDS_NOTI_TAB_DESC" = "Adds Notifications tab in the tab bar.";
+"HISTORY_TAB" = "History";
+"GAMING_TAB" = "Gaming";
+"SPORTS_TAB" = "Sports";
+"TRENDING_TAB" = "Trending";
+"NOTI_TAB" = "Notifications";
 
 "MISCELLANEOUS" = "Miscellaneous";
 "BACKGROUND_PLAYBACK" = "Background playback";
@@ -252,7 +267,6 @@
 "HIDE_LIKE_DISLIKE_VOTES" = "Hide like/dislike votes";
 "HIDE_LIKE_DISLIKE_VOTES_DESC" = "Hide messages that pop up when you like/dislike videos.";
 
-/* SponsorBlock */
 "SB_DESCRIPTION" = "Skip sponsored segments automatically using community-submitted data.";
 "SB_ENABLE" = "Enable SponsorBlock";
 "SB_ENABLE_DESC" = "Activate the SponsorBlock extension to skip sponsored segments.";

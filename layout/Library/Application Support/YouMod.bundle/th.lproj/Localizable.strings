@@ -156,8 +156,6 @@
 "OLD_QUALITY_PICKER_DESC" = "ใช้ตัวเลือกคุณภาพแบบเก่าเพื่อลิสต์คุณภาพวิดีโอได้เร็วขึ้น";
 "EXTRA_SPEED" = "เพิ่มตัวเลือกความเร็ววิดีโอ";
 "EXTRA_SPEED_DESC" = "เพิ่มตัวเลือกความเร็ววิดีโอถึง 10x";
-"DISABLE_HINTS" = "ปิดคำแนะนำ";
-"DISABLE_HINTS_DESC" = "ปิดคำแนะนำการใช้งานต่างๆ";
 "FORCE_MINIPLAYER" = "บังคับใช้ตัวเล่นย่อส่วน";
 "FORCE_MINIPLAYER_DESC" = "อนุญาตให้เล่นวิดีโอทุกประเภทในมินิเพลเยอร์ รวมถึงวิดีโอสำหรับเด็ก";
 "FORCE_SEEKBAR" = "แสดงแถบสถานะการเล่นตลอดเวลา";
@@ -178,6 +176,8 @@
 "HIDE_SAVE_BUTTON_DESC" = "ซ่อนปุ่มบันทึกใต้โอเวอร์เลย์วิดีโอ";
 
 "SHORTS" = "Shorts";
+"HIDE_SHORTS_HEADER" = "ซ่อนส่วนหัวของ Shorts";
+"HIDE_SHORTS_HEADER_DESC" = "ซ่อนส่วนหัวของ Shorts ที่อยู่ด้านบนเครื่องเล่น Shorts";
 "HIDE_SHORTS_LIKE_BUTTON" = "ซ่อนปุ่มถูกใจ";
 "HIDE_SHORTS_LIKE_BUTTON_DESC" = "ซ่อนปุ่มถูกใจใน Shorts";
 "HIDE_SHORTS_DISLIKE_BUTTON" = "ซ่อนปุ่มไม่ถูกใจ";
@@ -210,6 +210,8 @@
 "ENABLES_SHORTS_QUALITY_DESC" = "สามารถเลือกคุณภาพ Shorts ได้";
 "SHOW_SHORTS_SEEKBAR" = "แสดงแถบเลื่อนเสมอ";
 "SHOW_SHORTS_SEEKBAR_DESC" = "แสดงแถบความคืบหน้าเสมอ";
+"SHORTS_TO_REGULAR" = "เปลี่ยน Shorts เป็นวิดีโอธรรมมดา";
+"SHORTS_TO_REGULAR_DESC" = "เปิด Shorts เป็นวิดีโอธรรมมดา";
 
 "TABBAR" = "แท็บนำทาง";
 "DEFAULT_TAB" = "แท็บเริ่มต้น";
@@ -229,6 +231,21 @@
 "HIDE_CREATE_BUTTON_DESC" = "ซ่อนปุ่มสร้างในแท็บนำทาง";
 "HIDE_SUBSCRIPT_TAB" = "ซ่อนแท็บการติดตาม";
 "HIDE_SUBSCRIPT_TAB_DESC" = "ซ่อนแท็บการติดตามในแท็บนำทาง";
+"ADDS_HISTORY_TAB" = "เพิ่มแท็บประวัติการเข้าชม";
+"ADDS_HISTORY_TAB_DESC" = "เพิ่มแท็บประวัติการเข้าชมในแท็บนำทาง";
+"ADDS_GAMING_TAB" = "เพิ่มแท็บเกม";
+"ADDS_GAMING_TAB_DESC" = "เพิ่มแท็บเกมในแท็บนำทาง";
+"ADDS_SPORTS_TAB" = "เพิ่มแท็บกีฬา";
+"ADDS_SPORTS_TAB_DESC" = "เพิ่มแท็บกีฬาในแท็บนำทาง";
+"ADDS_TRENDING_TAB" = "เพิ่มแท็บมาแรง";
+"ADDS_TRENDING_TAB_DESC" = "เพิ่มแท็บมาแรงในแท็บนำทาง";
+"ADDS_NOTI_TAB" = "เพิ่มแท็บการแจ้งเตือน";
+"ADDS_NOTI_TAB_DESC" = "เพิ่มแท็บการแจ้งเตือนในแท็บนำทาง";
+"HISTORY_TAB" = "ประวัติการเข้าชม";
+"GAMING_TAB" = "เกม";
+"SPORTS_TAB" = "กีฬา";
+"TRENDING_TAB" = "มาแรง";
+"NOTI_TAB" = "การแจ้งเดือน";
 
 "MISCELLANEOUS" = "อื่นๆ";
 "BACKGROUND_PLAYBACK" = "เล่นภายในเบื้องหลัง";
@@ -251,3 +268,57 @@
 "HIDE_PLAY_IN_NEXT_QUEUE_DESC" = "ซ่อน 'เล่นถัดไป' ในเมนู 3 จุด";
 "HIDE_LIKE_DISLIKE_VOTES" = "ซ่อนโหวดชอบ/ไม่ชอบ";
 "HIDE_LIKE_DISLIKE_VOTES_DESC" = "ซ่อนกล่องโหวดชอบ/ไม่ชอบ";
+
+"SB_DESCRIPTION" = "ข้ามช่วงสปอนเซอร์โดยอัตโนมัติด้วยข้อมูลจากชุมชน";
+"SB_ENABLE" = "เปิดใช้งาน SponsorBlock";
+"SB_ENABLE_DESC" = "เปิดส่วนขยาย SponsorBlock เพื่อข้ามส่วนที่เป็นโฆษณาหรือสปอนเซอร์";
+"SB_SHOW_BUTTON" = "แสดงปุ่มบนหน้าจอ";
+"SB_SHOW_BUTTON_DESC" = "แสดงปุ่มเปิด-ปิด SponsorBlock บนหน้าเครื่องเล่นวิดีโอ";
+"SB_SHOW_NOTIFICATIONS" = "แสดงการแจ้งเตือน";
+"SB_SHOW_NOTIFICATIONS_DESC" = "แสดงการแจ้งเตือนเมื่อมีการข้ามช่วงวิดีโอ (การแจ้งเตือนสำหรับหมวดหมู่ที่ตั้งค่าแบบกดข้ามเองจะแสดงเสมอ)";
+"SB_HAPTIC_FEEDBACK" = "ตอบสนองด้วยการสั่น";
+"SB_HAPTIC_FEEDBACK_DESC" = "สั่นเมื่อมีการข้ามช่วงวิดีโอ";
+"SB_SEGMENTS_IN_FEED" = "แสดงช่วงวิดีโอในฟีด";
+"SB_SEGMENTS_IN_FEED_DESC" = "แสดงแถบสีระบุช่วงต่างๆ บนแถบความคืบหน้าของวิดีโอในหน้าฟีด";
+"SB_SEGMENTS_IN_MINIPLAYER" = "แสดงช่วงวิดีโอในเครื่องเล่นขนาดเล็ก";
+"SB_SEGMENTS_IN_MINIPLAYER_DESC" = "แสดงแถบสีระบุช่วงต่างๆ บนแถบความคืบหน้าของเครื่องเล่นขนาดเล็ก (Mini-player)";
+"SB_SHOW_DURATION" = "แสดงเวลาวิดีโอแบบไม่รวมช่วงสปอนเซอร์";
+"SB_SHOW_DURATION_DESC" = "แสดงเวลาความยาวทั้งหมดของวิดีโอโดยหักช่วงที่ข้ามได้ออก";
+"SB_CATEGORIES_HEADER" = "หมวดหมู่ช่วงวิดีโอ";
+"SB_SEGMENT_COLOR" = "สีประจำช่วง";
+
+"SB_ACTION_DISABLE" = "ปิดการใช้งาน";
+"SB_ACTION_AUTO_SKIP" = "ข้ามอัตโนมัติ";
+"SB_ACTION_ASK" = "ถามก่อนข้าม";
+"SB_ACTION_DISPLAY" = "แสดงบนแถบเวลาเท่านั้น";
+"SB_ACTION_SKIP_TO" = "ข้ามไปยังช่วงนี้";
+
+"SB_CAT_sponsor" = "สปอนเซอร์";
+"SB_CAT_sponsor_DESC" = "การโฆษณาสินค้าหรือบริการที่มีค่าตอบแทน ซึ่งไม่เกี่ยวข้องกับตัวผู้สร้างโดยตรง";
+"SB_CAT_intro" = "อินโทร/บทนำ";
+"SB_CAT_intro_DESC" = "ช่วงพักหรือแอนิเมชันเปิดตัวที่มักพบบ่อยในช่วงต้นวิดีโอ";
+"SB_CAT_outro" = "ท้ายคลิป/เครดิต";
+"SB_CAT_outro_DESC" = "เครดิต หรือส่วนปิดท้ายที่อยู่ช่วงท้ายของวิดีโอ";
+"SB_CAT_interaction" = "การปฏิสัมพันธ์";
+"SB_CAT_interaction_DESC" = "การเตือนให้กดไลก์ กดติดตาม หรือติดตามบนโซเชียลมีเดียต่างๆ";
+"SB_CAT_selfpromo" = "โปรโมทตัวเอง";
+"SB_CAT_selfpromo_DESC" = "การโปรโมทสินค้า สินค้าที่ระลึก หรือเนื้อหาอื่นๆ ของผู้สร้างเองโดยไม่มีค่าจ้าง";
+"SB_CAT_music_offtopic" = "ส่วนที่ไม่ใช่เพลง";
+"SB_CAT_music_offtopic_DESC" = "ส่วนที่ไม่มีเพลงในมิวสิกวิดีโอ (เช่น การพูดคุย หรือบทสนทนาเปิดเรื่อง)";
+"SB_CAT_preview" = "ตัวอย่างตอนต่อไป/สรุป";
+"SB_CAT_preview_DESC" = "การสรุปเนื้อหาเดิมหรือตัวอย่างจากวิดีโออื่นหรือตอนก่อนหน้า";
+"SB_CAT_poi_highlight" = "ไฮไลท์";
+"SB_CAT_poi_highlight_DESC" = "ช่วงสำคัญหรือจุดที่เป็นไฮไลท์ของวิดีโอ ใช้คำสั่ง 'ข้ามไปยัง' เพื่อดูส่วนนี้ทันที";
+"SB_CAT_filler" = "เนื้อหาน้ำ/ส่วนเติม";
+"SB_CAT_filler_DESC" = "เนื้อหาที่ออกนอกเรื่อง มุกตลก หรือส่วนเติมที่ไม่ได้เกี่ยวข้องกับหัวข้อหลัก";
+
+"SB_SKIPPED" = "ข้ามช่วง %@ แล้ว";
+"SB_DETECTED" = "ตรวจพบช่วง %@\nคุณต้องการข้ามช่วงนี้หรือไม่?";
+"SB_SKIP_NOW" = "ข้าม";
+"SB_UNSKIP" = "ยกเลิกการข้าม";
+"SB_JUMPED_TO_HIGHLIGHT" = "ข้ามไปยังไฮไลท์แล้ว";
+"SB_JUMP_TO_HIGHLIGHT" = "พบช่วงไฮไลท์ ต้องการข้ามไปดูเลยหรือไม่?";
+"SB_SEGMENT_COLOR_SUFFIX" = "สีประจำช่วง";
+"SB_SECTION_MAIN" = "หลัก";
+"SB_SKIP_ALERT_DURATION" = "ระยะเวลาแสดงการแจ้งเตือนเมื่อข้าม";
+"SB_UNSKIP_ALERT_DURATION" = "ระยะเวลาแสดงการแจ้งเตือนเมื่อยกเลิกการข้าม";

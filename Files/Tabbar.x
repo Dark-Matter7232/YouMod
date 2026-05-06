@@ -1,5 +1,20 @@
 #import "Headers.h"
 
+static NSBundle *YouModBundle() {
+    static NSBundle *bundle = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSString *tweakBundlePath = [[NSBundle mainBundle] pathForResource:Prefix ofType:@"bundle"];
+        if (tweakBundlePath)
+            bundle = [NSBundle bundleWithPath:tweakBundlePath];
+        else
+            bundle = [NSBundle bundleWithPath:[NSString stringWithFormat:PS_ROOT_PATH_NS(@"/Library/Application Support/%@.bundle"), Prefix]];
+    });
+    return bundle;
+}
+
+#define LOC(x) [YouModBundle() localizedStringForKey:x value:nil table:nil]
+
 %hook YTPivotBarView
 - (void)setRenderer:(YTIPivotBarRenderer *)renderer {
     NSMutableArray <YTIPivotBarSupportedRenderers *> *items = [renderer itemsArray];
@@ -24,6 +39,47 @@
     }
     // Remove them all at once so the layout doesn't break
     [items removeObjectsAtIndexes:indicesToRemove];
+    // Add tabs - Will find some ways to re-arrange them
+    NSUInteger historyIndex = [items indexOfObjectPassingTest:^BOOL(YTIPivotBarSupportedRenderers *renderers, NSUInteger idx, BOOL *stop) {
+        return [[[renderers pivotBarItemRenderer] pivotIdentifier] isEqualToString:[%c(YTIBrowseRequest) browseIDForHistory]];
+    }];
+    NSUInteger gamingIndex = [items indexOfObjectPassingTest:^BOOL(YTIPivotBarSupportedRenderers *renderers, NSUInteger idx, BOOL *stop) {
+        return [[[renderers pivotBarItemRenderer] pivotIdentifier] isEqualToString:[%c(YTIBrowseRequest) browseIDForGamingDestination]];
+    }];
+    NSUInteger trendingIndex = [items indexOfObjectPassingTest:^BOOL(YTIPivotBarSupportedRenderers *renderers, NSUInteger idx, BOOL *stop) {
+        return [[[renderers pivotBarItemRenderer] pivotIdentifier] isEqualToString:[%c(YTIBrowseRequest) browseIDForTrendingTab]];
+    }];
+    NSUInteger sportsIndex = [items indexOfObjectPassingTest:^BOOL(YTIPivotBarSupportedRenderers *renderers, NSUInteger idx, BOOL *stop) {
+        return [[[renderers pivotBarItemRenderer] pivotIdentifier] isEqualToString:[%c(YTIBrowseRequest) browseIDForSportsDestination]];
+    }];
+    NSUInteger notiIndex = [items indexOfObjectPassingTest:^BOOL(YTIPivotBarSupportedRenderers *renderers, NSUInteger idx, BOOL *stop) {
+        return [[[renderers pivotBarItemRenderer] pivotIdentifier] isEqualToString:[%c(YTIBrowseRequest) browseIDForNotificationsInbox]];
+    }];
+    if (historyIndex == NSNotFound && IS_ENABLED(AddsHistoryTab)) {
+        YTIPivotBarSupportedRenderers *historyTab = [%c(YTIPivotBarRenderer) pivotSupportedRenderersWithBrowseId:[%c(YTIBrowseRequest) browseIDForHistory] title:LOC(@"HISTORY_TAB") iconType:2];
+        NSUInteger insertIndex = MIN((NSUInteger)1, items.count);
+        [items insertObject:historyTab atIndex:insertIndex];
+    }
+    if (gamingIndex == NSNotFound && IS_ENABLED(AddsGamingTab)) {
+        YTIPivotBarSupportedRenderers *gamingTab = [%c(YTIPivotBarRenderer) pivotSupportedRenderersWithBrowseId:[%c(YTIBrowseRequest) browseIDForGamingDestination] title:LOC(@"GAMING_TAB") iconType:627];
+        NSUInteger insertIndex = MIN((NSUInteger)1, items.count);
+        [items insertObject:gamingTab atIndex:insertIndex];
+    }
+    if (sportsIndex == NSNotFound && IS_ENABLED(AddsSportsTab)) {
+        YTIPivotBarSupportedRenderers *sportsTab = [%c(YTIPivotBarRenderer) pivotSupportedRenderersWithBrowseId:[%c(YTIBrowseRequest) browseIDForSportsDestination] title:LOC(@"SPORTS_TAB") iconType:777];
+        NSUInteger insertIndex = MIN((NSUInteger)1, items.count);
+        [items insertObject:sportsTab atIndex:insertIndex];
+    }
+    if (trendingIndex == NSNotFound && IS_ENABLED(AddsTrendingTab)) {
+        YTIPivotBarSupportedRenderers *trendingTab = [%c(YTIPivotBarRenderer) pivotSupportedRenderersWithBrowseId:[%c(YTIBrowseRequest) browseIDForTrendingTab] title:LOC(@"TRENDING_TAB") iconType:201];
+        NSUInteger insertIndex = MIN((NSUInteger)1, items.count);
+        [items insertObject:trendingTab atIndex:insertIndex];
+    }
+    if (notiIndex == NSNotFound && IS_ENABLED(AddsNotiTab)) {
+        YTIPivotBarSupportedRenderers *notiTab = [%c(YTIPivotBarRenderer) pivotSupportedRenderersWithBrowseId:[%c(YTIBrowseRequest) browseIDForNotificationsInbox] title:LOC(@"NOTI_TAB") iconType:355];
+        NSUInteger insertIndex = MIN((NSUInteger)1, items.count);
+        [items insertObject:notiTab atIndex:insertIndex];
+    }
     %orig(renderer);
 }
 %end

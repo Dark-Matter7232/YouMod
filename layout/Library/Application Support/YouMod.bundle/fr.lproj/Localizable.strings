@@ -156,8 +156,6 @@
 "OLD_QUALITY_PICKER_DESC" = "Rétablit le menu de sélection de qualité vidéo en version classique (affiche immédiatement toutes les résolutions).";
 "EXTRA_SPEED" = "Options de vitesse supplémentaires";
 "EXTRA_SPEED_DESC" = "Ajoute plus d'options de vitesse de lecture jusqu'à 10x.";
-"DISABLE_HINTS" = "Désactiver les conseils";
-"DISABLE_HINTS_DESC" = "Désactive les conseils et les pop-ups interactifs.";
 "FORCE_MINIPLAYER" = "Forcer le minilecteur";
 "FORCE_MINIPLAYER_DESC" = "Permet à toutes les vidéos, y compris celles destinées aux enfants, de se lire en minilecteur lorsqu'on ferme le lecteur.";
 "FORCE_SEEKBAR" = "Toujours afficher la barre de progression";
@@ -178,6 +176,8 @@
 "HIDE_SAVE_BUTTON_DESC" = "Cache le bouton Enregistrer dans la barre d'actions sous l'interface vidéo.";
 
 "SHORTS" = "Shorts";
+"HIDE_SHORTS_HEADER" = "Hide Shorts header";
+"HIDE_SHORTS_HEADER_DESC" = "Hide Shorts header that is on top of the Shorts player.";
 "HIDE_SHORTS_LIKE_BUTTON" = "Cacher le bouton J'aime";
 "HIDE_SHORTS_LIKE_BUTTON_DESC" = "Cache le bouton J'aime dans le lecteur Shorts.";
 "HIDE_SHORTS_DISLIKE_BUTTON" = "Cacher le bouton Je n'aime pas";
@@ -210,6 +210,8 @@
 "ENABLES_SHORTS_QUALITY_DESC" = "Force l'activation du menu de sélection de qualité vidéo dans les Shorts.";
 "SHOW_SHORTS_SEEKBAR" = "Toujours afficher la barre de progression";
 "SHOW_SHORTS_SEEKBAR_DESC" = "Affiche en permanence la barre de progression en bas du lecteur Shorts.";
+"SHORTS_TO_REGULAR" = "Shorts to regular videos";
+"SHORTS_TO_REGULAR_DESC" = "Opens Shorts videos as regular videos.";
 
 "TABBAR" = "Barre d'onglets";
 "DEFAULT_TAB" = "Onglet de démarrage par défaut";
@@ -229,6 +231,21 @@
 "HIDE_CREATE_BUTTON_DESC" = "Cache le bouton Créer dans la barre d'onglets.";
 "HIDE_SUBSCRIPT_TAB" = "Cacher l'onglet Abonnements";
 "HIDE_SUBSCRIPT_TAB_DESC" = "Cache l'onglet Abonnements dans la barre d'onglets.";
+"ADDS_HISTORY_TAB" = "Adds History tab";
+"ADDS_HISTORY_TAB_DESC" = "Adds History tab in the tab bar.";
+"ADDS_GAMING_TAB" = "Adds Gaming tab";
+"ADDS_GAMING_TAB_DESC" = "Adds Gaming tab in the tab bar.";
+"ADDS_SPORTS_TAB" = "Adds Sports tab";
+"ADDS_SPORTS_TAB_DESC" = "Adds Sports tab in the tab bar.";
+"ADDS_TRENDING_TAB" = "Adds Trending tab";
+"ADDS_TRENDING_TAB_DESC" = "Adds Trending tab in the tab bar.";
+"ADDS_NOTI_TAB" = "Adds Notifications tab";
+"ADDS_NOTI_TAB_DESC" = "Adds Notifications tab in the tab bar.";
+"HISTORY_TAB" = "History";
+"GAMING_TAB" = "Gaming";
+"SPORTS_TAB" = "Sports";
+"TRENDING_TAB" = "Trending";
+"NOTI_TAB" = "Notifications";
 
 "MISCELLANEOUS" = "Autres";
 "BACKGROUND_PLAYBACK" = "Lecture en arrière-plan";
@@ -251,3 +268,57 @@
 "HIDE_PLAY_IN_NEXT_QUEUE_DESC" = "Cache l'option 'Lire ensuite dans la file' dans le menu contextuel.";
 "HIDE_LIKE_DISLIKE_VOTES" = "Cacher les votes J'aime/Je n'aime pas";
 "HIDE_LIKE_DISLIKE_VOTES_DESC" = "Cache les messages qui apparaissent lorsque tu aimes ou n'aimes pas des vidéos.";
+
+"SB_DESCRIPTION" = "Skip sponsored segments automatically using community-submitted data.";
+"SB_ENABLE" = "Enable SponsorBlock";
+"SB_ENABLE_DESC" = "Activate the SponsorBlock extension to skip sponsored segments.";
+"SB_SHOW_BUTTON" = "Show overlay button";
+"SB_SHOW_BUTTON_DESC" = "Display a SponsorBlock toggle button in the player overlay.";
+"SB_SHOW_NOTIFICATIONS" = "Show notifications";
+"SB_SHOW_NOTIFICATIONS_DESC" = "Display notifications when segments are skipped. Notifications for manual-skip categories are always shown.";
+"SB_HAPTIC_FEEDBACK" = "Haptic feedback";
+"SB_HAPTIC_FEEDBACK_DESC" = "Provide haptic feedback when a segment is skipped.";
+"SB_SEGMENTS_IN_FEED" = "Segments in feed";
+"SB_SEGMENTS_IN_FEED_DESC" = "Display colored segments on the progress bar of players in the feed.";
+"SB_SEGMENTS_IN_MINIPLAYER" = "Segments in mini-player";
+"SB_SEGMENTS_IN_MINIPLAYER_DESC" = "Display colored segments on the progress bar of the mini-player.";
+"SB_SHOW_DURATION" = "Show duration without segments";
+"SB_SHOW_DURATION_DESC" = "Display the total video duration excluding skippable segments.";
+"SB_CATEGORIES_HEADER" = "Segment categories";
+"SB_SEGMENT_COLOR" = "Segment color";
+
+"SB_ACTION_DISABLE" = "Disable";
+"SB_ACTION_AUTO_SKIP" = "Auto-skip";
+"SB_ACTION_ASK" = "Ask before skipping";
+"SB_ACTION_DISPLAY" = "Show on seek bar only";
+"SB_ACTION_SKIP_TO" = "Skip to segment";
+
+"SB_CAT_sponsor" = "Sponsor";
+"SB_CAT_sponsor_DESC" = "Paid promotion for a product or service not directly related to the creator.";
+"SB_CAT_intro" = "Intro";
+"SB_CAT_intro_DESC" = "Intermission or intro animation typically seen at the start of a video.";
+"SB_CAT_outro" = "Endcards";
+"SB_CAT_outro_DESC" = "Endcards, credits, or outros at the end of the video.";
+"SB_CAT_interaction" = "Interaction";
+"SB_CAT_interaction_DESC" = "Reminders to like, subscribe, or follow on social media.";
+"SB_CAT_selfpromo" = "Self-promotion";
+"SB_CAT_selfpromo_DESC" = "Unpaid promotion of the creator's own products, merchandise, or other content.";
+"SB_CAT_music_offtopic" = "Non-music";
+"SB_CAT_music_offtopic_DESC" = "Non-music sections in music videos (e.g. talking, introductions).";
+"SB_CAT_preview" = "Preview";
+"SB_CAT_preview_DESC" = "Recap or preview of content from another video or previous episode.";
+"SB_CAT_poi_highlight" = "Highlight";
+"SB_CAT_poi_highlight_DESC" = "The key moment or highlight point of the video. Use 'Skip to' to jump directly to it.";
+"SB_CAT_filler" = "Filler";
+"SB_CAT_filler_DESC" = "Tangential content, jokes, or filler that is not directly related to the main topic.";
+
+"SB_SKIPPED" = "%@ segment has been skipped";
+"SB_DETECTED" = "%@ segment detected.\nWould you like to skip the segment?";
+"SB_SKIP_NOW" = "Skip";
+"SB_UNSKIP" = "Unskip";
+"SB_JUMPED_TO_HIGHLIGHT" = "Jumped to highlight";
+"SB_JUMP_TO_HIGHLIGHT" = "Highlight available. Jump to the point?";
+"SB_SEGMENT_COLOR_SUFFIX" = "segment color";
+"SB_SECTION_MAIN" = "Main";
+"SB_SKIP_ALERT_DURATION" = "Skip Alert Duration";
+"SB_UNSKIP_ALERT_DURATION" = "Unskip Alert Duration";

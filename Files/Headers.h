@@ -35,18 +35,14 @@
 #import <YouTubeHeader/YTPlayerView.h>
 #import <YouTubeHeader/YTLabel.h>
 #import <YouTubeHeader/YTCommonColorPalette.h>
+#import <YouTubeHeader/YTIPivotBarSupportedRenderers.h>
+#import <YouTubeHeader/YTIBrowseRequest.h>
 #import <MediaPlayer/MediaPlayer.h>
 #import <dlfcn.h>
 
 // For Settings.x and SponsorBlockSettings.x
 #import <YouTubeHeader/YTDefaultSheetController.h>
 #import <PSHeader/Misc.h>
-
-@interface YTDefaultSheetController (YouMod)
-+ (instancetype)sheetControllerWithParentResponder:(id)responder;
-- (void)addAction:(YTActionSheetAction *)action;
-- (void)presentFromViewController:(UIViewController *)vc animated:(BOOL)animated completion:(void (^)(void))completion;
-@end
 #import <YouTubeHeader/YTSettingsGroupData.h>
 #import <YouTubeHeader/YTSettingsPickerViewController.h>
 #import <YouTubeHeader/YTSettingsSectionItem.h>
@@ -116,7 +112,6 @@
 #define PortFull @"YouModPortraitFullscreen"
 #define OldQualityPicker @"YouModUseOldQualityPicker"
 #define ExtraSpeed @"YouModAddExtraSpeed"
-#define DisableHints @"YouModDisableHints"
 #define ForceMiniPlayer @"YouModForceMiniPlayer"
 #define AlwaysShowSeekbar @"YouModAlwaysShowSeekbar"
 #define HideLikeButton @"YouModHideLikeButton"
@@ -127,6 +122,8 @@
 #define HideRemixButton @"YouModHideRemixButton"
 #define HideSaveButton @"YouModHideSaveButton"
 // Shorts
+#define ShortsToRegular @"YouModShortsToRegular"
+#define HideShortsHeader @"YouModHideShortsHeader"
 #define HideShortsLikeButton @"YouModHideShortsLikeButton"
 #define HideShortsDisLikeButton @"YouModHideShortsDisLikeButton"
 #define HideShortsCommentButton @"YouModHideShortsCommentButton"
@@ -151,6 +148,11 @@
 #define HideShortsTab @"YouModHideShortsTab"
 #define HideCreateButton @"YouModHideCreateButton"
 #define HideSubscriptTab @"YouModHideSubscriptionsTab"
+#define AddsGamingTab @"YouModAddsGamingTab"
+#define AddsHistoryTab @"YouModAddsHistoryTab"
+#define AddsSportsTab @"YouModAddsSportsTab"
+#define AddsTrendingTab @"YouModAddsTrendingTab"
+#define AddsNotiTab @"YouModAddsNotificationsTab"
 // Miscellaneous
 #define BackgroundPlayback @"YouModEnablesBackgroundPlayback"
 #define DisablesShortsPiP @"YouModTrytoDisablesShortsPiP"
@@ -184,12 +186,26 @@
 #define YT_BUNDLE_ID @"com.google.ios.youtube"
 #define YT_NAME @"YouTube"
 
+@interface YTDefaultSheetController (YouMod)
++ (instancetype)sheetControllerWithParentResponder:(id)responder;
+- (void)addAction:(YTActionSheetAction *)action;
+- (void)presentFromViewController:(UIViewController *)vc animated:(BOOL)animated completion:(void (^)(void))completion;
+@end
+
 // Gesture Section Enum
 typedef NS_ENUM(NSUInteger, GestureSection) {
     GestureSectionTop,
     GestureSectionBottom,
     GestureSectionInvalid
 };
+
+@interface YTIBrowseRequest (YouMod)
++ (NSString *)browseIDForGamingDestination;
++ (NSString *)browseIDForSportsDestination;
++ (NSString *)browseIDForNotificationsInbox;
++ (NSString *)browseIDForTrendingTab;
++ (NSString *)browseIDForHistory;
+@end
 
 @interface YTITopbarLogoRenderer : NSObject
 @property(readonly, nonatomic) YTIIcon *iconImage;
@@ -231,6 +247,7 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer;
 - (void)YouModAutoFullscreen;
 - (void)YouModTurnOffCaptions;
+- (void)YouModShortsToRegular;
 - (void)setActiveCaptionTrack:(id)arg1 source:(long long)arg2;
 - (void)setPlaybackRate:(float)rate;
 @end
