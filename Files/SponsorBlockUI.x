@@ -23,13 +23,13 @@
     view.remainingDuration = duration;
     view.isPaused = NO;
 
-    // Base layer (lighter — revealed as progress depletes)
-    view.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.45];
+    // Base layer (revealed as progress depletes)
+    view.backgroundColor = [UIColor colorWithWhite:0.08 alpha:1.0];
 
-    // Progress overlay (darker — shrinks from right to left)
+    // Progress overlay (shrinks from right to left)
     UIView *progressOverlay = [[UIView alloc] initWithFrame:CGRectZero];
     progressOverlay.translatesAutoresizingMaskIntoConstraints = YES;
-    progressOverlay.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.45];
+    progressOverlay.backgroundColor = [UIColor colorWithWhite:0.18 alpha:1.0];
     progressOverlay.userInteractionEnabled = NO;
     progressOverlay.layer.anchorPoint = CGPointMake(0, 0.5);
     progressOverlay.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
