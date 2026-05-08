@@ -1126,6 +1126,7 @@ static NSArray <YouModAudioOutputFormat *> *YouModAudioOutputFormats(void) {
         formats = @[
             YouModAudioOutputFormatMake(@"m4a", @"M4A", @"AAC container, passthrough when possible", @"m4a", @[@"-map", @"0:a:0", @"-vn", @"-c:a", @"aac", @"-b:a", @"192k", @"-movflags", @"+faststart"], YES, YES),
             YouModAudioOutputFormatMake(@"aac", @"AAC", @"Lossy (192k)", @"aac", @[@"-map", @"0:a:0", @"-vn", @"-c:a", @"aac", @"-b:a", @"192k", @"-f", @"adts"], YES, YES),
+            /*
             YouModAudioOutputFormatMake(@"mp3", @"MP3", @"Lossy, widely compatible", @"mp3", @[@"-map", @"0:a:0", @"-vn", @"-c:a", @"libmp3lame", @"-q:a", @"2"], NO, YES),
             YouModAudioOutputFormatMake(@"opus", @"Opus", @"Lossy, small file size", @"opus", @[@"-map", @"0:a:0", @"-vn", @"-c:a", @"libopus", @"-b:a", @"160k", @"-vbr", @"on"], NO, YES),
             YouModAudioOutputFormatMake(@"ogg", @"OGG", @"Vorbis lossy", @"ogg", @[@"-map", @"0:a:0", @"-vn", @"-c:a", @"libvorbis", @"-q:a", @"6"], NO, YES),
@@ -1133,6 +1134,7 @@ static NSArray <YouModAudioOutputFormat *> *YouModAudioOutputFormats(void) {
             YouModAudioOutputFormatMake(@"alac", @"ALAC", @"Apple lossless (M4A)", @"m4a", @[@"-map", @"0:a:0", @"-vn", @"-c:a", @"alac", @"-movflags", @"+faststart"], NO, YES),
             YouModAudioOutputFormatMake(@"wav", @"WAV", @"Uncompressed PCM", @"wav", @[@"-map", @"0:a:0", @"-vn", @"-c:a", @"pcm_s24le"], NO, YES),
             YouModAudioOutputFormatMake(@"aiff", @"AIFF", @"Apple PCM", @"aiff", @[@"-map", @"0:a:0", @"-vn", @"-c:a", @"pcm_s24be"], NO, YES),
+            */
         ];
     });
     return formats;

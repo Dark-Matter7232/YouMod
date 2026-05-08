@@ -160,7 +160,6 @@
 #define AddsGamingTab @"YouModAddsGamingTab"
 #define AddsHistoryTab @"YouModAddsHistoryTab"
 #define AddsSportsTab @"YouModAddsSportsTab"
-#define AddsTrendingTab @"YouModAddsTrendingTab"
 #define AddsNotiTab @"YouModAddsNotificationsTab"
 // Miscellaneous
 #define BackgroundPlayback @"YouModEnablesBackgroundPlayback"
@@ -174,7 +173,6 @@
 #define HidePlayInNextQueue @"YouModHidePlayInNextQueue"
 #define HideLikeDislikeVotes @"YouModHideLikeDislikeVotes"
 // #define CustomStartup @"YouModUseCustomVideoStartup"
-
 // SponsorBlock
 #define SBEnabled @"YouModSBEnabled"
 #define SBShowButton @"YouModSBShowButton"
@@ -212,7 +210,6 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 + (NSString *)browseIDForGamingDestination;
 + (NSString *)browseIDForSportsDestination;
 + (NSString *)browseIDForNotificationsInbox;
-+ (NSString *)browseIDForTrendingTab;
 + (NSString *)browseIDForHistory;
 @end
 

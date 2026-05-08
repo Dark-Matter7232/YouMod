@@ -48,9 +48,6 @@ static NSBundle *YouModBundle() {
     NSUInteger gamingIndex = [items indexOfObjectPassingTest:^BOOL(YTIPivotBarSupportedRenderers *renderers, NSUInteger idx, BOOL *stop) {
         return [[[renderers pivotBarItemRenderer] pivotIdentifier] isEqualToString:[%c(YTIBrowseRequest) browseIDForGamingDestination]];
     }];
-    NSUInteger trendingIndex = [items indexOfObjectPassingTest:^BOOL(YTIPivotBarSupportedRenderers *renderers, NSUInteger idx, BOOL *stop) {
-        return [[[renderers pivotBarItemRenderer] pivotIdentifier] isEqualToString:[%c(YTIBrowseRequest) browseIDForTrendingTab]];
-    }];
     NSUInteger sportsIndex = [items indexOfObjectPassingTest:^BOOL(YTIPivotBarSupportedRenderers *renderers, NSUInteger idx, BOOL *stop) {
         return [[[renderers pivotBarItemRenderer] pivotIdentifier] isEqualToString:[%c(YTIBrowseRequest) browseIDForSportsDestination]];
     }];
@@ -72,11 +69,6 @@ static NSBundle *YouModBundle() {
         YTIPivotBarSupportedRenderers *sportsTab = [%c(YTIPivotBarRenderer) pivotSupportedRenderersWithBrowseId:[%c(YTIBrowseRequest) browseIDForSportsDestination] title:LOC(@"SPORTS_TAB") iconType:777];
         NSUInteger insertIndex = MIN((NSUInteger)1, items.count);
         [items insertObject:sportsTab atIndex:insertIndex];
-    }
-    if (trendingIndex == NSNotFound && IS_ENABLED(AddsTrendingTab)) {
-        YTIPivotBarSupportedRenderers *trendingTab = [%c(YTIPivotBarRenderer) pivotSupportedRenderersWithBrowseId:[%c(YTIBrowseRequest) browseIDForTrendingTab] title:LOC(@"TRENDING_TAB") iconType:201];
-        NSUInteger insertIndex = MIN((NSUInteger)1, items.count);
-        [items insertObject:trendingTab atIndex:insertIndex];
     }
     if (notiIndex == NSNotFound && IS_ENABLED(AddsNotiTab)) {
         YTIPivotBarSupportedRenderers *notiTab = [%c(YTIPivotBarRenderer) pivotSupportedRenderersWithBrowseId:[%c(YTIBrowseRequest) browseIDForNotificationsInbox] title:LOC(@"NOTI_TAB") iconType:355];

@@ -248,14 +248,11 @@
 "ADDS_GAMING_TAB_DESC" = "Adds Gaming tab in the tab bar.";
 "ADDS_SPORTS_TAB" = "Adds Sports tab";
 "ADDS_SPORTS_TAB_DESC" = "Adds Sports tab in the tab bar.";
-"ADDS_TRENDING_TAB" = "Adds Trending tab";
-"ADDS_TRENDING_TAB_DESC" = "Adds Trending tab in the tab bar.";
 "ADDS_NOTI_TAB" = "Adds Notifications tab";
 "ADDS_NOTI_TAB_DESC" = "Adds Notifications tab in the tab bar.";
 "HISTORY_TAB" = "History";
 "GAMING_TAB" = "Gaming";
 "SPORTS_TAB" = "Sports";
-"TRENDING_TAB" = "Trending";
 "NOTI_TAB" = "Notifications";
 
 "MISCELLANEOUS" = "Miscellaneous";

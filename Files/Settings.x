@@ -324,7 +324,6 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
             YMToggle(LOC(@"ADDS_HISTORY_TAB"), LOC(@"ADDS_HISTORY_TAB_DESC"), AddsHistoryTab),
             YMToggle(LOC(@"ADDS_GAMING_TAB"), LOC(@"ADDS_GAMING_TAB_DESC"), AddsGamingTab),
             YMToggle(LOC(@"ADDS_SPORTS_TAB"), LOC(@"ADDS_SPORTS_TAB_DESC"), AddsSportsTab),
-            YMToggle(LOC(@"ADDS_TRENDING_TAB"), LOC(@"ADDS_TRENDING_TAB_DESC"), AddsTrendingTab),
             YMToggle(LOC(@"ADDS_NOTI_TAB"), LOC(@"ADDS_NOTI_TAB_DESC"), AddsNotiTab),
         ], settingsViewController, [self parentResponder]);
         return YES;
@@ -373,7 +372,6 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
             YMHeader(LOC(@"PERFER")),
             YMAction(LOC(@"IMPORT"), LOC(@"IMPORT_DESC"), ^(UIViewController *vc) {
                 Class alertClass = NSClassFromString(@"YTAlertView");
-                if (!alertClass) { [[YouModPrefsManager sharedManager] importYouModSettingsFromVC:vc]; return; }
                 YTAlertView *alertView = [alertClass confirmationDialogWithAction:^{
                     [[YouModPrefsManager sharedManager] importYouModSettingsFromVC:vc];
                 } actionTitle:LOC(@"YES")];
@@ -394,7 +392,7 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
                     [[NSFileManager defaultManager] removeItemAtPath:cachePath error:nil];
                     dispatch_async(dispatch_get_main_queue(), ^{
                         Class toastClass = NSClassFromString(@"YTToastResponderEvent");
-                        if (toastClass) [[toastClass eventWithMessage:LOC(@"DONE") firstResponder:vc] send];
+                        [[toastClass eventWithMessage:LOC(@"DONE") firstResponder:vc] send];
                     });
                 });
             }),

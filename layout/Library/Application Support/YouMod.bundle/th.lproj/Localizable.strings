@@ -248,14 +248,11 @@
 "ADDS_GAMING_TAB_DESC" = "เพิ่มแท็บเกมในแท็บนำทาง";
 "ADDS_SPORTS_TAB" = "เพิ่มแท็บกีฬา";
 "ADDS_SPORTS_TAB_DESC" = "เพิ่มแท็บกีฬาในแท็บนำทาง";
-"ADDS_TRENDING_TAB" = "เพิ่มแท็บมาแรง";
-"ADDS_TRENDING_TAB_DESC" = "เพิ่มแท็บมาแรงในแท็บนำทาง";
 "ADDS_NOTI_TAB" = "เพิ่มแท็บการแจ้งเตือน";
 "ADDS_NOTI_TAB_DESC" = "เพิ่มแท็บการแจ้งเตือนในแท็บนำทาง";
 "HISTORY_TAB" = "ประวัติการเข้าชม";
 "GAMING_TAB" = "เกม";
 "SPORTS_TAB" = "กีฬา";
-"TRENDING_TAB" = "มาแรง";
 "NOTI_TAB" = "การแจ้งเดือน";
 
 "MISCELLANEOUS" = "อื่นๆ";
