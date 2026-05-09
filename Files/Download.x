@@ -1168,15 +1168,9 @@ static NSURL *YouModThumbnailURLForVideoID(NSString *videoID) {
 }
 
 static void YouModRequestPhotoAccess(void (^completion)(BOOL granted)) {
-    if (@available(iOS 14.0, *)) {
-        [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelAddOnly handler:^(PHAuthorizationStatus status) {
-            completion(status == PHAuthorizationStatusAuthorized || status == PHAuthorizationStatusLimited);
-        }];
-    } else {
-        [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
-            completion(status == PHAuthorizationStatusAuthorized);
-        }];
-    }
+    [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelAddOnly handler:^(PHAuthorizationStatus status) {
+        completion(status == PHAuthorizationStatusAuthorized || status == PHAuthorizationStatusLimited);
+    }];
 }
 
 static void YouModSaveVideoToPhotos(NSURL *fileURL, UIViewController *presenter, void (^completion)(BOOL success, NSError *error)) {
