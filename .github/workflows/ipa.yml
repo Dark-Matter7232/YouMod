@@ -311,7 +311,7 @@ jobs:
 
       - name: Clone VolumeBoostYT
         if: ${{ inputs.volboost }}
-        run: git clone --quiet --depth=1 https://github.com/VasirakCalgux/VolumeBoostYT.git
+        run: git clone --quiet --depth=1 https://github.com/Dark-Matter7232/VolumeBoostYT.git
 
       - name: Build YouMod
         run: |
