@@ -303,6 +303,61 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
 %end
 %end
 
+static NSArray *YouModHoldSpeedValues(void) {
+    return @[@0.0, @0.25, @0.5, @0.75, @1.0, @1.25, @1.5, @1.75, @2.0, @3.0, @4.0, @5.0];
+}
+
+static CGFloat YouModSpeedForHoldIndex(NSInteger index) {
+    NSArray *values = YouModHoldSpeedValues();
+    return [values[index] floatValue];
+}
+
+static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMainAppVideoPlayerOverlayViewController *delegate) {
+    NSInteger speedIndex = INTFORVAL(HoldToSpeedIndex);
+    CGFloat speed = YouModSpeedForHoldIndex(speedIndex);
+
+    if (gesture.state == UIGestureRecognizerStateBegan) {
+        YouModRateBeforeHoldToSpeed = [delegate currentPlaybackRate];
+        [delegate setPlaybackRate:speed];
+    } else if (gesture.state == UIGestureRecognizerStateEnded || gesture.state == UIGestureRecognizerStateCancelled || gesture.state == UIGestureRecognizerStateFailed) {
+        [delegate setPlaybackRate:YouModRateBeforeHoldToSpeed];
+    }
+}
+
+%hook YTMainAppVideoPlayerOverlayView
+- (void)setSeekAnywherePanGestureRecognizer:(id)arg1 {
+    %orig;
+    if (INTFORVAL(HoldToSpeedIndex) != 0) {
+        UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(YouModHoldToSpeed:)];
+        longPress.minimumPressDuration = 0.3;
+        [self addGestureRecognizer:longPress];
+        objc_setAssociatedObject(self, @selector(YouModHoldToSpeed:), @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+}
+
+%new
+- (void)YouModHoldToSpeed:(UILongPressGestureRecognizer *)gesture {
+    YouModManageHoldToSpeed(gesture, self.delegate);
+}
+%end
+
+/*
+%hook YTMainAppVideoPlayerOverlayViewController
+- (void)didPressPause:(id)sender {
+    %orig;
+    if (!IS_ENABLED(CopyTimestampOnPause)) return;
+    NSString *videoID = nil;
+    CGFloat mediaTime = 0;
+    @try {
+        videoID = [self valueForKey:@"videoID"];
+        mediaTime = [[self valueForKey:@"mediaTime"] doubleValue];
+    } @catch (NSException *exception) {}
+    if (videoID.length)
+        UIPasteboard.generalPasteboard.string = [NSString stringWithFormat:@"https://www.youtube.com/watch?v=%@&t=%lds", videoID, (long)mediaTime];
+}
+%end
+*/
+
 %hook YTPlayerViewController
 - (void)loadWithPlayerTransition:(id)arg1 playbackConfig:(id)arg2 {
     [NSObject cancelPreviousPerformRequestsWithTarget:self];
@@ -350,7 +405,7 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
         && [self.view.superview isKindOfClass:NSClassFromString(@"YTWatchView")]) {
         YTMainAppVideoPlayerOverlayViewController *overlayVC = (YTMainAppVideoPlayerOverlayViewController *)self.activeVideoPlayerOverlay;
 
-        NSArray *speedLabels = @[@0.01, @0.25, @0.5, @0.75, @1.0, @1.25, @1.5, @1.75, @2.0];
+        NSArray *speedLabels = @[@0.01, @0.25, @0.5, @0.75, @1.0, @1.25, @1.5, @1.75, @2.0, @3.0, @4.0, @5.0];
         [overlayVC setPlaybackRate:[speedLabels[INTFORVAL(AutoSpeedIndex)] floatValue]];
     }
 }
@@ -732,7 +787,7 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     if (IS_ENABLED(OldQualityPicker)) {
         %init(OldVideoQuality);
     }
-    if (IS_ENABLED(ExtraSpeed) || IS_ENABLED(GestureControls)) {
+    if (IS_ENABLED(ExtraSpeed) || IS_ENABLED(GestureControls) || INTFORVAL(HoldToSpeedIndex) >= 9 || INTFORVAL(AutoSpeedIndex) >= 9) {
         %init(Speed);
     }
     if (IS_ENABLED(HidePaidPromoOverlay)) {

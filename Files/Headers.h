@@ -87,6 +87,8 @@
 #define WifiQualityIndex @"YouModWifiQualityIndex"
 #define CellQualityIndex @"YouModCellQualityIndex"
 #define AutoSpeedIndex @"YouModAutoSpeedIndex"
+#define HoldToSpeedIndex @"YouModHoldToSpeedIndex"
+// #define CopyTimestampOnPause @"YouModCopyTimestampOnPause"
 #define HideAutoPlayToggle @"YouModHideAutoPlayToggle"
 #define HideCaptionsButton @"YouModHideCaptionsButton"
 #define HideCastButtonPlayer @"YouModHideCastButtonPlayer"
@@ -225,6 +227,7 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 @interface YTMainAppVideoPlayerOverlayView (YouMod)
 @property (nonatomic, weak, readwrite) YTMainAppVideoPlayerOverlayViewController *delegate;
 @property (nonatomic, strong) YTQTMButton *playbackRouteButton;
+- (void)YouModHoldToSpeed:(UILongPressGestureRecognizer *)gesture;
 @end
 
 @interface YTNavigationBarTitleView : UIView
