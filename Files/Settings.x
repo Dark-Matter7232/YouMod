@@ -143,7 +143,7 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
 
     // ?
     YTSettingsSectionItem *blank = [YTSettingsSectionItemClass itemWithTitle:nil
-        titleDescription:nil
+        titleDescription:LOC(@"EXTRA")
         accessibilityIdentifier:nil
         detailTextBlock:nil
         selectBlock:^BOOL (YTSettingsCell *cell, NSUInteger arg1) {
@@ -254,8 +254,7 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
             YMToggle(LOC(@"HIDE_AUTOPLAY"), LOC(@"HIDE_AUTOPLAY_DESC"), HideAutoPlayToggle),
             YMToggle(LOC(@"HIDE_CAPTIONS_BUTTON"), LOC(@"HIDE_CAPTIONS_BUTTON_DESC"), HideCaptionsButton),
             YMToggle(LOC(@"HIDE_CAST_BUTTON_PLAYER"), LOC(@"HIDE_CAST_BUTTON_PLAYER_DESC"), HideCastButtonPlayer),
-            YMToggle(LOC(@"HIDE_PREV_BUTTON"), LOC(@"HIDE_PREV_BUTTON_DESC"), HidePrevButton),
-            YMToggle(LOC(@"HIDE_NEXT_BUTTON"), LOC(@"HIDE_NEXT_BUTTON_DESC"), HideNextButton),
+            YMToggle(LOC(@"HIDE_NEXT_AND_PREV_BUTTON"), LOC(@"HIDE_NEXT_AND_PREV_BUTTON_DESC"), HideNextAndPrevButtons),
             YMToggle(LOC(@"REPLACE_PREVNEXT_BUTTONS"), LOC(@"REPLACE_PREVNEXT_BUTTONS_DESC"), ReplacePrevNextButtons),
             YMToggle(LOC(@"REMOVE_DARK_OVERLAY"), LOC(@"REMOVE_DARK_OVERLAY_DESC"), RemoveDarkOverlay),
             YMToggle(LOC(@"HIDE_END_SCREEN"), LOC(@"HIDE_END_SCREEN_DESC"), HideEndScreenCards),

@@ -6,6 +6,7 @@
 "SOURCE_CODES" = "Mã nguồn";
 "SOURCE_CODES_DESC" = "Xem mã nguồn dự án!";
 
+"EXTRA" = "Extra";
 "FIX_PLAYBACK_ISSUES" = "Fix playback issues";
 "FIX_PLAYBACK_ISSUES_DESC" = "Fix video playback issues for some users. Turning this on will disable VP9 and AV1. Plus the video quality is limited to 1080p and HDR is removed.\nKnown issues: The player might act weird with this option on.";
 
@@ -140,10 +141,8 @@
 "HIDE_CAPTIONS_BUTTON_DESC" = "Ẩn nút Phụ đề trong trình phát.";
 "HIDE_CAST_BUTTON_PLAYER" = "Ẩn nút Trình chiếu (Cast)";
 "HIDE_CAST_BUTTON_PLAYER_DESC" = "Ẩn nút Trình chiếu trong trình phát.";
-"HIDE_PREV_BUTTON" = "Ẩn nút Trước/Quay lại";
-"HIDE_PREV_BUTTON_DESC" = "Ẩn nút Trước/Quay lại trong trình phát.";
-"HIDE_NEXT_BUTTON" = "Ẩn nút Tiếp theo/Bỏ qua";
-"HIDE_NEXT_BUTTON_DESC" = "Ẩn nút Tiếp theo/Bỏ qua trong trình phát.";
+"HIDE_NEXT_AND_PREV_BUTTON" = "Hide previous and next buttons";
+"HIDE_NEXT_AND_PREV_BUTTON_DESC" = "Hide previous and next buttons in the video overlay.";
 "REPLACE_PREVNEXT_BUTTONS" = "Thay thế nút Trước/Tiếp theo";
 "REPLACE_PREVNEXT_BUTTONS_DESC" = "Thay thế các nút video Trước và Tiếp theo trong trình phát bằng nút Tua lại và Tua nhanh.";
 "REMOVE_DARK_OVERLAY" = "Xóa lớp phủ tối";

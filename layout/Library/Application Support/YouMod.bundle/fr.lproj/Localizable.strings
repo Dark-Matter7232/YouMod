@@ -6,6 +6,7 @@
 "SOURCE_CODES" = "Code source";
 "SOURCE_CODES_DESC" = "Jette un œil au code !";
 
+"EXTRA" = "Extra";
 "FIX_PLAYBACK_ISSUES" = "Fix playback issues";
 "FIX_PLAYBACK_ISSUES_DESC" = "Fix video playback issues for some users. Turning this on will disable VP9 and AV1. Plus the video quality is limited to 1080p and HDR is removed.\nKnown issues: The player might act weird with this option on.";
 
@@ -140,10 +141,8 @@
 "HIDE_CAPTIONS_BUTTON_DESC" = "Cache le bouton des sous-titres dans l'interface vidéo.";
 "HIDE_CAST_BUTTON_PLAYER" = "Cacher le bouton de diffusion";
 "HIDE_CAST_BUTTON_PLAYER_DESC" = "Cache le bouton de diffusion dans l'interface vidéo.";
-"HIDE_PREV_BUTTON" = "Cacher le bouton précédent/retour";
-"HIDE_PREV_BUTTON_DESC" = "Cache le bouton précédent/retour dans l'interface vidéo.";
-"HIDE_NEXT_BUTTON" = "Cacher le bouton suivant/passer";
-"HIDE_NEXT_BUTTON_DESC" = "Cache le bouton suivant/passer dans l'interface vidéo.";
+"HIDE_NEXT_AND_PREV_BUTTON" = "Hide previous and next buttons";
+"HIDE_NEXT_AND_PREV_BUTTON_DESC" = "Hide previous and next buttons in the video overlay.";
 "REPLACE_PREVNEXT_BUTTONS" = "Remplacer les boutons Précédent/Suivant";
 "REPLACE_PREVNEXT_BUTTONS_DESC" = "Remplace les boutons Précédent et Suivant du lecteur par des boutons Reculer et Avance rapide.";
 "REMOVE_DARK_OVERLAY" = "Supprimer l'overlay sombre";

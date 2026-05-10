@@ -6,6 +6,7 @@
 "SOURCE_CODES" = "Codice sorgente";
 "SOURCE_CODES_DESC" = "Dai un'occhiata al codice!";
 
+"EXTRA" = "Extra";
 "FIX_PLAYBACK_ISSUES" = "Fix playback issues";
 "FIX_PLAYBACK_ISSUES_DESC" = "Fix video playback issues for some users. Turning this on will disable VP9 and AV1. Plus the video quality is limited to 1080p and HDR is removed.\nKnown issues: The player might act weird with this option on.";
 
@@ -140,10 +141,8 @@
 "HIDE_CAPTIONS_BUTTON_DESC" = "Nasconde il pulsante dei sottotitoli nel player.";
 "HIDE_CAST_BUTTON_PLAYER" = "Nascondi pulsante cast";
 "HIDE_CAST_BUTTON_PLAYER_DESC" = "Nasconde il pulsante cast nel player.";
-"HIDE_PREV_BUTTON" = "Nascondi pulsante precedente/indietro";
-"HIDE_PREV_BUTTON_DESC" = "Nasconde il pulsante precedente/indietro nel player.";
-"HIDE_NEXT_BUTTON" = "Nascondi pulsante successivo/avanti";
-"HIDE_NEXT_BUTTON_DESC" = "Nasconde il pulsante successivo/avanti nel player.";
+"HIDE_NEXT_AND_PREV_BUTTON" = "Hide previous and next buttons";
+"HIDE_NEXT_AND_PREV_BUTTON_DESC" = "Hide previous and next buttons in the video overlay.";
 "REPLACE_PREVNEXT_BUTTONS" = "Replace Previous/Next buttons";
 "REPLACE_PREVNEXT_BUTTONS_DESC" = "Replaces the Previous and Next video buttons in the player with Rewind and Fast Forward buttons.";
 "REMOVE_DARK_OVERLAY" = "Rimuovi overlay scuro";

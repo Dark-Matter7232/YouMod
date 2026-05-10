@@ -6,6 +6,7 @@
 "SOURCE_CODES" = "소스 코드";
 "SOURCE_CODES_DESC" = "앱의 소스 코드를 확인해 보세요!";
 
+"EXTRA" = "Extra";
 "FIX_PLAYBACK_ISSUES" = "Fix playback issues";
 "FIX_PLAYBACK_ISSUES_DESC" = "Fix video playback issues for some users. Turning this on will disable VP9 and AV1. Plus the video quality is limited to 1080p and HDR is removed.\nKnown issues: The player might act weird with this option on.";
 
@@ -140,10 +141,8 @@
 "HIDE_CAPTIONS_BUTTON_DESC" = "영상 화면 위쪽에 있는 CC(자막) 버튼을 숨깁니다.";
 "HIDE_CAST_BUTTON_PLAYER" = "화면 전송(캐스트) 버튼 숨기기";
 "HIDE_CAST_BUTTON_PLAYER_DESC" = "영상 화면에 있는 TV 모양 캐스트 버튼을 숨깁니다.";
-"HIDE_PREV_BUTTON" = "이전 영상 버튼 숨기기";
-"HIDE_PREV_BUTTON_DESC" = "재생바 옆에 있는 이전 영상으로 가기 버튼을 숨깁니다.";
-"HIDE_NEXT_BUTTON" = "다음 영상 버튼 숨기기";
-"HIDE_NEXT_BUTTON_DESC" = "재생바 옆에 있는 다음 영상으로 가기 버튼을 숨깁니다.";
+"HIDE_NEXT_AND_PREV_BUTTON" = "Hide previous and next buttons";
+"HIDE_NEXT_AND_PREV_BUTTON_DESC" = "Hide previous and next buttons in the video overlay.";
 "REPLACE_PREVNEXT_BUTTONS" = "Replace Previous/Next buttons";
 "REPLACE_PREVNEXT_BUTTONS_DESC" = "Replaces the Previous and Next video buttons in the player with Rewind and Fast Forward buttons.";
 "REMOVE_DARK_OVERLAY" = "어두운 음영 효과 제거";

@@ -6,6 +6,7 @@
 "SOURCE_CODES" = "Исходный код";
 "SOURCE_CODES_DESC" = "Посмотреть исходный код!";
 
+"EXTRA" = "Extra";
 "FIX_PLAYBACK_ISSUES" = "Fix playback issues";
 "FIX_PLAYBACK_ISSUES_DESC" = "Fix video playback issues for some users. Turning this on will disable VP9 and AV1. Plus the video quality is limited to 1080p and HDR is removed.\nKnown issues: The player might act weird with this option on.";
 
@@ -140,10 +141,8 @@
 "HIDE_CAPTIONS_BUTTON_DESC" = "Скрыть кнопку субтитров в интерфейсе видео.";
 "HIDE_CAST_BUTTON_PLAYER" = "Скрыть кнопку трансляции";
 "HIDE_CAST_BUTTON_PLAYER_DESC" = "Скрыть кнопку трансляции в интерфейсе видео.";
-"HIDE_PREV_BUTTON" = "Скрыть кнопку «Назад/Предыдущее»";
-"HIDE_PREV_BUTTON_DESC" = "Скрыть кнопку «Назад/Предыдущее» в интерфейсе видео.";
-"HIDE_NEXT_BUTTON" = "Скрыть кнопку «Далее/Пропустить»";
-"HIDE_NEXT_BUTTON_DESC" = "Скрыть кнопку «Далее/Пропустить» в интерфейсе видео.";
+"HIDE_NEXT_AND_PREV_BUTTON" = "Hide previous and next buttons";
+"HIDE_NEXT_AND_PREV_BUTTON_DESC" = "Hide previous and next buttons in the video overlay.";
 "REPLACE_PREVNEXT_BUTTONS" = "Replace Previous/Next buttons";
 "REPLACE_PREVNEXT_BUTTONS_DESC" = "Replaces the Previous and Next video buttons in the player with Rewind and Fast Forward buttons.";
 "REMOVE_DARK_OVERLAY" = "Убрать тёмное затемнение";

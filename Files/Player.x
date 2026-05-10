@@ -112,8 +112,11 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     if (vidID.length)
         UIPasteboard.generalPasteboard.string = [NSString stringWithFormat:@"https://www.youtube.com/watch?v=%@&t=%lds", vidID, (long)mediaTimeIn];
 }
-- (BOOL)shouldHidePreviousButton { return IS_ENABLED(HidePrevButton) ? YES : %orig; }
-- (BOOL)shouldHideNextButton { return IS_ENABLED(HideNextButton) ? YES : %orig; }
+%end
+
+%hook YTColdConfig
+- (BOOL)removeNextPaddleForAllVideos { return IS_ENABLED(HideNextAndPrevButtons) ? YES : %orig; }
+- (BOOL)removePreviousPaddleForAllVideos { return IS_ENABLED(HideNextAndPrevButtons) ? YES : %orig; }
 %end
 
 // YTNoPaidPromo (https://github.com/PoomSmart/YTNoPaidPromo)
