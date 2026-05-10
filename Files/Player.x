@@ -89,8 +89,6 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     if (IS_ENABLED(HideCastButtonPlayer)) self.playbackRouteButton.hidden = YES;    
 }
 - (BOOL)isFullscreenActionsVisible { return IS_ENABLED(HideFullAction) ? NO : %orig; }
-- (void)setPreviousButtonHidden:(BOOL)arg { IS_ENABLED(HidePrevButton) ? %orig(YES) : %orig; }
-- (void)setNextButtonHidden:(BOOL)arg { IS_ENABLED(HideNextButton) ? %orig(YES) : %orig; }
 %end
 
 // No Endscreen Cards
@@ -114,6 +112,8 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     if (vidID.length)
         UIPasteboard.generalPasteboard.string = [NSString stringWithFormat:@"https://www.youtube.com/watch?v=%@&t=%lds", vidID, (long)mediaTimeIn];
 }
+- (BOOL)shouldHidePreviousButton { return IS_ENABLED(HidePrevButton) ? YES : %orig; }
+- (BOOL)shouldHideNextButton { return IS_ENABLED(HideNextButton) ? YES : %orig; }
 %end
 
 // YTNoPaidPromo (https://github.com/PoomSmart/YTNoPaidPromo)
