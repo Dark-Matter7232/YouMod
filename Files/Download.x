@@ -880,10 +880,6 @@ static NSArray *YouModPlayerResponsesForPlayer(YTPlayerViewController *player) {
     NSMutableArray *responses = [NSMutableArray array];
     id response = YouModObjectFromSelector(player, @selector(contentPlayerResponse));
     if (response) [responses addObject:response];
-
-    id activeVideo = YouModObjectFromSelector(player, @selector(activeVideo));
-    response = YouModObjectFromSelector(activeVideo, @selector(contentPlayerResponse));
-    if (response && ![responses containsObject:response]) [responses addObject:response];
     return responses.copy;
 }
 
@@ -940,7 +936,7 @@ static NSArray *YouModAdaptiveFormatObjectsForPlayer(YTPlayerViewController *pla
 
     for (id response in YouModPlayerResponsesForPlayer(player)) {
         id playerData = YouModObjectFromSelector(response, @selector(playerData)) ?: response;
-        id responseStreamingData = YouModObjectFromSelector(playerData, @selector(streamingData));
+        id responseStreamingData = YouModObjectFromSelector(playerData, @sformatStreamelector(streamingData));
         appendFormats(YouModObjectFromSelector(responseStreamingData, @selector(adaptiveFormatsArray)));
     }
 
@@ -950,7 +946,7 @@ static NSArray *YouModAdaptiveFormatObjectsForPlayer(YTPlayerViewController *pla
 static YouModMediaFormat *YouModMediaFormatFromStream(id stream, BOOL video) {
     id formatStream = YouModObjectFromSelector(stream, @selector(formatStream));
     NSString *url = YouModStringFromSelector(stream, @selector(URL));
-    if (url.length == 0) url = YouModStringFromSelector(formatStream, @selector(URL));
+    if (url.length == 0) url = YouModStringFromSelector(, @selector(URL));
     if (url.length == 0) url = YouModStringFromSelector(stream, @selector(url));
     if (url.length == 0) url = YouModStringFromSelector(formatStream, @selector(url));
     if (url.length == 0) return nil;

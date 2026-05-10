@@ -39,8 +39,6 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
 - (void)setAutoplaySwitchButtonRenderer:(id)arg1 { if (!IS_ENABLED(HideAutoPlayToggle)) %orig; }
 // Hide captions Button
 - (void)setClosedCaptionsOrSubtitlesButtonAvailable:(BOOL)arg1 { if (!IS_ENABLED(HideCaptionsButton)) %orig; }
-- (void)setPreviousButtonHidden:(BOOL)arg { IS_ENABLED(HidePrevButton) ? %orig(YES) : %orig; }
-- (void)setNextButtonHidden:(BOOL)arg { IS_ENABLED(HideNextButton) ? %orig(YES) : %orig; }
 // Hide video title in full screen
 - (BOOL)titleViewHidden { return IS_ENABLED(HideFullvidTitle) ? YES : %orig; }
 // Pause On Overlay
@@ -73,9 +71,7 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     return NO;
 }
 %end
-*/
 
-/*
 %hook YTHeaderView
 - (BOOL)stickyNavHeaderEnabled { return IS_ENABLED(YTPremiumLogo) ? YES : NO; } // idk what is this does, the nav is already sticky... Or this thing only happens in iPhone?
 - (void)setStickyNavHeaderEnabled:(BOOL)arg { IS_ENABLED(YTPremiumLogo) ? %orig(YES) : %orig(NO); }
@@ -93,6 +89,8 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     if (IS_ENABLED(HideCastButtonPlayer)) self.playbackRouteButton.hidden = YES;    
 }
 - (BOOL)isFullscreenActionsVisible { return IS_ENABLED(HideFullAction) ? NO : %orig; }
+- (void)setPreviousButtonHidden:(BOOL)arg { IS_ENABLED(HidePrevButton) ? %orig(YES) : %orig; }
+- (void)setNextButtonHidden:(BOOL)arg { IS_ENABLED(HideNextButton) ? %orig(YES) : %orig; }
 %end
 
 // No Endscreen Cards
