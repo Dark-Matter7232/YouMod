@@ -1,7 +1,25 @@
 # YouMod
+
+<p align="center">
+<a href="https://www.star-history.com/?repos=Tonwalter888%2FYouMod&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Tonwalter888/YouMod&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Tonwalter888/YouMod&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Tonwalter888/YouMod&type=date&legend=top-left" />
+ </picture>
+</a>
+</p>
+
+<p align="center">
+<img src="https://img.shields.io/badge/Platform-iOS%20%7C%20iPadOS%2014.0%2B-blue" alt="Badge"/>
+<a href="https://github.com/Tonwalter888/YouMod/releases/latest"><img src="https://custom-icon-badges.demolab.com/github/v/release/Tonwalter888/YouMod?color=brightgreen&label=Latest%20release" alt="Badge"></img></a>
+<a href="https://github.com/Tonwalter888/YouMod/releases/latest"><img src="https://img.shields.io/github/downloads/Tonwalter888/YouMod/total?label=Download" alt="Badge"></img></a>
+<a href=""><img src="https://api.oosmetrics.com/api/v1/badge/achievement/3f9a6594-0226-4a4e-b531-409bee6afa18.svg" alt="Badge"></img></a>
+</p>
+
 A tweak that's try to recreate features like in YTLite as much as possible. Contributors are welcome! ^^
 
-Thanks for 200 stars and forks! This might be the best project I've done.
+Thanks for 200 stars and 300 forks! This might be the best project I've done.
 
 If you want to contribute this project, scroll down below for how to do it.
 
@@ -16,6 +34,7 @@ This tweak can hide, remove elements and others in YouTube. Such as:
 - Player
 - Shorts
 - Tab bar
+- Built-in SponsorBlock
 - And much more!
 
 ## Supported YouTube version
@@ -53,6 +72,7 @@ This project uses GPLv3 license. See [LICENSE](https://github.com/Tonwalter888/Y
 - [daisuke1227](https://github.com/daisuke1227) - Implementing download features and others
 - [grohit1810](https://github.com/grohit1810) - Implementing built-in SponsorBlock, whole new settings logic, and others
 - [SponsorBlock](https://sponsor.ajay.app) - SponsorBlock segments API
+- [Google Fonts](https://fonts.google.com/icons) - Icons for custom tabs
 - And [PoomSmart](https://github.com/PoomSmart)'s tweaks
 
 Also thanks to all the contributors in the past!

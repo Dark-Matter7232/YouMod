@@ -1,6 +1,8 @@
 #import "Headers.h"
 #import <AudioToolbox/AudioToolbox.h>
 
+BOOL useBackwardIconForButton;
+
 @interface SBPassthroughView : UIView
 @end
 @implementation SBPassthroughView
@@ -197,8 +199,7 @@ UIColor *SBColorFromHex(NSString *hexString) {
 - (void)setContentVideoID:(NSString *)videoID {
     %orig;
     @try {
-        if (!IS_ENABLED(SBEnabled)) return;
-        if (!videoID || videoID.length == 0) return;
+        if (!IS_ENABLED(SBEnabled) || self.isInlinePlaybackActive || !videoID || videoID.length == 0) return;
         if ([self.sbLastVideoID isEqualToString:videoID] && self.sbSegments.count > 0) return;
         self.sbLastVideoID = videoID;
 
@@ -224,8 +225,7 @@ UIColor *SBColorFromHex(NSString *hexString) {
 - (void)playbackController:(id)playbackController didActivateVideo:(id)video withPlaybackData:(id)playbackData {
     %orig;
     @try {
-        if (!IS_ENABLED(SBEnabled)) return;
-        if (self.isPlayingAd) return;
+        if (!IS_ENABLED(SBEnabled) || self.isInlinePlaybackActive || self.isPlayingAd) return;
 
         self.sbEnabledForVideo = YES;
         self.sbSkippedSegments = [NSMutableSet set];
@@ -255,8 +255,7 @@ UIColor *SBColorFromHex(NSString *hexString) {
 - (void)singleVideo:(id)video currentVideoTimeDidChange:(id)time {
     %orig;
     @try {
-        if (!IS_ENABLED(SBEnabled) || !self.sbEnabledForVideo) return;
-        if (self.isPlayingAd) return;
+        if (!IS_ENABLED(SBEnabled) || !self.sbEnabledForVideo || self.isInlinePlaybackActive || self.isPlayingAd) return;
 
         CGFloat currentTime = [self currentVideoMediaTime];
         float minDuration = FLOAT_FOR_KEY(SBMinDuration);
@@ -288,8 +287,7 @@ UIColor *SBColorFromHex(NSString *hexString) {
 - (void)potentiallyMutatedSingleVideo:(id)video currentVideoTimeDidChange:(id)time {
     %orig;
     @try {
-        if (!IS_ENABLED(SBEnabled) || !self.sbEnabledForVideo) return;
-        if (self.isPlayingAd) return;
+        if (!IS_ENABLED(SBEnabled) || !self.sbEnabledForVideo || self.isInlinePlaybackActive || self.isPlayingAd) return;
 
         CGFloat currentTime = [self currentVideoMediaTime];
         float minDuration = FLOAT_FOR_KEY(SBMinDuration);
@@ -327,6 +325,7 @@ UIColor *SBColorFromHex(NSString *hexString) {
     }
 
     if (IS_ENABLED(SBShowNotifications)) {
+        useBackwardIconForButton = YES;
         NSBundle *bundle = [NSBundle bundleWithPath:[[NSBundle mainBundle] pathForResource:@"YouMod" ofType:@"bundle"]];
         NSString *catName = [bundle localizedStringForKey:[NSString stringWithFormat:@"SB_CAT_%@", segment.category] value:segment.category table:nil];
         NSString *message = [NSString stringWithFormat:[bundle localizedStringForKey:@"SB_SKIPPED" value:@"%@ skipped" table:nil], catName];
@@ -358,6 +357,7 @@ UIColor *SBColorFromHex(NSString *hexString) {
 - (void)sbShowAskNotification:(SBSegment *)segment {
     [self.sbSkippedSegments addObject:segment.UUID];
 
+    useBackwardIconForButton = NO;
     NSBundle *bundle = [NSBundle bundleWithPath:[[NSBundle mainBundle] pathForResource:@"YouMod" ofType:@"bundle"]];
     NSString *catName = [bundle localizedStringForKey:[NSString stringWithFormat:@"SB_CAT_%@", segment.category] value:segment.category table:nil];
     NSString *message = [NSString stringWithFormat:[bundle localizedStringForKey:@"SB_DETECTED" value:@"%@ detected" table:nil], catName];
@@ -381,6 +381,7 @@ UIColor *SBColorFromHex(NSString *hexString) {
 - (void)sbShowHighlightBannerIfNeeded:(NSArray<SBSegment *> *)segments {
     for (SBSegment *seg in segments) {
         if ([seg.category isEqualToString:@"poi_highlight"] && [seg configuredAction] == SBSegmentActionSkipTo) {
+            useBackwardIconForButton = NO;
             NSBundle *bundle = [NSBundle bundleWithPath:[[NSBundle mainBundle] pathForResource:@"YouMod" ofType:@"bundle"]];
             NSString *message = [bundle localizedStringForKey:@"SB_JUMP_TO_HIGHLIGHT" value:@"Highlight available. Jump to the point?" table:nil];
             NSString *skipTitle = [bundle localizedStringForKey:@"SB_SKIP_NOW" value:@"Skip" table:nil];
@@ -389,11 +390,15 @@ UIColor *SBColorFromHex(NSString *hexString) {
             if (alertDuration < 2.0 || alertDuration > 20.0) alertDuration = 4.0;
 
             UIView *parentView = sbGetNotificationParent();
-            self.sbNotificationView = [SBSkipNotificationView showInView:parentView
+            SBSkipNotificationView *pill = [SBSkipNotificationView showInView:parentView
                 message:message
                 buttonTitle:skipTitle
                 action:^{ [self sbSkipToHighlight]; }
                 duration:alertDuration];
+            if (pill) {
+                pill.isHighlightPill = YES;
+                self.sbNotificationView = pill;
+            }
             break;
         }
     }
@@ -401,12 +406,15 @@ UIColor *SBColorFromHex(NSString *hexString) {
 
 %new
 - (void)sbSkipToHighlight {
+    self.sbNotificationView.isHighlightPill = NO;
+
     for (SBSegment *segment in self.sbSegments) {
         if ([segment.category isEqualToString:@"poi_highlight"]) {
             CGFloat previousTime = [self currentVideoMediaTime];
             [self seekToTime:(CGFloat)segment.startTime];
 
             if (IS_ENABLED(SBShowNotifications)) {
+                useBackwardIconForButton = YES;
                 NSBundle *bundle = [NSBundle bundleWithPath:[[NSBundle mainBundle] pathForResource:@"YouMod" ofType:@"bundle"]];
                 NSString *message = [bundle localizedStringForKey:@"SB_JUMPED_TO_HIGHLIGHT" value:@"Jumped to highlight" table:nil];
                 NSString *unskipTitle = [bundle localizedStringForKey:@"SB_UNSKIP" value:@"Unskip" table:nil];
@@ -415,7 +423,7 @@ UIColor *SBColorFromHex(NSString *hexString) {
                 if (alertDuration < 2.0 || alertDuration > 20.0) alertDuration = 4.0;
 
                 __weak typeof(self) weakSelf = self;
-                self.sbNotificationView = [SBSkipNotificationView showInView:sbGetNotificationParent()
+                SBSkipNotificationView *pill = [SBSkipNotificationView showInView:sbGetNotificationParent()
                     message:message
                     buttonTitle:unskipTitle
                     action:^{
@@ -423,6 +431,10 @@ UIColor *SBColorFromHex(NSString *hexString) {
                         if (ss) [ss seekToTime:previousTime];
                     }
                     duration:alertDuration];
+                if (pill) {
+                    pill.isHighlightPill = YES;
+                    self.sbNotificationView = pill;
+                }
             }
             break;
         }

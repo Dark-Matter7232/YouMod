@@ -166,6 +166,7 @@ typedef void (^YouModRangeDownloadProgress)(unsigned long long completedBytes);
 @property (nonatomic, strong) YouModRangeDownloader *rangeDownloader;
 @property (nonatomic, strong) UIAlertController *progressAlert;
 @property (nonatomic, strong) UIProgressView *progressView;
+@property (nonatomic, strong) YMDownloadProgressView *progressPill;
 @property (nonatomic, weak) UIViewController *presenter;
 @property (nonatomic, copy) YouModFileDownloadCompletion fileCompletion;
 @property (nonatomic, strong) NSURL *destinationURL;
@@ -825,7 +826,6 @@ static NSArray <YouModAudioOutputFormat *> *YouModAudioOutputFormats(void) {
     dispatch_once(&onceToken, ^{
         formats = @[
             YouModAudioOutputFormatMake(@"m4a", @"M4A", @"", @"m4a", YES, YES),
-            YouModAudioOutputFormatMake(@"aac", @"AAC", @"", @"aac", YES, YES),
         ];
     });
     return formats;
@@ -851,10 +851,6 @@ static NSString *YouModAudioOutputFileExtension(YouModAudioOutputFormat *outputF
     if (passthrough && ([identifier isEqualToString:@"m4a"] || [identifier isEqualToString:@"aac"]) && ([mime containsString:@"mp4"] || [mime containsString:@"m4a"]))
         return @"m4a";
     return outputFormat.fileExtension ?: YouModFileExtensionForFormat(sourceFormat, @"m4a");
-}
-
-static NSString *YouModAudioOutputSubtitle(YouModAudioOutputFormat *outputFormat) {
-    return [NSString stringWithFormat:@"%@", outputFormat.subtitle];
 }
 
 static NSString *YouModFormatSubtitle(YouModMediaFormat *format) {
@@ -1272,27 +1268,43 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
     self.presenter = presenter;
     self.baseProgressTitle = title;
     self.downloadStartTime = [NSDate timeIntervalSinceReferenceDate];
-    self.progressAlert = [UIAlertController alertControllerWithTitle:[NSString stringWithFormat:@"%@ - 0%%", title] message:@"\n" preferredStyle:UIAlertControllerStyleAlert];
-    self.progressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
-    self.progressView.progress = 0.0;
-    self.progressView.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.progressAlert.view addSubview:self.progressView];
-    [NSLayoutConstraint activateConstraints:@[
-        [self.progressView.leadingAnchor constraintEqualToAnchor:self.progressAlert.view.leadingAnchor constant:24.0],
-        [self.progressView.trailingAnchor constraintEqualToAnchor:self.progressAlert.view.trailingAnchor constant:-24.0],
-        [self.progressView.bottomAnchor constraintEqualToAnchor:self.progressAlert.view.bottomAnchor constant:-56.0],
-    ]];
-    __weak typeof(self) weakSelf = self;
-    [self.progressAlert addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL") style:UIAlertActionStyleCancel handler:^(__unused UIAlertAction *action) {
-        [weakSelf cancelWithMessage:LOC(@"DOWNLOAD_CANCELLED")];
-    }]];
-    [presenter presentViewController:self.progressAlert animated:YES completion:nil];
+
+    UIView *pillParent = sbGetNotificationParent();
+    if (pillParent) {
+        __weak typeof(self) weakSelf = self;
+        self.progressPill = [YMDownloadProgressView showInView:pillParent
+            message:[NSString stringWithFormat:@"%@ - 0%%", title]
+            cancelAction:^{
+                [weakSelf cancelWithMessage:LOC(@"DOWNLOAD_CANCELLED")];
+            }];
+    } else {
+        self.progressAlert = [UIAlertController alertControllerWithTitle:[NSString stringWithFormat:@"%@ - 0%%", title] message:@"\n" preferredStyle:UIAlertControllerStyleAlert];
+        self.progressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
+        self.progressView.progress = 0.0;
+        self.progressView.translatesAutoresizingMaskIntoConstraints = NO;
+        [self.progressAlert.view addSubview:self.progressView];
+        [NSLayoutConstraint activateConstraints:@[
+            [self.progressView.leadingAnchor constraintEqualToAnchor:self.progressAlert.view.leadingAnchor constant:24.0],
+            [self.progressView.trailingAnchor constraintEqualToAnchor:self.progressAlert.view.trailingAnchor constant:-24.0],
+            [self.progressView.bottomAnchor constraintEqualToAnchor:self.progressAlert.view.bottomAnchor constant:-56.0],
+        ]];
+        __weak typeof(self) weakSelf = self;
+        [self.progressAlert addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL") style:UIAlertActionStyleCancel handler:^(__unused UIAlertAction *action) {
+            [weakSelf cancelWithMessage:LOC(@"DOWNLOAD_CANCELLED")];
+        }]];
+        [presenter presentViewController:self.progressAlert animated:YES completion:nil];
+    }
 }
 
 - (void)updateProgressTitle:(NSString *)title progress:(float)progress {
-    self.progressAlert.title = [NSString stringWithFormat:@"%@ - %ld%%", title, (long)lrintf(progress * 100.0f)];
-    self.progressAlert.message = @"\n";
-    [self.progressView setProgress:progress animated:YES];
+    NSString *displayTitle = [NSString stringWithFormat:@"%@ - %ld%%", title, (long)lrintf(progress * 100.0f)];
+    if (self.progressPill) {
+        [self.progressPill updateProgress:progress title:displayTitle subtitle:nil];
+    } else {
+        self.progressAlert.title = displayTitle;
+        self.progressAlert.message = @"\n";
+        [self.progressView setProgress:progress animated:YES];
+    }
 }
 
 - (void)cancelWithMessage:(NSString *)message {
@@ -1305,8 +1317,9 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
     self.fileCompletion = nil;
     self.active = NO;
     self.cancelled = YES;
+    if (self.progressPill) { [self.progressPill dismiss]; self.progressPill = nil; }
     [self cleanupTemporaryFiles];
-    if (message.length) YouModSendToast(message, self.presenter);
+    if (message.length) YouModSendError(message);
 }
 
 - (void)cleanupTemporaryFiles {
@@ -1401,7 +1414,7 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
     unsigned long long total = self.totalBytes ?: expectedBytes;
     float progress = total ? (float)(self.completedBytes + currentBytes) / (float)total : 0.0f;
     progress = fminf(fmaxf(progress, 0.0f), 0.985f);
-    
+
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     NSTimeInterval elapsed = now - self.downloadStartTime;
     double speedMBps = 0;
@@ -1409,14 +1422,22 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
         speedMBps = ((double)(self.completedBytes + currentBytes) / 1048576.0) / elapsed;
     }
     double totalMB = (double)total / 1048576.0;
-    
-    self.progressAlert.title = [NSString stringWithFormat:@"%@ - %ld%%", self.baseProgressTitle ?: @"Downloading", (long)lrintf(progress * 100.0f)];
+
+    NSString *title = [NSString stringWithFormat:@"%@ - %ld%%", self.baseProgressTitle ?: @"Downloading", (long)lrintf(progress * 100.0f)];
+    NSString *subtitle;
     if (total > 0) {
-        self.progressAlert.message = [NSString stringWithFormat:@"%.1f MB/s - %.1f MB\n", speedMBps, totalMB];
+        subtitle = [NSString stringWithFormat:@"%.1f MB/s · %.1f MB", speedMBps, totalMB];
     } else {
-        self.progressAlert.message = [NSString stringWithFormat:@"%.1f MB/s\n", speedMBps];
+        subtitle = [NSString stringWithFormat:@"%.1f MB/s", speedMBps];
     }
-    [self.progressView setProgress:progress animated:YES];
+
+    if (self.progressPill) {
+        [self.progressPill updateProgress:progress title:title subtitle:subtitle];
+    } else {
+        self.progressAlert.title = title;
+        self.progressAlert.message = [NSString stringWithFormat:@"%@\n", subtitle];
+        [self.progressView setProgress:progress animated:YES];
+    }
 }
 
 - (void)adjustCurrentExpectedBytesIfNeeded:(unsigned long long)newExpectedBytes {
@@ -1691,6 +1712,7 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
 - (void)completeWithFileURL:(NSURL *)fileURL isVideo:(BOOL)isVideo presenter:(UIViewController *)presenter {
     self.active = NO;
     [self updateProgressTitle:LOC(@"DOWNLOAD_COMPLETED") progress:1.0f];
+    if (self.progressPill) { [self.progressPill dismiss]; self.progressPill = nil; }
     [self.progressAlert dismissViewControllerAnimated:YES completion:nil];
     self.progressAlert = nil;
     self.progressView = nil;
@@ -1715,6 +1737,7 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
 
 - (void)failWithError:(NSError *)error {
     self.active = NO;
+    if (self.progressPill) { [self.progressPill dismiss]; self.progressPill = nil; }
     [self.progressAlert dismissViewControllerAnimated:YES completion:nil];
     self.progressAlert = nil;
     self.progressView = nil;
@@ -1815,37 +1838,19 @@ static void YouModShowAudioSourceSheet(YTPlayerViewController *player, YouModAud
     NSArray <YouModMediaFormat *> *audioFormats = YouModFormatsForPlayer(player, NO);
     NSString *title = YouModTitleForPlayer(player);
     NSString *videoID = YouModVideoIDForPlayer(player);
-    NSMutableArray *items = [NSMutableArray array];
 
     if (audioFormats.count == 0) {
-        if (items.count) {
-            YouModPresentMenu(LOC(@"DOWNLOAD_AUDIO"), items, presenter, sender);
-            return;
-        }
         YouModSendToast(LOC(@"NO_AUDIO_STREAM_FOUND"), presenter);
         return;
     }
 
-    NSUInteger index = 1;
-    for (YouModMediaFormat *format in audioFormats) {
-        NSString *rowTitle = audioFormats.count == 1 ? LOC(@"AUDIO") : [NSString stringWithFormat:@"%@ %lu", LOC(@"AUDIO"), (unsigned long)index++];
-        NSString *subtitle = YouModFormatSubtitle(format);
-        [items addObject:[YouModMenuItem itemWithTitle:rowTitle subtitle:subtitle icon:YouModIconImage(21) handler:^{
-            [[YouModDownloadCoordinator sharedCoordinator] startAudioDownloadWithAudioFormat:format fileName:title videoID:videoID outputFormat:outputFormat presenter:presenter];
-        }]];
-    }
-    NSString *menuTitle = outputFormat.title.length ? [NSString stringWithFormat:@"%@ %@", LOC(@"DOWNLOAD"), outputFormat.title] : LOC(@"DOWNLOAD_AUDIO");
-    YouModPresentMenu(menuTitle, items, presenter, sender);
+    YouModMediaFormat *bestFormat = audioFormats.firstObject;
+    [[YouModDownloadCoordinator sharedCoordinator] startAudioDownloadWithAudioFormat:bestFormat fileName:title videoID:videoID outputFormat:outputFormat presenter:presenter];
 }
 
 static void YouModShowAudioSheet(YTPlayerViewController *player, UIViewController *presenter, UIView *sender) {
-    NSMutableArray *items = [NSMutableArray array];
-    for (YouModAudioOutputFormat *format in YouModAudioOutputFormats()) {
-        [items addObject:[YouModMenuItem itemWithTitle:format.title subtitle:YouModAudioOutputSubtitle(format) icon:YouModIconImage(21) handler:^{
-            YouModShowAudioSourceSheet(player, format, presenter, sender);
-        }]];
-    }
-    YouModPresentMenu(LOC(@"AUDIO_FORMAT"), items, presenter, sender);
+    YouModAudioOutputFormat *defaultFormat = YouModDefaultAudioOutputFormat();
+    YouModShowAudioSourceSheet(player, defaultFormat, presenter, sender);
 }
 
 static void YouModShowCaptionsSheet(YTPlayerViewController *player, UIViewController *presenter, UIView *sender) {
@@ -1921,11 +1926,6 @@ static void YouModShowDownloadManager(YTPlayerViewController *player, UIViewCont
     [items addObject:[YouModMenuItem itemWithTitle:LOC(@"DOWNLOAD_CAPTIONS") subtitle:LOC(@"DOWNLOAD_CAPTIONS_DESC") icon:YouModIconImage(637) handler:^{
         YouModShowCaptionsSheet(player, presenter, sender);
     }]];
-    /*
-    [items addObject:[YouModMenuItem itemWithTitle:@"Copy diagnostics" subtitle:@"Copy last error log" icon:YouModIconImage(870) handler:^{
-        YouModCopyDownloadDiagnostics(presenter);
-    }]];
-    */
     [items addObject:[YouModMenuItem itemWithTitle:LOC(@"SAVE_THUMBNAIL") subtitle:LOC(@"SAVE_THUMBNAIL_DESC") icon:YouModIconImage(367) handler:^{
         YouModDownloadThumbnail(videoID, presenter);
     }]];

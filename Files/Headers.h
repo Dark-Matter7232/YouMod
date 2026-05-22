@@ -34,7 +34,7 @@
 #import <YouTubeHeader/YTSingleVideoTime.h>
 #import <YouTubeHeader/YTSingleVideoController.h>
 #import <YouTubeHeader/YTPlayerView.h>
-// #import <YouTubeHeader/YTReelPlayerViewController.h>
+#import <YouTubeHeader/YTReelPlayerViewController.h>
 #import <YouTubeHeader/YTLabel.h>
 #import <YouTubeHeader/MLFormat.h>
 #import <YouTubeHeader/MLQuickMenuVideoQualitySettingFormatConstraint.h>
@@ -53,6 +53,7 @@
 #import <YouTubeHeader/YTIHamplayerConfig.h>
 #import <YouTubeHeader/YTAssetLoader.h>
 #import <MediaPlayer/MediaPlayer.h>
+#import <YouTubeHeader/ASCollectionView.h>
 #import <dlfcn.h>
 
 // For Settings.x and SponsorBlockSettings.x
@@ -163,11 +164,13 @@
 #define HideShortsToVideo @"YouModHideShortsToVideo"
 #define EnablesShortsQuality @"YouModEnablesShortsQuality"
 #define ShowShortsSeekbar @"YouModShowShortsSeekbar"
-// #define ShortsActionIndex @"YouModMakeAShortsAction"
+#define ShortsActionIndex @"YouModMakeAShortsAction"
 // Tab bar
 #define DefaultTab @"YouModDefaultStartupTab"
+#define TabOrder @"YouModTabOrder"
 #define HideTabIndi @"YouModHideTabIndicators"
 #define HideTabLabels @"YouModHideTabLabels"
+#define UseFrostedTabBar @"YouModUseFrostedTabBar"
 #define HideHomeTab @"YouModHideHomeTab"
 #define HideShortsTab @"YouModHideShortsTab"
 #define HideCreateButton @"YouModHideCreateButton"
@@ -267,7 +270,9 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 @interface YTPlayerViewController (YouMod) <UIGestureRecognizerDelegate>
 @property (nonatomic, retain) UIPanGestureRecognizer *YouModPanGesture;
 @property (nonatomic, retain) UILabel *YouModGestureHUD;
-// @property (nonatomic, weak, readwrite) UIViewController *parentViewController;
+@property (nonatomic, weak, readwrite) UIViewController *parentViewController;
+@property (nonatomic, assign, readonly) BOOL isInlinePlaybackActive;
+@property (nonatomic, assign, readonly) BOOL isPlayingAd;
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer;
 - (void)YouModAutoFullscreen;
 - (void)YouModTurnOffCaptions;
@@ -357,12 +362,10 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 @interface YTGLMediaPlayerViewFactory : NSObject
 @end
 
-/*
 @interface YTReelPlayerViewController (YouMod)
 - (void)reelContentViewRequestsAdvanceToNextVideo:(id)arg;
-- (void)reelContentViewRequestsSuspendPlayback:(id)arg;
+- (void)reelContentViewRequestsPlayPauseToggle:(id)arg;
 @end
-*/
 
 // SponsorBlock action modes
 typedef NS_ENUM(NSInteger, SBSegmentAction) {
@@ -396,6 +399,7 @@ typedef NS_ENUM(NSInteger, SBSegmentAction) {
 @property (nonatomic, assign) NSTimeInterval totalDuration;
 @property (nonatomic, assign) NSTimeInterval remainingDuration;
 @property (nonatomic, assign) BOOL isPaused;
+@property (nonatomic, assign) BOOL isHighlightPill;
 + (instancetype)showInView:(UIView *)parentView message:(NSString *)message buttonTitle:(NSString *)buttonTitle action:(void (^)(void))action duration:(NSTimeInterval)duration;
 + (instancetype)showSuccessInView:(UIView *)parentView message:(NSString *)message duration:(NSTimeInterval)duration;
 + (instancetype)showErrorInView:(UIView *)parentView message:(NSString *)message duration:(NSTimeInterval)duration;
@@ -405,6 +409,17 @@ typedef NS_ENUM(NSInteger, SBSegmentAction) {
 @end
 
 extern UIView *sbGetNotificationParent(void);
+
+@interface YMDownloadProgressView : UIView
+@property (nonatomic, strong) UILabel *titleLabel;
+@property (nonatomic, strong) UILabel *subtitleLabel;
+@property (nonatomic, strong) UIProgressView *progressBar;
+@property (nonatomic, strong) UIButton *cancelButton;
+@property (nonatomic, copy) void (^onCancel)(void);
++ (instancetype)showInView:(UIView *)parentView message:(NSString *)message cancelAction:(void (^)(void))cancelAction;
+- (void)updateProgress:(float)progress title:(NSString *)title subtitle:(NSString *)subtitle;
+- (void)dismiss;
+@end
 
 @interface YTPlayerViewController (SponsorBlock)
 @property (nonatomic, strong) NSString *sbLastVideoID;

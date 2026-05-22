@@ -87,7 +87,10 @@ static NSBundle *YouModBundle() {
     [defaults synchronize];
     // Success Alert with Restart
     YTAlertView *alertView = [%c(YTAlertView) confirmationDialogWithAction:^{
-        exit(0);
+        [[UIApplication sharedApplication] performSelector:@selector(suspend)];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            exit(0);
+        });
     } actionTitle:LOC(@"YES")];
     alertView.title = LOC(@"IMPORT_DONE");
     alertView.subtitle = LOC(@"APPLY_DESC"); // "Restart required"
@@ -141,7 +144,10 @@ static NSBundle *YouModBundle() {
         [defaults setBool:YES forKey:DownloadManager];
         [defaults setBool:YES forKey:DownloadSaveToPhotos];
         [defaults synchronize];
-        exit(0);
+        [[UIApplication sharedApplication] performSelector:@selector(suspend)];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            exit(0);
+        });
     } actionTitle:LOC(@"YES")];
     alertView.title = LOC(@"WARNING");
     alertView.subtitle = LOC(@"RESETDEFAULT");

@@ -17,6 +17,9 @@ extern YMSettingsItem *YMPicker(NSString *title, NSString *subtitle, NSString *k
 extern YMSettingsItem *YMAction(NSString *title, NSString *subtitle, void (^action)(UIViewController *vc));
 extern YMSettingsItem *YMHeader(NSString *title);
 extern YMSettingsItem *YMSegment(NSString *title, NSString *key, NSArray<NSNumber *> *icons, NSInteger defaultValue);
+extern YMSettingsItem *YMTextSegment(NSString *title, NSString *key, NSArray<NSString *> *labels, NSInteger defaultValue);
+extern YMSettingsItem *YMImageSegment(NSString *title, NSString *key, NSArray<UIImage *> *images, NSInteger defaultValue);
+extern void YMPushTabOrder(id settingsVC, id parentResponder);
 
 @interface YTSettingsSectionItemManager (YouMod)
 - (void)updateYouModSectionWithEntry:(id)entry;
@@ -307,6 +310,7 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
     // Shorts
     YTSettingsSectionItem *shortsgroup = [YTSettingsSectionItemClass itemWithTitle:LOC(@"SHORTS") accessibilityIdentifier:nil detailTextBlock:nil selectBlock:^BOOL (YTSettingsCell *cell, NSUInteger arg1) {
         YMPushSubSettings(LOC(@"SHORTS"), @[
+            YMTextSegment(LOC(@"SHORTS_ACTION"), ShortsActionIndex, (@[LOC(@"LOOP"), LOC(@"SKIP_TO_NEXT_SHORTS"), LOC(@"PAUSE_SHORTS")]), 0),
             YMToggle(LOC(@"HIDE_SHORTS_HEADER"), LOC(@"HIDE_SHORTS_HEADER_DESC"), HideShortsHeader),
             YMToggle(LOC(@"HIDE_SHORTS_LIKE_BUTTON"), LOC(@"HIDE_SHORTS_LIKE_BUTTON_DESC"), HideShortsLikeButton),
             YMToggle(LOC(@"HIDE_SHORTS_DISLIKE_BUTTON"), LOC(@"HIDE_SHORTS_DISLIKE_BUTTON_DESC"), HideShortsDisLikeButton),
@@ -336,18 +340,56 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
     // Section 7
     // Tab bar
     YTSettingsSectionItem *tabgroup = [YTSettingsSectionItemClass itemWithTitle:LOC(@"TABBAR") accessibilityIdentifier:nil detailTextBlock:nil selectBlock:^BOOL (YTSettingsCell *cell, NSUInteger arg1) {
+        // Build dynamic image list from enabled tabs (standard + custom)
+        NSDictionary *tabYTIconMap = @{@"home": @(65), @"shorts": @(769), @"subscriptions": @(66), @"library": @(61)};
+        NSDictionary *tabBundleIconMap = @{@"history": @"icons/history", @"gaming": @"icons/gaming", @"sports": @"icons/sports", @"notifications": @"icons/noti", @"news": @"icons/news"};
+        NSBundle *ymBundle = [NSBundle bundleWithPath:[[NSBundle mainBundle] pathForResource:@"YouMod" ofType:@"bundle"]];
+        YTAssetLoader *assetLoader = [[%c(YTAssetLoader) alloc] initWithBundle:ymBundle];
+
+        NSMutableArray<UIImage *> *defaultTabImages = [NSMutableArray array];
+        NSArray *savedOrder = [[NSUserDefaults standardUserDefaults] arrayForKey:TabOrder];
+        if (savedOrder.count > 0) {
+            for (NSDictionary *entry in savedOrder) {
+                if (![entry[@"enabled"] boolValue]) continue;
+                NSString *tabID = entry[@"id"];
+                if ([tabID isEqualToString:@"create"]) continue;
+                NSNumber *ytIconType = tabYTIconMap[tabID];
+                if (ytIconType) {
+                    YTIIcon *icon = [%c(YTIIcon) new];
+                    icon.iconType = [ytIconType intValue];
+                    UIImage *img = [icon respondsToSelector:@selector(iconImageWithColor:)] ? [icon iconImageWithColor:[UIColor whiteColor]] : nil;
+                    if (img) [defaultTabImages addObject:img];
+                } else {
+                    NSString *bundleName = tabBundleIconMap[tabID];
+                    if (bundleName) {
+                        UIImage *img = [assetLoader imageNamed:bundleName];
+                        if (img) {
+                            UIImage *whiteImg = [img imageWithTintColor:[UIColor whiteColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
+                            [defaultTabImages addObject:whiteImg];
+                        }
+                    }
+                }
+            }
+        }
+        if (defaultTabImages.count == 0) {
+            NSArray *fallbackIcons = @[@(65), @(769), @(66), @(61)];
+            for (NSNumber *iconType in fallbackIcons) {
+                YTIIcon *icon = [%c(YTIIcon) new];
+                icon.iconType = [iconType intValue];
+                UIImage *img = [icon respondsToSelector:@selector(iconImageWithColor:)] ? [icon iconImageWithColor:[UIColor whiteColor]] : nil;
+                if (img) [defaultTabImages addObject:img];
+            }
+        }
+
         YMPushSubSettings(LOC(@"TABBAR"), @[
-            YMSegment(LOC(@"DEFAULT_TAB"), DefaultTab, (@[@(65), @(769), @(66), @(61)]), 0),
+            YMImageSegment(LOC(@"DEFAULT_TAB"), DefaultTab, defaultTabImages, 0),
+            YMTextSegment(LOC(@"FORSTED_TAB_BAR"), UseFrostedTabBar, (@[LOC(@"DEFAULT"),LOC(@"ENABLED"), LOC(@"DISABLED")]), 0),
             YMToggle(LOC(@"HIDE_TAB_INDI"), LOC(@"HIDE_TAB_INDI_DESC"), HideTabIndi),
             YMToggle(LOC(@"HIDE_TAB_LABELS"), LOC(@"HIDE_TAB_LABELS_DESC"), HideTabLabels),
-            YMToggle(LOC(@"HIDE_HOME_TAB"), LOC(@"HIDE_HOME_TAB_DESC"), HideHomeTab),
-            YMToggle(LOC(@"HIDE_SHORTS_TAB"), LOC(@"HIDE_SHORTS_TAB_DESC"), HideShortsTab),
-            YMToggle(LOC(@"HIDE_CREATE_BUTTON"), LOC(@"HIDE_CREATE_BUTTON_DESC"), HideCreateButton),
-            YMToggle(LOC(@"HIDE_SUBSCRIPT_TAB"), LOC(@"HIDE_SUBSCRIPT_TAB_DESC"), HideSubscriptTab),
-            YMToggle(LOC(@"ADDS_HISTORY_TAB"), LOC(@"ADDS_HISTORY_TAB_DESC"), AddsHistoryTab),
-            YMToggle(LOC(@"ADDS_GAMING_TAB"), LOC(@"ADDS_GAMING_TAB_DESC"), AddsGamingTab),
-            YMToggle(LOC(@"ADDS_SPORTS_TAB"), LOC(@"ADDS_SPORTS_TAB_DESC"), AddsSportsTab),
-            YMToggle(LOC(@"ADDS_NOTI_TAB"), LOC(@"ADDS_NOTI_TAB_DESC"), AddsNotiTab),
+            YMAction(LOC(@"MANAGE_TABS"), LOC(@"MANAGE_TABS_DESC"), ^(UIViewController *vc) {
+                (void)vc;
+                YMPushTabOrder(settingsViewController, [self parentResponder]);
+            }),
         ], settingsViewController, [self parentResponder]);
         return YES;
     }];
@@ -410,12 +452,23 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
             }),
             YMHeader(LOC(@"CACHE")),
             YMAction(LOC(@"CLEARCACHE"), GetCacheSize(), ^(UIViewController *vc) {
+                __weak UIViewController *weakVC = vc;
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                     NSString *cachePath = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES).firstObject;
                     [[NSFileManager defaultManager] removeItemAtPath:cachePath error:nil];
                     dispatch_async(dispatch_get_main_queue(), ^{
-                        Class toastClass = NSClassFromString(@"YTToastResponderEvent");
-                        [[toastClass eventWithMessage:LOC(@"DONE") firstResponder:vc] send];
+                        __strong UIViewController *strongVC = weakVC;
+                        if (!strongVC) return;
+                        if ([strongVC respondsToSelector:@selector(items)] && [strongVC respondsToSelector:@selector(tableView)]) {
+                            NSArray *items = [(id)strongVC items];
+                            for (id item in items) {
+                                if ([[item title] isEqualToString:LOC(@"CLEARCACHE")]) {
+                                    [item setSubtitle:@"Zero KB"];
+                                    break;
+                                }
+                            }
+                            [[(id)strongVC tableView] reloadData];
+                        }
                     });
                 });
             }),

@@ -39,7 +39,6 @@
 - (void)setTitleLabelVisible:(BOOL)arg1 animated:(BOOL)arg2 { IS_ENABLED(HideShortsHeader) ? %orig(NO, arg2) : %orig; }
 %end
 
-/*
 static void YouModMakeAShortsAction(YTPlayerViewController *self, YTSingleVideoController *video, YTSingleVideoTime *time) {
     if (INTFORVAL(ShortsActionIndex) == 0) return;
 
@@ -48,8 +47,8 @@ static void YouModMakeAShortsAction(YTPlayerViewController *self, YTSingleVideoC
             YTReelPlayerViewController *reelVC = (YTReelPlayerViewController *)self.parentViewController;
             if ([reelVC respondsToSelector:@selector(reelContentViewRequestsAdvanceToNextVideo:)] && INTFORVAL(ShortsActionIndex) == 1) {
                 [reelVC performSelector:@selector(reelContentViewRequestsAdvanceToNextVideo:)];
-            } else if ([reelVC respondsToSelector:@selector(reelContentViewRequestsSuspendPlayback:)] && INTFORVAL(ShortsActionIndex) == 2) {
-                [reelVC performSelector:@selector(reelContentViewRequestsSuspendPlayback:)];
+            } else if ([reelVC respondsToSelector:@selector(reelContentViewRequestsPlayPauseToggle:)] && INTFORVAL(ShortsActionIndex) == 2) {
+                [reelVC performSelector:@selector(reelContentViewRequestsPlayPauseToggle:)];
             }
         }
     }
@@ -65,4 +64,3 @@ static void YouModMakeAShortsAction(YTPlayerViewController *self, YTSingleVideoC
     YouModMakeAShortsAction(self, video, time);
 }
 %end
-*/

@@ -261,6 +261,10 @@ jobs:
         if: ${{ inputs.youspeed }}
         run: git clone --quiet --depth=1 https://github.com/PoomSmart/YouSpeed.git
 
+      - name: Clone UncappedAVPlayer
+        if: ${{ inputs.youspeed }}
+        run: git clone --quiet --depth=1 https://github.com/PoomSmart/UncappedAVPlayer.git
+
       - name: Clone DontEatMyContent
         if: ${{ inputs.demc }}
         run: git clone --quiet --depth=1 https://github.com/therealFoxster/DontEatMyContent.git
@@ -374,6 +378,13 @@ jobs:
           cd YouSpeed
           make clean package DEBUG=0 FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
           mv packages/*.deb ${{ github.workspace }}/youspeed.deb
+
+      - name: Build UncappedAVPlayer
+        if: ${{ inputs.youspeed }}
+        run: |
+          cd UncappedAVPlayer
+          make clean package DEBUG=0 FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+          mv packages/*.deb ${{ github.workspace }}/uncapavplayer.deb
 
       - name: Build DontEatMyContent
         if: ${{ inputs.demc }}

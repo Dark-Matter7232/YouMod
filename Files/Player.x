@@ -4,35 +4,51 @@ extern void YouModDownloadSetCurrentPlayer(YTPlayerViewController *player);
 
 static float playbackRate = 1.0;
 
-/*
+static BOOL isAutoSelected = NO;
+
 static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoController *video, YTSingleVideoTime *time) {
-    if (!IS_ENABLED(ShowExtraTimeRemaining)) return;
+    // if (!IS_ENABLED(ShowExtraTimeRemaining)) return;
 
     CGFloat rate = playbackRate != 0 ? playbackRate : 1.0;
-    NSTimeInterval remainingTime = (lround(video.totalMediaTime) - lround(time.time)) / rate;
+    NSTimeInterval remainingSeconds = (lround(video.totalMediaTime) - lround(time.time)) / rate;
 
-    NSDate *estimatedEndTime = [NSDate dateWithTimeIntervalSinceNow:remainingTime];
+    int hours = (int)(remainingSeconds / 3600);
+    int minutes = (int)(((int)remainingSeconds % 3600) / 60);
+    int seconds = (int)((int)remainingSeconds % 60);
+
+    NSString *remainingTimeText;
+    if (hours > 0) {
+        remainingTimeText = [NSString stringWithFormat:@"%d:%02d:%02d", hours, minutes, seconds];
+    } else {
+        remainingTimeText = [NSString stringWithFormat:@"%d:%02d", minutes, seconds];
+    }
+    
+    /*
+    CGFloat rate = playbackRate != 0 ? playbackRate : 1.0;
+    NSTimeInterval remainingTimetext = (lround(video.totalMediaTime) - lround(time.time)) / rate;
+    NSString *remainingTime = remainingTimetext;
+
+    // NSDate *estimatedEndTime = [NSDate dateWithTimeIntervalSinceNow:remainingTime];
 
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     [dateFormatter setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]];
     [dateFormatter setDateFormat:@"HH:mm"];
     // [dateFormatter setDateFormat:ytlBool(@"24hrFormat") ? @"HH:mm" : @"h:mm a"];
+    */
 
-    NSString *formattedEndTime = [dateFormatter stringFromDate:estimatedEndTime];
+    // NSString *formattedEndTime = [dateFormatter stringFromDate:estimatedEndTime];
 
-    YTPlayerView *playerView = (YTPlayerView *)self.view;
+    YTPlayerView *playerView = (YTPlayerView *)self.playerView;
     if (![playerView.overlayView isKindOfClass:%c(YTMainAppVideoPlayerOverlayView)]) return;
 
     YTMainAppVideoPlayerOverlayView *overlay = (YTMainAppVideoPlayerOverlayView*)playerView.overlayView;
     YTLabel *durationLabel = overlay.playerBar.durationLabel;
-    overlay.playerBar.endTimeString = formattedEndTime;
 
-    if (![durationLabel.text containsString:formattedEndTime]) {
-        durationLabel.text = [durationLabel.text stringByAppendingString:[NSString stringWithFormat:@" • %@", formattedEndTime]];
+    if (![durationLabel.text containsString:remainingTimeText]) {
+        durationLabel.text = [durationLabel.text stringByAppendingString:[NSString stringWithFormat:@" • %@", remainingTimeText]];
         [durationLabel sizeToFit];
     }
 }
-*/
 
 %hook YTMainAppControlsOverlayView
 // Hide autoplay Switch
@@ -168,6 +184,15 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
             playerBar.shouldDisplayTimeRemaining = YES;
         }
     }
+    YTSingleVideoController *sgvid = [self valueForKey:@"_currentSingleVideo"];
+    YTPlayerView *playerview = [sgvid valueForKey:@"_playerView"];
+    YTPlayerViewController *playerviewController = [playerview valueForKey:@"_playerViewDelegate"];
+    YouModDownloadSetCurrentPlayer(playerviewController);
+    if (IS_ENABLED(AutoFullScreen)) [playerviewController performSelector:@selector(YouModAutoFullscreen)];
+    if (IS_ENABLED(ShortsToRegular)) [playerviewController performSelector:@selector(YouModShortsToRegular)];
+    if (IS_ENABLED(DisablesCaptions)) [playerviewController performSelector:@selector(YouModTurnOffCaptions)];
+    if (INTFORVAL(AutoSpeedIndex) != 0) [playerviewController performSelector:@selector(YouModSetAutoSpeed)];
+    if (INTFORVAL(WifiQualityIndex) != 0 || INTFORVAL(CellQualityIndex) != 0) [playerviewController performSelector:@selector(YouModAutoQuality)];
 }
 %end
 
@@ -353,31 +378,23 @@ static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMai
 %end
 
 %hook YTPlayerViewController
-- (void)loadWithPlayerTransition:(id)arg1 playbackConfig:(id)arg2 {
-    [NSObject cancelPreviousPerformRequestsWithTarget:self];
-    %orig;
-    YouModDownloadSetCurrentPlayer(self);
-    if (IS_ENABLED(AutoFullScreen)) [self performSelector:@selector(YouModAutoFullscreen) withObject:nil afterDelay:0.75];
-    if (IS_ENABLED(ShortsToRegular)) [self performSelector:@selector(YouModShortsToRegular) withObject:nil afterDelay:0.75];
-    if (IS_ENABLED(DisablesCaptions)) [self performSelector:@selector(YouModTurnOffCaptions) withObject:nil afterDelay:1.0];
-    if (INTFORVAL(AutoSpeedIndex) != 0) [self performSelector:@selector(YouModSetAutoSpeed) withObject:nil afterDelay:0.75];
-    if (INTFORVAL(WifiQualityIndex) != 0 || INTFORVAL(CellQualityIndex) != 0) [self performSelector:@selector(YouModAutoQuality) withObject:nil afterDelay:1.0];
-}
 
-- (void)prepareToLoadWithPlayerTransition:(id)arg1 expectedLayout:(id)arg2 {
-    [NSObject cancelPreviousPerformRequestsWithTarget:self];
-    %orig;
-    YouModDownloadSetCurrentPlayer(self);
-    if (IS_ENABLED(AutoFullScreen)) [self performSelector:@selector(YouModAutoFullscreen) withObject:nil afterDelay:0.75];
-    if (IS_ENABLED(ShortsToRegular)) [self performSelector:@selector(YouModShortsToRegular) withObject:nil afterDelay:0.75];
-    if (IS_ENABLED(DisablesCaptions)) [self performSelector:@selector(YouModTurnOffCaptions) withObject:nil afterDelay:1.0];
-    if (INTFORVAL(AutoSpeedIndex) != 0) [self performSelector:@selector(YouModSetAutoSpeed) withObject:nil afterDelay:0.75];
-    if (INTFORVAL(WifiQualityIndex) != 0 || INTFORVAL(CellQualityIndex) != 0) [self performSelector:@selector(YouModAutoQuality) withObject:nil afterDelay:1.0];
-}
-
-- (void)dealloc {
-    [NSObject cancelPreviousPerformRequestsWithTarget:self];
-    %orig;
+- (id)activeVideo {
+    id value = %orig;
+    if (value) {
+        if (!isAutoSelected) {
+            YouModDownloadSetCurrentPlayer(self);
+            if (IS_ENABLED(AutoFullScreen)) [self performSelector:@selector(YouModAutoFullscreen)];
+            if (IS_ENABLED(ShortsToRegular)) [self performSelector:@selector(YouModShortsToRegular)];
+            if (IS_ENABLED(DisablesCaptions)) [self performSelector:@selector(YouModTurnOffCaptions)];
+            if (INTFORVAL(AutoSpeedIndex) != 0) [self performSelector:@selector(YouModSetAutoSpeed)];
+            if (INTFORVAL(WifiQualityIndex) != 0 || INTFORVAL(CellQualityIndex) != 0) [self performSelector:@selector(YouModAutoQuality)];
+            isAutoSelected = YES;
+        }
+    } else {
+        isAutoSelected = NO;
+    }
+    return value;
 }
 
 %new
@@ -466,7 +483,6 @@ static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMai
     }
 }
 
-/*
 - (void)singleVideo:(YTSingleVideoController *)video currentVideoTimeDidChange:(YTSingleVideoTime *)time {
     %orig;
     YouModAddEndTime(self, video, time);
@@ -476,7 +492,6 @@ static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMai
     %orig;
     YouModAddEndTime(self, video, time);
 }
-*/
 
 - (void)setPlaybackRate:(float)rate {
     playbackRate = rate;
@@ -485,8 +500,8 @@ static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMai
 
 %new
 - (void)YouModShortsToRegular {
-    if (self.contentVideoID != nil && [self.parentViewController isKindOfClass:NSClassFromString(@"YTShortsPlayerViewController")]) {
-        NSString *vidLink = [NSString stringWithFormat:@"vnd.youtube://%@", self.contentVideoID]; // idk about this
+    if (self.contentVideoID != nil && [self.parentViewController isKindOfClass:NSClassFromString(@"YTReelPlayerViewController")]) {
+        NSString *vidLink = [NSString stringWithFormat:@"vnd.youtube://%@", self.contentVideoID];
         if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:vidLink]]) {
             [[UIApplication sharedApplication] openURL:[NSURL URLWithString:vidLink] options:@{} completionHandler:nil];
         }

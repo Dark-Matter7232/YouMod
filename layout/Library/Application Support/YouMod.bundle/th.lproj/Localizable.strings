@@ -48,9 +48,9 @@
 "SAVE_THUMBNAIL" = "บันทึกปกคลิป";
 "SAVE_THUMBNAIL_DESC" = "บันทึกลงในแอปรูปภาพ";
 "DOWNLOAD_CAPTIONS" = "ดาวน์โหลดคำบรรยาย";
-"DOWNLOAD_CAPTIONS_DESC" = "บันทึกซับไตเติ้ลเป็นไฟล์ VTT";
+"DOWNLOAD_CAPTIONS_DESC" = "บันทึกซับไตเติ้ลเป็นไฟล์ .VTT";
 "DOWNLOAD_AUDIO" = "ดาวน์โหลดเสียง";
-"DOWNLOAD_AUDIO_DESC" = "เลือกรูปแบบไฟล์เสียง";
+"DOWNLOAD_AUDIO_DESC" = "บันทึกเสียงเป็นไฟล์ .m4a";
 "DOWNLOAD_VIDEO" = "ดาวน์โหลดวิดีโอ";
 "DOWNLOAD_VIDEO_DESC" = "เลือกคุณภาพวิดีโอ";
 "OPEN_VID_BEFORE" = "กรุณาเปิดวิดีโอก่อนใช้ตัวจัดการดาวน์โหลด";
@@ -235,6 +235,10 @@
 "HIDE_SAVE_BUTTON_DESC" = "ซ่อนปุ่มบันทึกใต้โอเวอร์เลย์วิดีโอ";
 
 "SHORTS" = "Shorts";
+"SHORTS_ACTION" = "การกระทำของ Shorts เมื่อจบวิดีโอ";
+"LOOP" = "ลูปวิดีโอ";
+"SKIP_TO_NEXT_SHORTS" = "ข้ามไปยังวิดีโอถัดไป";
+"PAUSE_SHORTS" = "หยุดวิดีโอ";
 "HIDE_SHORTS_HEADER" = "ซ่อนส่วนหัวของ Shorts";
 "HIDE_SHORTS_HEADER_DESC" = "ซ่อนส่วนหัวของ Shorts ที่อยู่ด้านบนเครื่องเล่น Shorts";
 "HIDE_SHORTS_LIKE_BUTTON" = "ซ่อนปุ่มถูกใจ";
@@ -274,34 +278,30 @@
 
 "TABBAR" = "แท็บนำทาง";
 "DEFAULT_TAB" = "แท็บเริ่มต้น";
-"DEFAULT_TAB_DESC" = "คุณสามารถเลือกแท็บที่จะเปิดเมื่อเริ่มแอปได้";
-"HOME_NAME" = "หน้าแรก";
-"SUBSCRIPT_NAME" = "การติดตาม";
-"LIB_NAME" = "คลัง (คุณ)";
+"FORSTED_TAB_BAR" = "แท็บโปร่งใส";
+"ENABLED" = "เปิดใช้งาน";
+"HOME_TAB" = "หน้าแรก";
+"SHORTS_TAB" = "Shorts";
+"CREATE_TAB" = "สร้าง";
+"SUBSCRIPTIONS_TAB" = "การติดตาม";
+"LIBRARY_TAB" = "คลัง (คุณ)";
 "HIDE_TAB_INDI" = "ซ่อนตัวบอกสถานะ";
 "HIDE_TAB_INDI_DESC" = "ซ่อนตัวบอกสถานะในแท็บต่างๆ";
 "HIDE_TAB_LABELS" = "ซ่อนชื่อแท็บ";
 "HIDE_TAB_LABELS_DESC" = "ซ่อนชื่อแท็บในแท็บต่างๆ";
-"HIDE_HOME_TAB" = "ซ่อนแท็บหน้าแรก";
-"HIDE_HOME_TAB_DESC" = "ซ่อนแท็บหน้าแรกในแท็บนำทาง";
-"HIDE_SHORTS_TAB" = "ซ่อนแท็บ Shorts";
-"HIDE_SHORTS_TAB_DESC" = "ซ่อนแท็บ Shorts ในแท็บนำทาง";
-"HIDE_CREATE_BUTTON" = "ซ่อนปุ่มสร้าง";
-"HIDE_CREATE_BUTTON_DESC" = "ซ่อนปุ่มสร้างในแท็บนำทาง";
-"HIDE_SUBSCRIPT_TAB" = "ซ่อนแท็บการติดตาม";
-"HIDE_SUBSCRIPT_TAB_DESC" = "ซ่อนแท็บการติดตามในแท็บนำทาง";
-"ADDS_HISTORY_TAB" = "เพิ่มแท็บประวัติการเข้าชม";
-"ADDS_HISTORY_TAB_DESC" = "เพิ่มแท็บประวัติการเข้าชมในแท็บนำทาง";
-"ADDS_GAMING_TAB" = "เพิ่มแท็บเกม";
-"ADDS_GAMING_TAB_DESC" = "เพิ่มแท็บเกมในแท็บนำทาง";
-"ADDS_SPORTS_TAB" = "เพิ่มแท็บกีฬา";
-"ADDS_SPORTS_TAB_DESC" = "เพิ่มแท็บกีฬาในแท็บนำทาง";
-"ADDS_NOTI_TAB" = "เพิ่มแท็บการแจ้งเตือน";
-"ADDS_NOTI_TAB_DESC" = "เพิ่มแท็บการแจ้งเตือนในแท็บนำทาง";
 "HISTORY_TAB" = "ประวัติการเข้าชม";
 "GAMING_TAB" = "เกม";
 "SPORTS_TAB" = "กีฬา";
-"NOTI_TAB" = "การแจ้งเดือน";
+"NOTI_TAB" = "การแจ้งเตือน";
+"NEWS_TAB" = "ข่าวสาร";
+"MANAGE_TABS" = "จัดการแท็บ";
+"MANAGE_TABS_DESC" = "จัดเรียงและเปิด/ปิดใช้งานแท็บ";
+"TAB_REORDER_HINT" = "ลากเพื่อจัดเรียงใหม่ เปิด/ปิดเพื่อแสดง/ซ่อน";
+"TAB_LIMIT" = "จำกัดแท็บ";
+"TAB_LIMIT_DESC" = "สามารถมีแท็บได้สูงสุด 6 แท็บ";
+"RESTART_REQUIRED" = "จำเป็นต้องรีสตาร์ทแอป";
+"RESTART_REQUIRED_DESC" = "จำเป็นต้องรีสตาร์ทแอปเพื่อปรับใช้การตั้งค่าแท็บ";
+"RESTART_NOW" = "ตกลง";
 
 "MISCELLANEOUS" = "อื่นๆ";
 "BACKGROUND_PLAYBACK" = "เล่นภายในเบื้องหลัง";
@@ -378,3 +378,7 @@
 "SB_SECTION_MAIN" = "หลัก";
 "SB_SKIP_ALERT_DURATION" = "ระยะเวลาแสดงการแจ้งเตือนเมื่อข้าม";
 "SB_UNSKIP_ALERT_DURATION" = "ระยะเวลาแสดงการแจ้งเตือนเมื่อยกเลิกการข้าม";
+
+"CANCEL_DOWNLOAD" = "ยกเลิกการดาวน์โหลด";
+"CANCEL_DOWNLOAD_TITLE" = "ยกเลิกการดาวน์โหลดหรือไม่?";
+"CANCEL_DOWNLOAD_DESC" = "การดาวน์โหลดจะหยุดทำงาน";

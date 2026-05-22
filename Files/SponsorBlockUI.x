@@ -1,6 +1,19 @@
 #import "Headers.h"
 #import <objc/message.h>
 
+extern BOOL useBackwardIconForButton;
+
+static NSBundle *SBUIBundle() {
+    static NSBundle *bundle = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSString *path = [[NSBundle mainBundle] pathForResource:@"YouMod" ofType:@"bundle"];
+        if (path) bundle = [NSBundle bundleWithPath:path];
+    });
+    return bundle;
+}
+#define SBLOC(x) [SBUIBundle() localizedStringForKey:x value:nil table:nil]
+
 #pragma mark - SBSkipNotificationView Implementation
 
 @implementation SBSkipNotificationView
@@ -10,7 +23,9 @@
 
     for (UIView *sub in [parentView.subviews copy]) {
         if ([sub isKindOfClass:[SBSkipNotificationView class]]) {
-            [(SBSkipNotificationView *)sub dismiss];
+            SBSkipNotificationView *existing = (SBSkipNotificationView *)sub;
+            if (existing.isHighlightPill) return nil;
+            [existing dismiss];
         }
     }
 
@@ -55,11 +70,7 @@
         button = [UIButton buttonWithType:UIButtonTypeCustom];
         button.translatesAutoresizingMaskIntoConstraints = NO;
 
-        NSString *iconName = @"forward.end.fill";
-        if (buttonTitle && ([buttonTitle.lowercaseString containsString:@"unskip"] || [buttonTitle.lowercaseString containsString:@"back"])) {
-            iconName = @"backward.fill";
-        }
-
+        NSString *iconName = useBackwardIconForButton ? @"backward.fill" : @"forward.end.fill";
         UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:14 weight:UIImageSymbolWeightMedium];
         UIImage *icon = [UIImage systemImageNamed:iconName withConfiguration:config];
         [button setImage:icon forState:UIControlStateNormal];
@@ -283,6 +294,152 @@
         ]];
     }
     return view;
+}
+
+@end
+
+#pragma mark - YMDownloadProgressView
+
+@implementation YMDownloadProgressView
+
++ (instancetype)showInView:(UIView *)parentView message:(NSString *)message cancelAction:(void (^)(void))cancelAction {
+    if (!parentView) return nil;
+
+    // Dismiss any existing download progress pill
+    for (UIView *sub in [parentView.subviews copy]) {
+        if ([sub isKindOfClass:[YMDownloadProgressView class]]) {
+            [(YMDownloadProgressView *)sub dismiss];
+        }
+    }
+
+    YMDownloadProgressView *view = [[YMDownloadProgressView alloc] init];
+    view.onCancel = cancelAction;
+    view.translatesAutoresizingMaskIntoConstraints = NO;
+    view.backgroundColor = [UIColor colorWithWhite:0.12 alpha:1.0];
+    view.layer.cornerRadius = 16.0;
+    view.clipsToBounds = YES;
+    view.layer.borderWidth = 0.5;
+    view.layer.borderColor = [UIColor colorWithWhite:0.25 alpha:1.0].CGColor;
+
+    // Title label
+    UILabel *titleLabel = [[UILabel alloc] init];
+    titleLabel.text = message;
+    titleLabel.textColor = [UIColor whiteColor];
+    titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
+    titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    view.titleLabel = titleLabel;
+    [view addSubview:titleLabel];
+
+    // Subtitle label (speed + size)
+    UILabel *subtitleLabel = [[UILabel alloc] init];
+    subtitleLabel.text = @"";
+    subtitleLabel.textColor = [UIColor colorWithWhite:0.55 alpha:1.0];
+    subtitleLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightRegular];
+    subtitleLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    view.subtitleLabel = subtitleLabel;
+    [view addSubview:subtitleLabel];
+
+    // Progress bar
+    UIProgressView *progressBar = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
+    progressBar.progress = 0.0;
+    progressBar.trackTintColor = [UIColor colorWithWhite:0.22 alpha:1.0];
+    progressBar.progressTintColor = [UIColor colorWithRed:0.6 green:0.2 blue:0.9 alpha:1.0];
+    progressBar.translatesAutoresizingMaskIntoConstraints = NO;
+    progressBar.layer.cornerRadius = 3.0;
+    progressBar.clipsToBounds = YES;
+    view.progressBar = progressBar;
+    [view addSubview:progressBar];
+
+    // Cancel button
+    UIButton *cancelButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:18 weight:UIImageSymbolWeightMedium];
+    [cancelButton setImage:[UIImage systemImageNamed:@"xmark.circle.fill" withConfiguration:config] forState:UIControlStateNormal];
+    cancelButton.tintColor = [UIColor colorWithWhite:0.45 alpha:1.0];
+    cancelButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [cancelButton addTarget:view action:@selector(cancelButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+    view.cancelButton = cancelButton;
+    [view addSubview:cancelButton];
+
+    // Layout
+    [NSLayoutConstraint activateConstraints:@[
+        [titleLabel.leadingAnchor constraintEqualToAnchor:view.leadingAnchor constant:16],
+        [titleLabel.topAnchor constraintEqualToAnchor:view.topAnchor constant:12],
+        [titleLabel.trailingAnchor constraintEqualToAnchor:cancelButton.leadingAnchor constant:-10],
+
+        [subtitleLabel.leadingAnchor constraintEqualToAnchor:view.leadingAnchor constant:16],
+        [subtitleLabel.topAnchor constraintEqualToAnchor:titleLabel.bottomAnchor constant:3],
+        [subtitleLabel.trailingAnchor constraintEqualToAnchor:cancelButton.leadingAnchor constant:-10],
+
+        [progressBar.leadingAnchor constraintEqualToAnchor:view.leadingAnchor constant:16],
+        [progressBar.trailingAnchor constraintEqualToAnchor:view.trailingAnchor constant:-16],
+        [progressBar.topAnchor constraintEqualToAnchor:subtitleLabel.bottomAnchor constant:10],
+        [progressBar.bottomAnchor constraintEqualToAnchor:view.bottomAnchor constant:-14],
+        [progressBar.heightAnchor constraintEqualToConstant:6],
+
+        [cancelButton.trailingAnchor constraintEqualToAnchor:view.trailingAnchor constant:-14],
+        [cancelButton.centerYAnchor constraintEqualToAnchor:titleLabel.centerYAnchor],
+        [cancelButton.widthAnchor constraintEqualToConstant:32],
+        [cancelButton.heightAnchor constraintEqualToConstant:32],
+    ]];
+
+    [parentView addSubview:view];
+
+    // Center horizontally with max width
+    NSLayoutConstraint *centerX = [view.centerXAnchor constraintEqualToAnchor:parentView.centerXAnchor];
+    NSLayoutConstraint *maxWidth = [view.widthAnchor constraintLessThanOrEqualToConstant:360];
+    NSLayoutConstraint *leadingFallback = [view.leadingAnchor constraintGreaterThanOrEqualToAnchor:parentView.leadingAnchor constant:16];
+    NSLayoutConstraint *trailingFallback = [view.trailingAnchor constraintLessThanOrEqualToAnchor:parentView.trailingAnchor constant:-16];
+    NSLayoutConstraint *preferredWidth = [view.widthAnchor constraintEqualToAnchor:parentView.widthAnchor constant:-32];
+    preferredWidth.priority = UILayoutPriorityDefaultHigh;
+
+    [NSLayoutConstraint activateConstraints:@[
+        centerX, maxWidth, leadingFallback, trailingFallback, preferredWidth,
+        [view.bottomAnchor constraintEqualToAnchor:parentView.safeAreaLayoutGuide.bottomAnchor constant:-12],
+    ]];
+
+    // Slide-up animation
+    view.transform = CGAffineTransformMakeTranslation(0, 80);
+    view.alpha = 0;
+    [UIView animateWithDuration:0.35 delay:0 usingSpringWithDamping:0.75 initialSpringVelocity:0.5 options:UIViewAnimationOptionCurveEaseOut animations:^{
+        view.transform = CGAffineTransformIdentity;
+        view.alpha = 1.0;
+    } completion:nil];
+
+    return view;
+}
+
+- (void)updateProgress:(float)progress title:(NSString *)title subtitle:(NSString *)subtitle {
+    self.titleLabel.text = title;
+    self.subtitleLabel.text = subtitle;
+    [self.progressBar setProgress:progress animated:YES];
+}
+
+- (void)cancelButtonTapped {
+    Class alertClass = NSClassFromString(@"YTAlertView");
+    if (alertClass && self.onCancel) {
+        __weak typeof(self) weakSelf = self;
+        YTAlertView *alert = [alertClass confirmationDialogWithAction:^{
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            if (strongSelf.onCancel) strongSelf.onCancel();
+            [strongSelf dismiss];
+        } actionTitle:SBLOC(@"CANCEL_DOWNLOAD")];
+        alert.title = SBLOC(@"CANCEL_DOWNLOAD_TITLE");
+        alert.subtitle = SBLOC(@"CANCEL_DOWNLOAD_DESC");
+        [alert show];
+    } else if (self.onCancel) {
+        self.onCancel();
+        [self dismiss];
+    }
+}
+
+- (void)dismiss {
+    if (!self.superview) return;
+    [UIView animateWithDuration:0.25 animations:^{
+        self.transform = CGAffineTransformMakeTranslation(0, 80);
+        self.alpha = 0;
+    } completion:^(BOOL finished) {
+        [self removeFromSuperview];
+    }];
 }
 
 @end
