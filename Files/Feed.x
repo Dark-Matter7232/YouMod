@@ -5,24 +5,37 @@ static NSMutableArray <YTIItemSectionRenderer *> *filteredArray(NSArray <YTIItem
     NSMutableArray <YTIItemSectionRenderer *> *newArray = [array mutableCopy];
     NSIndexSet *removeIndexes = [newArray indexesOfObjectsPassingTest:^BOOL(YTIItemSectionRenderer *sectionRenderer, NSUInteger idx, BOOL *stop) {
         if ([sectionRenderer isKindOfClass:%c(YTIShelfRenderer)]) {
-            YTIShelfSupportedRenderers *content = ((YTIShelfRenderer *)sectionRenderer).content;
-            YTIHorizontalListRenderer *horizontalListRenderer = content.horizontalListRenderer;
-            NSMutableArray <YTIHorizontalListSupportedRenderers *> *itemsArray = horizontalListRenderer.itemsArray;
-            NSIndexSet *removeItemsArrayIndexes = [itemsArray indexesOfObjectsPassingTest:^BOOL(YTIHorizontalListSupportedRenderers *horizontalListSupportedRenderers, NSUInteger idx2, BOOL *stop2) {
-                YTIElementRenderer *elementRenderer = horizontalListSupportedRenderers.elementRenderer;
-                NSString *description = [elementRenderer description];
-                BOOL hasShorts = [description containsString:@"shorts_video_cell"];
-                if (hasShorts) *stop2 = YES;
-                return hasShorts;
-            }];
-            return removeItemsArrayIndexes.count > 0;
+            if (IS_ENABLED(HideShortsShelf)) {
+                YTIShelfSupportedRenderers *content = ((YTIShelfRenderer *)sectionRenderer).content;
+                YTIHorizontalListRenderer *horizontalListRenderer = content.horizontalListRenderer;
+                NSMutableArray <YTIHorizontalListSupportedRenderers *> *itemsArray = horizontalListRenderer.itemsArray;
+                NSIndexSet *removeItemsArrayIndexes = [itemsArray indexesOfObjectsPassingTest:^BOOL(YTIHorizontalListSupportedRenderers *horizontalListSupportedRenderers, NSUInteger idx2, BOOL *stop2) {
+                    YTIElementRenderer *elementRenderer = horizontalListSupportedRenderers.elementRenderer;
+                    NSString *description = [elementRenderer description];
+                    return [description containsString:@"shorts_video_cell"];
+                }];
+                if (removeItemsArrayIndexes.count > 0) {
+                    [itemsArray removeObjectsAtIndexes:removeItemsArrayIndexes];
+                }
+            }
+            return NO;
         }
         if ([sectionRenderer isKindOfClass:%c(YTIItemSectionRenderer)]) {
             NSString *description = [sectionRenderer description];
-            if ([description containsString:@"shorts_shelf.eml"] && ![description containsString:@"subscriptions"])
+            BOOL isShortsShelf = [description containsString:@"shorts_shelf.eml"];
+            BOOL isHistory = [description containsString:@"history-shorts-shelf-item"];
+            if (IS_ENABLED(HideShortsShelf) && IS_ENABLED(KeepShortsSubscript)) {
+                if (isShortsShelf && ![description containsString:@"subscriptions-shorts-shelf-item"] && !isHistory) {
+                    return YES;
+                }
+            } else if (IS_ENABLED(HideShortsShelf)) {
+                if (isShortsShelf && !isHistory) {
+                    return YES;
+                }   
+            }
+            if (IS_ENABLED(HideHoriShelf) && [description containsString:@"horizontal_shelf.eml"] && ![description containsString:@"UCYfdidRxbB8Qhf0Nx7ioOYw"] && ![description containsString:@"FElibrary"] && ![description containsString:@"FEplaylist_aggregation"]) {
                 return YES;
-            if ([description containsString:@"horizontal_shelf.eml"] && ![description containsString:@"FEnews_destination"] && ![description containsString:@"FEhistory"] && ![description containsString:@"FEplaylist_aggregation"])
-                return YES;
+            }
         }
         return NO;
     }];
@@ -30,20 +43,15 @@ static NSMutableArray <YTIItemSectionRenderer *> *filteredArray(NSArray <YTIItem
     return newArray;
 }
 
-%group Shorts
 %hook YTInnerTubeCollectionViewController
-
 - (void)displaySectionsWithReloadingSectionControllerByRenderer:(id)renderer {
     NSMutableArray *sectionRenderers = [self valueForKey:@"_sectionRenderers"];
     [self setValue:filteredArray(sectionRenderers) forKey:@"_sectionRenderers"];
     %orig;
 }
-
 - (void)addSectionsFromArray:(NSArray <YTIItemSectionRenderer *> *)array {
     %orig(filteredArray(array));
 }
-
-%end
 %end
 
 // Hide Subbar
@@ -79,10 +87,3 @@ static NSMutableArray <YTIItemSectionRenderer *> *filteredArray(NSArray <YTIItem
 %hook YTPersonalizedSuggestionsCacheProvider
 - (id)activeCache { return IS_ENABLED(HideSearchHis) ? nil : %orig; }
 %end
-
-%ctor {
-    %init;
-    if (IS_ENABLED(HideShortsShelf)) {
-        %init(Shorts);
-    }
-}

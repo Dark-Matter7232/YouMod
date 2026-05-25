@@ -40,12 +40,14 @@ static BOOL isDarkMode(UIView *view) {
 %hook UITableViewCell
 - (void)_layoutSystemBackgroundView {
     %orig;
+    if (localPageStyle != 1) return;
     UIView *systemBackgroundView = [self valueForKey:@"_systemBackgroundView"];
     NSString *backgroundViewKey = class_getInstanceVariable(systemBackgroundView.class, "_colorView") ? @"_colorView" : @"_backgroundView";
     ((UIView *)[systemBackgroundView valueForKey:backgroundViewKey]).backgroundColor = [UIColor blackColor];
 }
 - (void)_layoutSystemBackgroundView:(BOOL)arg1 {
     %orig;
+    if (localPageStyle != 1) return;
     ((UIView *)[[self valueForKey:@"_systemBackgroundView"] valueForKey:@"_colorView"]).backgroundColor = [UIColor blackColor];
 }
 %end
@@ -57,9 +59,8 @@ static BOOL isDarkMode(UIView *view) {
 %hook ASCollectionView
 - (void)didMoveToWindow {
     %orig;
-    if (localPageStyle == 1 && [self.nextResponder isKindOfClass:%c(_ASDisplayView)]) {
-        self.superview.backgroundColor = [UIColor blackColor];
-        self.backgroundColor = [UIColor clearColor];
+    if (localPageStyle == 1 && ([self.accessibilityIdentifier isEqualToString:@"eml.chip_bar_collection"] || [self.accessibilityIdentifier isEqualToString:@"id.elements.components.more_drawer_collection"] || [self.accessibilityIdentifier isEqualToString:@"subs.channel_bar.collection"])) {
+        self.backgroundColor = [UIColor blackColor];
     }
 }
 %end

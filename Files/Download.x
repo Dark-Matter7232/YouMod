@@ -164,6 +164,7 @@ typedef void (^YouModRangeDownloadProgress)(unsigned long long completedBytes);
 @property (nonatomic, strong) NSURLSessionDownloadTask *task;
 @property (nonatomic, strong) NSURLSessionDataTask *metadataTask;
 @property (nonatomic, strong) YouModRangeDownloader *rangeDownloader;
+@property (nonatomic, strong) AVAssetExportSession *exporter;
 @property (nonatomic, strong) UIAlertController *progressAlert;
 @property (nonatomic, strong) UIProgressView *progressView;
 @property (nonatomic, strong) YMDownloadProgressView *progressPill;
@@ -978,6 +979,7 @@ static YouModMediaFormat *YouModMediaFormatFromStream(id stream, BOOL video) {
     if (fps == 0) fps = YouModIntegerFromSelector(stream, @selector(frameRate));
     if (fps == 0) fps = YouModIntegerFromSelector(formatStream, @selector(frameRate));
     fps = YouModNormalizedFPS(fps);
+    if (video && (height > 1080 || fps < 30)) return nil;
     format.fps = fps;
     format.qualityLabel = YouModStringFromSelector(stream, @selector(qualityLabel));
     if (format.qualityLabel.length == 0) format.qualityLabel = YouModStringFromSelector(formatStream, @selector(qualityLabel));
@@ -1311,13 +1313,16 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
     [self.task cancel];
     [self.metadataTask cancel];
     [self.rangeDownloader cancel];
+    [self.exporter cancelExport];
     self.task = nil;
     self.metadataTask = nil;
     self.rangeDownloader = nil;
+    self.exporter = nil;
     self.fileCompletion = nil;
     self.active = NO;
     self.cancelled = YES;
     if (self.progressPill) { [self.progressPill dismiss]; self.progressPill = nil; }
+    if (self.progressAlert) { [self.progressAlert dismissViewControllerAnimated:YES completion:nil]; self.progressAlert = nil; self.progressView = nil; }
     [self cleanupTemporaryFiles];
     if (message.length) YouModSendError(message);
 }
@@ -1353,6 +1358,11 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
     self.finishedCurrentFile = NO;
     self.fileCompletion = completion;
     [NSFileManager.defaultManager removeItemAtURL:destinationURL error:nil];
+
+    if (self.cancelled) {
+        if (completion) completion(nil, [NSError errorWithDomain:NSCocoaErrorDomain code:NSUserCancelledError userInfo:@{NSLocalizedDescriptionKey: LOC(@"DOWNLOAD_CANCELLED")}]);
+        return;
+    }
 
     if (allowFast && expectedBytes == 0) allowFast = NO;
 
@@ -1481,7 +1491,8 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
     __weak typeof(self) weakSelf = self;
     [self downloadURL:videoURL toURL:self.videoTempURL expectedBytes:videoFormat.contentLength headers:videoFormat.httpHeaders completion:^(NSURL *videoFileURL, NSError *videoError) {
         __strong typeof(weakSelf) self = weakSelf;
-        if (!self || videoError) {
+        if (!self || self.cancelled) return;
+        if (videoError) {
             [self failWithError:videoError ?: [NSError errorWithDomain:@"YouMod" code:2 userInfo:@{NSLocalizedDescriptionKey: @"Video download failed"}]];
             return;
         }
@@ -1490,7 +1501,8 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
         [self updateProgressTitle:LOC(@"DOWNLOADING_AUDIO") progress:(self.totalBytes ? (float)self.completedBytes / (float)self.totalBytes : 0.5f)];
         [self downloadURL:audioURL toURL:self.audioTempURL expectedBytes:audioFormat.contentLength headers:audioFormat.httpHeaders completion:^(NSURL *audioFileURL, NSError *audioError) {
             __strong typeof(weakSelf) self = weakSelf;
-            if (!self || audioError) {
+            if (!self || self.cancelled) return;
+            if (audioError) {
                 [self failWithError:audioError ?: [NSError errorWithDomain:@"YouMod" code:3 userInfo:@{NSLocalizedDescriptionKey: @"Audio download failed"}]];
                 return;
             }
@@ -1579,7 +1591,8 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
     __weak typeof(self) weakSelf = self;
     [self downloadURL:audioURL toURL:downloadURL expectedBytes:audioFormat.contentLength headers:audioFormat.httpHeaders completion:^(NSURL *fileURL, NSError *error) {
         __strong typeof(weakSelf) self = weakSelf;
-        if (!self || error || !passthrough) {
+        if (!self || self.cancelled) return;
+        if (error || !passthrough) {
             [self failWithError:error ?: [NSError errorWithDomain:@"YouMod" code:4 userInfo:@{NSLocalizedDescriptionKey: @"Audio download failed"}]];
             return;
         }
@@ -1637,12 +1650,15 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
     exporter.outputURL = outputURL;
     exporter.outputFileType = AVFileTypeMPEG4;
     exporter.shouldOptimizeForNetworkUse = YES;
+    self.exporter = exporter;
 
     __weak typeof(self) weakSelf = self;
     [exporter exportAsynchronouslyWithCompletionHandler:^{
         dispatch_async(dispatch_get_main_queue(), ^{
             __strong typeof(weakSelf) self = weakSelf;
             if (!self) return;
+            self.exporter = nil;
+            if (self.cancelled || exporter.status == AVAssetExportSessionStatusCancelled) return;
             if (exporter.status == AVAssetExportSessionStatusCompleted) {
                 [self completeWithFileURL:outputURL isVideo:YES presenter:presenter];
             } else {
@@ -1694,12 +1710,15 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
     exporter.outputURL = outputURL;
     exporter.outputFileType = AVFileTypeMPEG4;
     exporter.shouldOptimizeForNetworkUse = YES;
+    self.exporter = exporter;
 
     __weak typeof(self) weakSelf = self;
     [exporter exportAsynchronouslyWithCompletionHandler:^{
         dispatch_async(dispatch_get_main_queue(), ^{
             __strong typeof(weakSelf) self = weakSelf;
             if (!self) return;
+            self.exporter = nil;
+            if (self.cancelled || exporter.status == AVAssetExportSessionStatusCancelled) return;
             if (exporter.status == AVAssetExportSessionStatusCompleted) {
                 [self completeWithFileURL:outputURL isVideo:YES presenter:presenter];
             } else {
@@ -1710,6 +1729,7 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
 }
 
 - (void)completeWithFileURL:(NSURL *)fileURL isVideo:(BOOL)isVideo presenter:(UIViewController *)presenter {
+    if (self.cancelled) return;
     self.active = NO;
     [self updateProgressTitle:LOC(@"DOWNLOAD_COMPLETED") progress:1.0f];
     if (self.progressPill) { [self.progressPill dismiss]; self.progressPill = nil; }
@@ -1736,6 +1756,7 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
 }
 
 - (void)failWithError:(NSError *)error {
+    if (self.cancelled) return;
     self.active = NO;
     if (self.progressPill) { [self.progressPill dismiss]; self.progressPill = nil; }
     [self.progressAlert dismissViewControllerAnimated:YES completion:nil];
@@ -1755,6 +1776,7 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
 }
 
 - (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didFinishDownloadingToURL:(NSURL *)location {
+    if (self.cancelled) return;
     self.finishedCurrentFile = YES;
     NSError *error = nil;
     [NSFileManager.defaultManager removeItemAtURL:self.destinationURL error:nil];

@@ -167,6 +167,16 @@ static const void *kYMSwitchKeyAssoc = &kYMSwitchKeyAssoc;
     [self.view addSubview:self.tableView];
 }
 
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+    [super traitCollectionDidChange:previousTraitCollection];
+    if (previousTraitCollection.userInterfaceStyle != self.traitCollection.userInterfaceStyle) {
+        self.tableView.backgroundColor = (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark)
+            ? [UIColor blackColor]
+            : [UIColor systemBackgroundColor];
+        [self.tableView reloadData];
+    }
+}
+
 - (void)viewWillAppear:(BOOL)animated {
     Class ytStyled = objc_getClass("YTStyledViewController");
     struct objc_super superStruct = { self, ytStyled ?: [UIViewController class] };
@@ -588,9 +598,9 @@ YMSettingsItem *YMImageSegment(NSString *title, NSString *key, NSArray<UIImage *
 
 static NSString * const kYMTabIDs[] = {
     @"home", @"shorts", @"create", @"subscriptions", @"library",
-    @"history", @"gaming", @"sports", @"notifications", @"news"
+    @"history", @"gaming", @"sports", @"notifications", @"news", @"music", @"watchlater", @"playlist", @"like"
 };
-static const NSInteger kYMTabCount = 10;
+static const NSInteger kYMTabCount = 14;
 static const NSInteger kYMTabMaxEnabled = 6;
 
 @interface YMTabOrderViewController : UIViewController <UITableViewDelegate, UITableViewDataSource>
@@ -626,6 +636,10 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
     if ([tabID isEqualToString:@"sports"]) return YMLOC(@"SPORTS_TAB");
     if ([tabID isEqualToString:@"notifications"]) return YMLOC(@"NOTI_TAB");
     if ([tabID isEqualToString:@"news"]) return YMLOC(@"NEWS_TAB");
+    if ([tabID isEqualToString:@"music"]) return YMLOC(@"MUSIC_TAB");
+    if ([tabID isEqualToString:@"watchlater"]) return YMLOC(@"WATCH_LATER_TAB");
+    if ([tabID isEqualToString:@"playlist"]) return YMLOC(@"PLAYLIST_TAB");
+    if ([tabID isEqualToString:@"like"]) return YMLOC(@"LIKE_TAB");
     return tabID;
 }
 
@@ -638,11 +652,11 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
 
     if ([tabID isEqualToString:@"create"]) {
         UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:18 weight:UIImageSymbolWeightMedium];
-        return [[UIImage systemImageNamed:@"plus" withConfiguration:config] imageWithTintColor:[UIColor whiteColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
+        return [[UIImage systemImageNamed:@"plus" withConfiguration:config] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     }
 
     NSDictionary *ytIconTypes = @{@"home": @(65), @"shorts": @(769), @"subscriptions": @(66), @"library": @(61)};
-    NSDictionary *bundleIcons = @{@"history": @"icons/history", @"gaming": @"icons/gaming", @"sports": @"icons/sports", @"notifications": @"icons/noti", @"news": @"icons/news"};
+    NSDictionary *bundleIcons = @{@"history": @"icons/history", @"gaming": @"icons/gaming", @"sports": @"icons/sports", @"notifications": @"icons/noti", @"news": @"icons/news", @"music": @"icons/music", @"watchlater": @"icons/watchlater", @"playlist": @"icons/playlist", @"like": @"icons/like"};
 
     NSNumber *iconType = ytIconTypes[tabID];
     if (iconType) {
@@ -650,7 +664,7 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
         if (icon) {
             ((void (*)(id, SEL, int))objc_msgSend)(icon, @selector(setIconType:), [iconType intValue]);
             if ([icon respondsToSelector:@selector(iconImageWithColor:)]) {
-                return [[icon iconImageWithColor:[UIColor whiteColor]] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+                return [[icon iconImageWithColor:[UIColor whiteColor]] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
             }
         }
     }
@@ -658,7 +672,7 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
     NSString *bundleName = bundleIcons[tabID];
     if (bundleName && cachedLoader) {
         UIImage *img = [cachedLoader imageNamed:bundleName];
-        if (img) return [img imageWithTintColor:[UIColor whiteColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
+        if (img) return [img imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     }
 
     return nil;
@@ -689,6 +703,16 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
     }
 
     [self.view addSubview:self.tableView];
+}
+
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+    [super traitCollectionDidChange:previousTraitCollection];
+    if (previousTraitCollection.userInterfaceStyle != self.traitCollection.userInterfaceStyle) {
+        self.tableView.backgroundColor = (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark)
+            ? [UIColor blackColor]
+            : [UIColor systemBackgroundColor];
+        [self.tableView reloadData];
+    }
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -843,13 +867,12 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
     BOOL enabled = [entry[@"enabled"] boolValue];
 
     cell.textLabel.text = [self localizedNameForTabID:tabID];
-    cell.textLabel.textColor = (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark)
-        ? [UIColor whiteColor] : [UIColor labelColor];
+    cell.textLabel.textColor = [UIColor labelColor];
     cell.textLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightMedium];
 
     UIImage *tabIcon = [self iconForTabID:tabID];
     cell.imageView.image = tabIcon;
-    cell.imageView.tintColor = tabIcon ? [UIColor whiteColor] : nil;
+    cell.imageView.tintColor = [UIColor labelColor];
 
     sw.on = enabled;
     objc_setAssociatedObject(sw, kYMSwitchKeyAssoc, tabID, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
