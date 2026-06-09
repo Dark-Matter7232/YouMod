@@ -28,39 +28,107 @@ static BOOL isDarkMode(UIView *view) {
 - (UIColor *)raisedBackground { return self.pageStyle == 1 ? [UIColor blackColor] : %orig; }
 - (UIColor *)staticBrandBlack { return self.pageStyle == 1 ? [UIColor blackColor] : %orig; }
 - (UIColor *)generalBackgroundA { return self.pageStyle == 1 ? [UIColor blackColor] : %orig; }
+- (NSInteger)pageStyle {
+    int value = %orig;
+    localPageStyle = value;
+    return value;
+}
 %end
 
 %hook YTInnerTubeCollectionViewController
-- (UIColor *)backgroundColor:(NSInteger)pageStyle { 
-    localPageStyle = pageStyle;
-    return pageStyle == 1 ? [UIColor blackColor] : %orig;
-}
+- (UIColor *)backgroundColor:(NSInteger)pageStyle { return pageStyle == 1 ? [UIColor blackColor] : %orig; }
 %end
 
 %hook UITableViewCell
 - (void)_layoutSystemBackgroundView {
     %orig;
-    if (localPageStyle != 1) return;
     UIView *systemBackgroundView = [self valueForKey:@"_systemBackgroundView"];
     NSString *backgroundViewKey = class_getInstanceVariable(systemBackgroundView.class, "_colorView") ? @"_colorView" : @"_backgroundView";
-    ((UIView *)[systemBackgroundView valueForKey:backgroundViewKey]).backgroundColor = [UIColor blackColor];
+    if (localPageStyle == 1) {
+        ((UIView *)[systemBackgroundView valueForKey:backgroundViewKey]).backgroundColor = [UIColor blackColor];
+    } else {
+        ((UIView *)[systemBackgroundView valueForKey:backgroundViewKey]).backgroundColor = [UIColor clearColor];
+    }
 }
 - (void)_layoutSystemBackgroundView:(BOOL)arg1 {
     %orig;
-    if (localPageStyle != 1) return;
-    ((UIView *)[[self valueForKey:@"_systemBackgroundView"] valueForKey:@"_colorView"]).backgroundColor = [UIColor blackColor];
+    if (localPageStyle == 1) {
+        ((UIView *)[[self valueForKey:@"_systemBackgroundView"] valueForKey:@"_colorView"]).backgroundColor = [UIColor blackColor];
+    } else {
+        ((UIView *)[[self valueForKey:@"_systemBackgroundView"] valueForKey:@"_colorView"]).backgroundColor = [UIColor clearColor];
+    }
 }
 %end
 
-%hook GOODialogView
-+ (UIColor *)dialogBodyColor { return localPageStyle == 1 ? [UIColor blackColor] : %orig; }
+%hook _ASDisplayView
+%new
+- (BOOL)isInsideViewControllerOfClass:(NSString *)className {
+    UIResponder *responder = self.nextResponder;
+    while (responder != nil) {
+        if ([responder isKindOfClass:NSClassFromString(className)]) {
+            return YES;
+        }
+        responder = responder.nextResponder;
+    }
+    return NO;
+}
+- (void)didMoveToWindow {
+    %orig;
+    if (localPageStyle == 1) {
+        if ([self.accessibilityIdentifier isEqualToString:@"id.elements.components.filter_chip_bar"]) self.backgroundColor = [UIColor blackColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"id.elements.components.comment_composer"]) self.backgroundColor = [UIColor blackColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"eml.live_chat_text_message"]) self.backgroundColor = [UIColor blackColor];
+        if ([self isInsideViewControllerOfClass:@"YTActionSheetDialogViewController"]) self.backgroundColor = [UIColor blackColor];
+        if ([self isInsideViewControllerOfClass:@"YTMySubsFilterHeaderViewController"]) self.backgroundColor = [UIColor blackColor];
+    } else {
+        if ([self.accessibilityIdentifier isEqualToString:@"id.elements.components.filter_chip_bar"]) self.backgroundColor = [UIColor clearColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"id.elements.components.comment_composer"]) self.backgroundColor = [UIColor clearColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"eml.live_chat_text_message"]) self.backgroundColor = [UIColor clearColor];
+        if ([self isInsideViewControllerOfClass:@"YTActionSheetDialogViewController"]) self.backgroundColor = [UIColor clearColor];
+        if ([self isInsideViewControllerOfClass:@"YTMySubsFilterHeaderViewController"]) self.backgroundColor = [UIColor clearColor];
+    }
+}
+- (void)layoutSubviews {
+    %orig;
+    if (localPageStyle == 1) {
+        if ([self.accessibilityIdentifier isEqualToString:@"id.elements.components.filter_chip_bar"]) self.backgroundColor = [UIColor blackColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"id.elements.components.comment_composer"]) self.backgroundColor = [UIColor blackColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"eml.live_chat_text_message"]) self.backgroundColor = [UIColor blackColor];
+        if ([self isInsideViewControllerOfClass:@"YTActionSheetDialogViewController"]) self.backgroundColor = [UIColor blackColor];
+        if ([self isInsideViewControllerOfClass:@"YTMySubsFilterHeaderViewController"]) self.backgroundColor = [UIColor blackColor];
+    } else {
+        if ([self.accessibilityIdentifier isEqualToString:@"id.elements.components.filter_chip_bar"]) self.backgroundColor = [UIColor clearColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"id.elements.components.comment_composer"]) self.backgroundColor = [UIColor clearColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"eml.live_chat_text_message"]) self.backgroundColor = [UIColor clearColor];
+        if ([self isInsideViewControllerOfClass:@"YTActionSheetDialogViewController"]) self.backgroundColor = [UIColor clearColor];
+        if ([self isInsideViewControllerOfClass:@"YTMySubsFilterHeaderViewController"]) self.backgroundColor = [UIColor clearColor];
+    }
+}
 %end
 
 %hook ASCollectionView
 - (void)didMoveToWindow {
     %orig;
-    if (localPageStyle == 1 && ([self.accessibilityIdentifier isEqualToString:@"eml.chip_bar_collection"] || [self.accessibilityIdentifier isEqualToString:@"id.elements.components.more_drawer_collection"] || [self.accessibilityIdentifier isEqualToString:@"subs.channel_bar.collection"])) {
-        self.backgroundColor = [UIColor blackColor];
+    if (localPageStyle == 1) {
+        if ([self.superview.accessibilityIdentifier isEqualToString:@"id.elements.components.filter_chip_bar"]) self.backgroundColor = [UIColor blackColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"eml.chip_bar_collection"]) self.backgroundColor = [UIColor blackColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"subs_channel_bar.collection"]) self.backgroundColor = [UIColor blackColor];
+    } else {
+        if ([self.superview.accessibilityIdentifier isEqualToString:@"id.elements.components.filter_chip_bar"]) self.backgroundColor = [UIColor clearColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"eml.chip_bar_collection"]) self.backgroundColor = [UIColor clearColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"subs_channel_bar.collection"]) self.backgroundColor = [UIColor clearColor];
+    }
+}
+- (void)layoutSubviews {
+    %orig;
+    if (localPageStyle == 1) {
+        if ([self.superview.accessibilityIdentifier isEqualToString:@"id.elements.components.filter_chip_bar"]) self.backgroundColor = [UIColor blackColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"eml.chip_bar_collection"]) self.backgroundColor = [UIColor blackColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"subs_channel_bar.collection"]) self.backgroundColor = [UIColor blackColor];
+    } else {
+        if ([self.superview.accessibilityIdentifier isEqualToString:@"id.elements.components.filter_chip_bar"]) self.backgroundColor = [UIColor clearColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"eml.chip_bar_collection"]) self.backgroundColor = [UIColor clearColor];
+        if ([self.accessibilityIdentifier isEqualToString:@"subs_channel_bar.collection"]) self.backgroundColor = [UIColor clearColor];
     }
 }
 %end

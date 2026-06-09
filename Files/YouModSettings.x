@@ -159,7 +159,7 @@ static const void *kYMSwitchKeyAssoc = &kYMSwitchKeyAssoc;
     self.tableView.rowHeight = UITableViewAutomaticDimension;
 
     if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
-        self.tableView.backgroundColor = [UIColor blackColor];
+        self.tableView.backgroundColor = [%c(YTColor) black3];
     } else {
         self.tableView.backgroundColor = [UIColor systemBackgroundColor];
     }
@@ -171,7 +171,7 @@ static const void *kYMSwitchKeyAssoc = &kYMSwitchKeyAssoc;
     [super traitCollectionDidChange:previousTraitCollection];
     if (previousTraitCollection.userInterfaceStyle != self.traitCollection.userInterfaceStyle) {
         self.tableView.backgroundColor = (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark)
-            ? [UIColor blackColor]
+            ? [%c(YTColor) black3]
             : [UIColor systemBackgroundColor];
         [self.tableView reloadData];
     }
@@ -597,8 +597,7 @@ YMSettingsItem *YMImageSegment(NSString *title, NSString *key, NSArray<UIImage *
 #pragma mark - YMTabOrderViewController
 
 static NSString * const kYMTabIDs[] = {
-    @"home", @"shorts", @"create", @"subscriptions", @"library",
-    @"history", @"gaming", @"sports", @"notifications", @"news", @"music", @"watchlater", @"playlist", @"like"
+    @"home", @"shorts", @"create", @"subscriptions",  @"library", @"history", @"gaming", @"sports", @"notifications", @"news", @"music", @"watchlater", @"playlist", @"like"
 };
 static const NSInteger kYMTabCount = 14;
 static const NSInteger kYMTabMaxEnabled = 6;
@@ -654,7 +653,6 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
         UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:18 weight:UIImageSymbolWeightMedium];
         return [[UIImage systemImageNamed:@"plus" withConfiguration:config] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     }
-
     NSDictionary *ytIconTypes = @{@"home": @(65), @"shorts": @(769), @"subscriptions": @(66), @"library": @(61)};
     NSDictionary *bundleIcons = @{@"history": @"icons/history", @"gaming": @"icons/gaming", @"sports": @"icons/sports", @"notifications": @"icons/noti", @"news": @"icons/news", @"music": @"icons/music", @"watchlater": @"icons/watchlater", @"playlist": @"icons/playlist", @"like": @"icons/like"};
 
@@ -697,7 +695,7 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
     self.tableView.rowHeight = UITableViewAutomaticDimension;
 
     if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
-        self.tableView.backgroundColor = [UIColor blackColor];
+        self.tableView.backgroundColor = [%c(YTColor) black3];
     } else {
         self.tableView.backgroundColor = [UIColor systemBackgroundColor];
     }
@@ -709,7 +707,7 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
     [super traitCollectionDidChange:previousTraitCollection];
     if (previousTraitCollection.userInterfaceStyle != self.traitCollection.userInterfaceStyle) {
         self.tableView.backgroundColor = (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark)
-            ? [UIColor blackColor]
+            ? [%c(YTColor) black3]
             : [UIColor systemBackgroundColor];
         [self.tableView reloadData];
     }

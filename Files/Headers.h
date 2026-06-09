@@ -76,7 +76,6 @@
 // Downloading
 #define DownloadManager @"YouModDownloadManager"
 #define DownloadSaveToPhotos @"YouModDownloadSaveToPhotos"
-#define DownloadPreferDRCAudio @"YouModDownloadPreferDRCAudio"
 // Cache
 #define AutoClearCache @"YouModAutoClearCache"
 // Appearance
@@ -103,6 +102,9 @@
 // Player
 #define WifiQualityIndex @"YouModWifiQualityIndex"
 #define CellQualityIndex @"YouModCellQualityIndex"
+#define AudioTrack @"YouModAudioTrackSegment"
+#define AudioTrackLangIndex @"YouModAudioTrackLangIndex"
+#define NoDubbedAudioTrack @"YouModNoDubbedAudioTrack"
 #define AutoSpeedIndex @"YouModAutoSpeedIndex"
 #define HoldToSpeedIndex @"YouModHoldToSpeedIndex"
 #define HideAutoPlayToggle @"YouModHideAutoPlayToggle"
@@ -222,6 +224,9 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
     GestureSectionInvalid
 };
 
+@interface ASScrollView : UIScrollView
+@end
+
 @interface YTIBrowseRequest (YouMod)
 + (NSString *)browseIDForGamingDestination;
 + (NSString *)browseIDForSportsDestination;
@@ -242,6 +247,13 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 @property (nonatomic, weak, readwrite) YTMainAppVideoPlayerOverlayViewController *delegate;
 @property (nonatomic, strong) YTQTMButton *playbackRouteButton;
 - (void)YouModHoldToSpeed:(UILongPressGestureRecognizer *)gesture;
+@end
+
+@interface YTMainAppControlsOverlayView (YouMod)
+- (void)setOverlayVisible:(BOOL)visible;
+@end
+
+@interface YTPivotBarView : UIView
 @end
 
 @interface YTNavigationBarTitleView : UIView
@@ -276,14 +288,18 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 - (void)YouModTurnOffCaptions;
 - (void)YouModShortsToRegular;
 - (void)YouModSetAutoSpeed;
-- (void)YouModAutoQuality;
 - (void)setActiveCaptionTrack:(id)arg1 source:(long long)arg2;
+- (void)setActiveCaptionTrack:(id)arg;
 - (void)setPlaybackRate:(float)rate;
 - (void)play;
 - (void)pause;
 @end
 
 @interface SSOConfiguration : NSObject
+@end
+
+@interface _ASDisplayView (YouMod)
+- (BOOL)isInsideViewControllerOfClass:(NSString *)className;
 @end
 
 @interface YTVideoQualitySwitchOriginalController (YouMod)
@@ -319,6 +335,17 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 - (void)exportYouModSettingsFromVC:(UIViewController *)vc;
 - (void)importYouModSettingsFromVC:(UIViewController *)vc;
 - (void)restoreYouModDefaults;
+@end
+
+@interface YTAudioTrackSwitchController : NSObject
+- (void)switchToAudioTrack:(id)track source:(NSInteger)source;
+- (void)notifyObserversAudioTrackDidChange:(id)arg1 source:(NSInteger)arg2;
+- (void)notifyObserversAudioTrackWillChange:(id)arg1 source:(NSInteger)arg2;
+- (void)YouModChangeAudioTrackWithTrack:(YTIAudioTrack *)matchedTrack;
+@end
+
+@interface YTIAudioTrack (YouMod)
+@property (nonatomic, assign, readwrite) BOOL isAutoDubbed;
 @end
 
 // Player Gestures - @bhackel (YTLitePlus)
@@ -357,6 +384,7 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 @property (nonatomic, readonly, strong) YTSingleVideoTime *localTime;
 @property (nonatomic, strong, readonly) id <MLVideoFormatConstraint> videoFormatConstraint;
 - (void)setVideoFormatConstraint:(id)arg;
+- (void)YouModAutoQuality;
 @end
 
 @protocol MLPlayerItemDelegate <NSObject>
@@ -367,10 +395,6 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 @end
 
 @interface YTGLMediaPlayerViewFactory : NSObject
-@end
-
-@interface YTColor (YouMod)
-+ (instancetype)black0;
 @end
 
 @interface YTReelPlayerViewController (YouMod)

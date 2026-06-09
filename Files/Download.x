@@ -46,10 +46,6 @@ static NSBundle *YouModBundle() {
 - (id)streamingData;
 @end
 
-@interface YTIStreamingData : NSObject
-- (NSArray *)adaptiveFormatsArray;
-@end
-
 @interface YTIFormatStream (YouModDownload)
 - (NSString *)mimeType;
 - (BOOL)hasContentLength;
@@ -98,14 +94,11 @@ static UIImage *YouModIconImage(NSInteger iconType) {
 @property (nonatomic, copy) NSString *urlString;
 @property (nonatomic, copy) NSString *qualityLabel;
 @property (nonatomic, copy) NSString *mimeType;
-@property (nonatomic, copy) NSDictionary *httpHeaders;
 @property (nonatomic, assign) unsigned long long contentLength;
 @property (nonatomic, assign) unsigned long long durationMs;
 @property (nonatomic, assign) NSInteger fps;
 @property (nonatomic, assign) BOOL video;
-@property (nonatomic, copy) NSString *languageCode;
-@property (nonatomic, copy) NSString *languageName;
-@property (nonatomic, assign) BOOL drcAudio;
+@property (nonatomic, assign) BOOL audioTrack;
 @end
 
 @implementation YouModMediaFormat
@@ -598,37 +591,19 @@ static UIViewController *YouModTopViewController(UIViewController *root) {
     return root;
 }
 
-static void YouModSendToast(NSString *message, id responder) {
+static void YouModSendToast(NSString *message) {
     UIView *parent = sbGetNotificationParent();
-    if (parent) {
-        [SBSkipNotificationView showInView:parent message:message buttonTitle:nil action:nil duration:3.0];
-        return;
-    }
-    Class toastClass = NSClassFromString(@"YTToastResponderEvent");
-    id event = [toastClass eventWithMessage:message firstResponder:responder ?: YouModTopViewController(nil)];
-    if ([event respondsToSelector:@selector(send)]) [event send];
+    [SBSkipNotificationView showInView:parent message:message buttonTitle:nil action:nil duration:3.0];
 }
 
 static void YouModSendSuccess(NSString *message) {
     UIView *parent = sbGetNotificationParent();
-    if (parent) {
-        [SBSkipNotificationView showSuccessInView:parent message:message duration:3.0];
-        return;
-    }
-    Class toastClass = NSClassFromString(@"YTToastResponderEvent");
-    id event = [toastClass eventWithMessage:message firstResponder:YouModTopViewController(nil)];
-    if ([event respondsToSelector:@selector(send)]) [event send];
+    [SBSkipNotificationView showSuccessInView:parent message:message duration:3.0];
 }
 
 static void YouModSendError(NSString *message) {
     UIView *parent = sbGetNotificationParent();
-    if (parent) {
-        [SBSkipNotificationView showErrorInView:parent message:message duration:4.0];
-        return;
-    }
-    Class toastClass = NSClassFromString(@"YTToastResponderEvent");
-    id event = [toastClass eventWithMessage:message firstResponder:YouModTopViewController(nil)];
-    if ([event respondsToSelector:@selector(send)]) [event send];
+    [SBSkipNotificationView showErrorInView:parent message:message duration:4.0];
 }
 
 static NSString *YouModByteCount(unsigned long long bytes) {
@@ -636,14 +611,6 @@ static NSString *YouModByteCount(unsigned long long bytes) {
     NSByteCountFormatter *formatter = [NSByteCountFormatter new];
     formatter.countStyle = NSByteCountFormatterCountStyleFile;
     return [formatter stringFromByteCount:(long long)bytes];
-}
-
-static NSString *YouModGenerateCPN(void) {
-    static NSString *const alphabet = @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-    NSMutableString *nonce = [NSMutableString stringWithCapacity:16];
-    for (NSUInteger i = 0; i < 16; i++)
-        [nonce appendFormat:@"%C", [alphabet characterAtIndex:arc4random_uniform((uint32_t)alphabet.length)]];
-    return nonce;
 }
 
 static NSString *YouModURLStringBypassingThrottle(NSString *urlString) {
@@ -675,8 +642,6 @@ static NSString *YouModURLStringWithCPN(NSString *urlString) {
     if ([urlString containsString:@"cpn="]) return urlString;
     Class ytDataUtils = NSClassFromString(@"YTDataUtils");
     NSString *cpn = ((id (*)(Class, SEL))objc_msgSend)(ytDataUtils, @selector(generateClientSideNonce));
-    if (![cpn isKindOfClass:NSString.class] || cpn.length == 0)
-        cpn = YouModGenerateCPN();
     NSString *separator = [urlString containsString:@"?"] ? @"&" : @"?";
     return [NSString stringWithFormat:@"%@%@cpn=%@", urlString, separator, cpn];
 }
@@ -694,7 +659,7 @@ static NSString *YouModSanitizedFileName(NSString *name) {
 
 static NSURL *YouModDownloadsDirectoryURL(void) {
     NSURL *documentsURL = [NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].firstObject;
-    NSURL *downloadsURL = [documentsURL URLByAppendingPathComponent:@"YouMod Downloads" isDirectory:YES];
+    NSURL *downloadsURL = [documentsURL URLByAppendingPathComponent:@"YouMod_Downloads" isDirectory:YES];
     [NSFileManager.defaultManager createDirectoryAtURL:downloadsURL withIntermediateDirectories:YES attributes:nil error:nil];
     return downloadsURL;
 }
@@ -719,8 +684,6 @@ static NSURL *YouModTemporaryFileURL(NSString *extension) {
 static NSInteger YouModResolutionFromQuality(NSString *quality);
 static NSInteger YouModFPSFromQuality(NSString *quality);
 static NSInteger YouModNormalizedFPS(NSInteger fps);
-static NSInteger YouModDisplayHeightForVideoHeight(NSInteger height);
-static NSString *YouModQualityLabel(NSInteger height, NSInteger fps, NSString *fallback);
 
 static unsigned long long YouModDurationMsForURL(NSURL *url) {
     AVURLAsset *asset = [AVURLAsset URLAssetWithURL:url options:nil];
@@ -761,45 +724,32 @@ static CMTime YouModExportDuration(AVAsset *videoAsset, AVAsset *audioAsset, uns
 }
 
 static BOOL YouModPathExtensionIsPhotosVideo(NSString *extension) {
-    NSString *lower = extension.lowercaseString ?: @"";
-    return [@[@"mp4", @"m4v", @"mov"] containsObject:lower];
+    NSString *lower = extension.lowercaseString;
+    return [@[@"mp4"] containsObject:lower];
 }
 
 static NSString *YouModMimeDetail(NSString *mimeType) {
-    NSString *lower = mimeType.lowercaseString ?: @"";
+    NSString *lower = mimeType.lowercaseString;
     if ([lower containsString:@"mp4"]) return @"MP4";
-    if ([lower containsString:@"webm"]) return @"WebM";
-    if ([lower containsString:@"mp3"]) return @"MP3";
-    if ([lower containsString:@"aac"]) return @"AAC";
-    return mimeType.length ? mimeType : @"Stream";
+    return mimeType;
 }
 
-static NSString *YouModFileExtensionForFormat(YouModMediaFormat *format, NSString *fallbackExtension) {
-    NSString *lower = format.mimeType.lowercaseString ?: @"";
-    if ([lower containsString:@"webm"]) return @"webm";
-    if ([lower containsString:@"matroska"]) return @"mkv";
-    if ([lower containsString:@"quicktime"]) return @"mov";
+static NSString *YouModFileExtensionForFormat(YouModMediaFormat *format) {
+    NSString *lower = format.mimeType.lowercaseString;
     if ([lower containsString:@"m4a"]) return @"m4a";
     if ([lower containsString:@"mp4"]) return @"mp4";
-    return fallbackExtension ?: @"mp4";
+    return nil;
 }
 
 static BOOL YouModFormatLooksMP4Family(YouModMediaFormat *format) {
-    NSString *mime = format.mimeType.lowercaseString ?: @"";
-    NSString *extension = YouModFileExtensionForFormat(format, @"").lowercaseString ?: @"";
-    return [mime containsString:@"mp4"] || [mime containsString:@"m4a"] || [mime containsString:@"quicktime"] || [@[@"mp4", @"m4a", @"m4v", @"mov"] containsObject:extension];
-}
-
-static BOOL YouModFormatLooksWebM(YouModMediaFormat *format) {
-    NSString *mime = format.mimeType.lowercaseString ?: @"";
-    NSString *extension = YouModFileExtensionForFormat(format, @"").lowercaseString ?: @"";
-    return [mime containsString:@"webm"] || [extension isEqualToString:@"webm"];
+    NSString *mime = format.mimeType.lowercaseString;
+    NSString *extension = YouModFileExtensionForFormat(format);
+    return [mime containsString:@"mp4"] || [mime containsString:@"m4a"] || [@[@"mp4", @"m4a"] containsObject:extension];
 }
 
 static NSString *YouModMergedVideoOutputExtension(YouModMediaFormat *videoFormat, YouModMediaFormat *audioFormat) {
     if (YouModFormatLooksMP4Family(videoFormat) && YouModFormatLooksMP4Family(audioFormat)) return @"mp4";
-    if (YouModFormatLooksWebM(videoFormat) && YouModFormatLooksWebM(audioFormat)) return @"webm";
-    return @"mkv";
+    return nil;
 }
 
 static BOOL YouModVideoFileCanUseAVFoundation(NSURL *fileURL) {
@@ -836,29 +786,8 @@ static YouModAudioOutputFormat *YouModDefaultAudioOutputFormat(void) {
     return [YouModAudioOutputFormats() firstObject];
 }
 
-static BOOL YouModAudioOutputFormatCanPassthrough(YouModAudioOutputFormat *outputFormat, YouModMediaFormat *sourceFormat) {
-    if (!outputFormat.passthroughWhenCompatible) return NO;
-    NSString *identifier = outputFormat.identifier.lowercaseString ?: @"";
-    NSString *mime = sourceFormat.mimeType.lowercaseString ?: @"";
-    NSString *extension = YouModFileExtensionForFormat(sourceFormat, @"").lowercaseString ?: @"";
-    if ([identifier isEqualToString:@"m4a"] || [identifier isEqualToString:@"aac"])
-        return [extension isEqualToString:@"m4a"] || [mime containsString:@"mp4"] || [mime containsString:@"m4a"];
-    return NO;
-}
-
-static NSString *YouModAudioOutputFileExtension(YouModAudioOutputFormat *outputFormat, YouModMediaFormat *sourceFormat, BOOL passthrough) {
-    NSString *identifier = outputFormat.identifier.lowercaseString ?: @"";
-    NSString *mime = sourceFormat.mimeType.lowercaseString ?: @"";
-    if (passthrough && ([identifier isEqualToString:@"m4a"] || [identifier isEqualToString:@"aac"]) && ([mime containsString:@"mp4"] || [mime containsString:@"m4a"]))
-        return @"m4a";
-    return outputFormat.fileExtension ?: YouModFileExtensionForFormat(sourceFormat, @"m4a");
-}
-
 static NSString *YouModFormatSubtitle(YouModMediaFormat *format) {
     NSMutableArray *parts = [NSMutableArray array];
-    NSString *language = format.languageName.length ? format.languageName : format.languageCode;
-    if (language.length) [parts addObject:language];
-    if (format.drcAudio) [parts addObject:@"DRC"];
     NSString *detail = YouModMimeDetail(format.mimeType);
     if (detail.length) [parts addObject:detail];
     NSString *size = YouModByteCount(format.contentLength);
@@ -867,35 +796,29 @@ static NSString *YouModFormatSubtitle(YouModMediaFormat *format) {
 }
 
 static NSString *YouModVideoIDForPlayer(YTPlayerViewController *player) {
-    NSString *videoID = [player contentVideoID];
-    if (videoID.length == 0)
-        videoID = [player currentVideoID];
-    return videoID;
+    return [player currentVideoID];
 }
 
-static NSArray *YouModPlayerResponsesForPlayer(YTPlayerViewController *player) {
-    NSMutableArray *responses = [NSMutableArray array];
+static id YouModPlayerResponsesForPlayer(YTPlayerViewController *player) {
     id response = YouModObjectFromSelector(player, @selector(contentPlayerResponse));
-    if (response) [responses addObject:response];
-    return responses.copy;
+    if (response == nil) response = YouModObjectFromSelector(player, @selector(playerResponse));
+    return response;
 }
 
-// Where is this going to?
 static NSArray *YouModCaptionTracksForPlayer(YTPlayerViewController *player) {
-    for (id response in YouModPlayerResponsesForPlayer(player)) {
-        id playerData = YouModObjectFromSelector(response, @selector(playerData)) ?: response;
-        id captions = YouModObjectFromSelector(playerData, @selector(captions));
-        id tracklistRenderer = YouModObjectFromSelector(captions, @selector(playerCaptionsTracklistRenderer));
-        NSArray *tracks = YouModObjectFromSelector(tracklistRenderer, @selector(captionTracksArray));
-        if (tracks.count > 0) return tracks;
-    }
+    id response = YouModPlayerResponsesForPlayer(player);
+    id playerData = YouModObjectFromSelector(response, @selector(playerData));
+    id captions = YouModObjectFromSelector(playerData, @selector(captions));
+    id tracklistRenderer = YouModObjectFromSelector(captions, @selector(playerCaptionsTracklistRenderer));
+    NSArray *tracks = YouModObjectFromSelector(tracklistRenderer, @selector(captionTracksArray));
+    if (tracks.count > 0) return tracks;
     return nil;
 }
 
 static id YouModPlayerDataForPlayer(YTPlayerViewController *player) {
-    id response = YouModPlayerResponsesForPlayer(player).firstObject;
+    id response = YouModPlayerResponsesForPlayer(player);
     id playerData = YouModObjectFromSelector(response, @selector(playerData));
-    return playerData ?: response;
+    return playerData;
 }
 
 static NSString *YouModTitleForPlayer(YTPlayerViewController *player) {
@@ -903,13 +826,8 @@ static NSString *YouModTitleForPlayer(YTPlayerViewController *player) {
     id details = YouModObjectFromSelector(playerData, @selector(videoDetails));
     NSString *title = YouModStringFromSelector(details, @selector(title));
     NSString *author = YouModStringFromSelector(details, @selector(author));
-    if (author.length && title.length) {
-        return [NSString stringWithFormat:@"%@ - %@", author, title];
-    } else if (title.length) {
-        return title;
-    }
-    NSString *videoID = YouModVideoIDForPlayer(player);
-    return videoID.length ? [NSString stringWithFormat:@"YouTube %@", videoID] : @"YouTube Video";
+    // Can add description if uses details.shortDescription
+    return [NSString stringWithFormat:@"%@ - %@", author, title];
 }
 
 static NSArray *YouModAdaptiveFormatObjectsForPlayer(YTPlayerViewController *player) {
@@ -926,40 +844,24 @@ static NSArray *YouModAdaptiveFormatObjectsForPlayer(YTPlayerViewController *pla
         }
     };
 
-    id activeVideo = YouModObjectFromSelector(player, @selector(activeVideo));
-    id streamingData = YouModObjectFromSelector(activeVideo, @selector(streamingData));
-    appendFormats(YouModObjectFromSelector(streamingData, @selector(adaptiveStreams)));
-    appendFormats(YouModObjectFromSelector(activeVideo, @selector(selectableVideoFormats)));
-
-    for (id response in YouModPlayerResponsesForPlayer(player)) {
-        id playerData = YouModObjectFromSelector(response, @selector(playerData)) ?: response;
-        id responseStreamingData = YouModObjectFromSelector(playerData, @selector(streamingData));
-        appendFormats(YouModObjectFromSelector(responseStreamingData, @selector(adaptiveFormatsArray)));
-    }
+    id response = YouModPlayerResponsesForPlayer(player);
+    id playerData = YouModObjectFromSelector(response, @selector(playerData));
+    id responseStreamingData = YouModObjectFromSelector(playerData, @selector(streamingData));
+    appendFormats(YouModObjectFromSelector(responseStreamingData, @selector(adaptiveFormatsArray)));
 
     return formats.copy;
 }
 
 static YouModMediaFormat *YouModMediaFormatFromStream(id stream, BOOL video) {
-    id formatStream = YouModObjectFromSelector(stream, @selector(formatStream));
     NSString *url = YouModStringFromSelector(stream, @selector(URL));
-    if (url.length == 0) url = YouModStringFromSelector(formatStream, @selector(URL));
-    if (url.length == 0) url = YouModStringFromSelector(stream, @selector(url));
-    if (url.length == 0) url = YouModStringFromSelector(formatStream, @selector(url));
-    if (url.length == 0) return nil;
-
     NSString *mimeType = YouModStringFromSelector(stream, @selector(mimeType));
-    if (mimeType.length == 0) mimeType = YouModStringFromSelector(formatStream, @selector(mimeType));
-    NSString *lowerMime = mimeType.lowercaseString ?: @"";
-    BOOL streamSaysVideo = YouModBoolFromSelector(stream, @selector(isVideo)) || YouModBoolFromSelector(formatStream, @selector(isVideo));
-    BOOL streamSaysAudio = YouModBoolFromSelector(stream, @selector(isAudio)) || YouModBoolFromSelector(formatStream, @selector(isAudio));
+    NSString *lowerMime = mimeType.lowercaseString;
     NSInteger itag = YouModIntegerFromSelector(stream, @selector(itag));
-    if (itag == 0) itag = YouModIntegerFromSelector(formatStream, @selector(itag));
 
     NSSet *mp4VideoItags = [NSSet setWithObjects:@18, @22, @37, @38, @59, @78, @133, @134, @135, @136, @137, @160, @212, @264, @266, @298, @299, nil];
     NSSet *m4aAudioItags = [NSSet setWithObjects:@139, @140, @141, @256, @258, @325, @328, nil];
     BOOL itagMatches = video ? [mp4VideoItags containsObject:@(itag)] : [m4aAudioItags containsObject:@(itag)];
-    BOOL typeMatches = video ? ([lowerMime containsString:@"video/"] || streamSaysVideo || itagMatches) : ([lowerMime containsString:@"audio/"] || streamSaysAudio || itagMatches);
+    BOOL typeMatches = video ? ([lowerMime containsString:@"video/"] || itagMatches) : ([lowerMime containsString:@"audio/"] || itagMatches);
     if (!typeMatches) return nil;
 
     BOOL mimeLooksMP4 = [lowerMime containsString:@"mp4"] || [lowerMime containsString:@"m4a"];
@@ -969,92 +871,38 @@ static YouModMediaFormat *YouModMediaFormatFromStream(id stream, BOOL video) {
     format.source = stream;
     format.video = video;
     format.urlString = YouModURLStringWithCPN(url);
-    format.mimeType = mimeType.length ? mimeType : (video ? @"video/mp4" : @"audio/mp4");
+    format.mimeType = mimeType;
     NSInteger height = YouModIntegerFromSelector(stream, @selector(height));
-    if (height == 0) height = YouModIntegerFromSelector(formatStream, @selector(height));
     NSInteger fps = YouModIntegerFromSelector(stream, @selector(fps));
-    if (fps == 0) fps = YouModIntegerFromSelector(formatStream, @selector(fps));
-    if (fps == 0) fps = YouModIntegerFromSelector(stream, @selector(framesPerSecond));
-    if (fps == 0) fps = YouModIntegerFromSelector(formatStream, @selector(framesPerSecond));
-    if (fps == 0) fps = YouModIntegerFromSelector(stream, @selector(frameRate));
-    if (fps == 0) fps = YouModIntegerFromSelector(formatStream, @selector(frameRate));
     fps = YouModNormalizedFPS(fps);
-    if (video && (height > 1080 || fps < 30)) return nil;
+    if (video && (height > 1080 || height < 144 || fps < 30)) return nil;
     format.fps = fps;
     format.qualityLabel = YouModStringFromSelector(stream, @selector(qualityLabel));
-    if (format.qualityLabel.length == 0) format.qualityLabel = YouModStringFromSelector(formatStream, @selector(qualityLabel));
-    if (video) {
-        NSInteger labelHeight = YouModResolutionFromQuality(format.qualityLabel);
-        NSInteger labelFPS = YouModFPSFromQuality(format.qualityLabel);
-        if (labelHeight == 960) format.qualityLabel = YouModQualityLabel(labelHeight, fps ?: labelFPS, nil);
-        else if (labelFPS == 0 && fps > 0) format.qualityLabel = YouModQualityLabel(height, fps, format.qualityLabel);
-        if (format.qualityLabel.length == 0) format.qualityLabel = YouModQualityLabel(height, fps, nil);
-    }
-    if (format.qualityLabel.length == 0 && !video) format.qualityLabel = @"Audio";
     if (!video) {
-        NSString *languageCode = YouModStringFromSelector(stream, @selector(languageCode));
-        if (languageCode.length == 0) languageCode = YouModStringFromSelector(formatStream, @selector(languageCode));
-        if (languageCode.length == 0) languageCode = YouModStringFromSelector(stream, @selector(language));
-        if (languageCode.length == 0) languageCode = YouModStringFromSelector(formatStream, @selector(language));
-        format.languageCode = languageCode;
-
-        NSString *languageName = YouModStringFromSelector(stream, @selector(languageName));
-        if (languageName.length == 0) languageName = YouModStringFromSelector(formatStream, @selector(languageName));
-        if (languageName.length == 0) languageName = YouModStringFromSelector(stream, @selector(displayName));
-        if (languageName.length == 0) languageName = YouModStringFromSelector(formatStream, @selector(displayName));
-        format.languageName = languageName.length ? languageName : languageCode;
-
         NSMutableArray *audioTraits = [NSMutableArray array];
-        for (NSString *value in @[
-            mimeType ?: @"",
-            format.qualityLabel ?: @"",
-            YouModStringFromSelector(stream, @selector(audioTrack)) ?: @"",
-            YouModStringFromSelector(formatStream, @selector(audioTrack)) ?: @"",
-            YouModStringFromSelector(stream, @selector(audioTrackType)) ?: @"",
-            YouModStringFromSelector(formatStream, @selector(audioTrackType)) ?: @"",
-            YouModStringFromSelector(stream, @selector(audioTrackDisplayName)) ?: @"",
-            YouModStringFromSelector(formatStream, @selector(audioTrackDisplayName)) ?: @"",
-        ]) {
-            if (value.length) [audioTraits addObject:value];
+        id audio = YouModObjectFromSelector(stream, @selector(audioTrack));
+        if (audio) {
+            NSString *audioidp = YouModStringFromSelector(audio, @selector(id_p)); 
+            if ([audioidp hasSuffix:@".4"]) [audioTraits addObject:audioidp];
         }
-        format.drcAudio = [[audioTraits componentsJoinedByString:@" "] localizedCaseInsensitiveContainsString:@"drc"];
+        format.audioTrack = [[audioTraits componentsJoinedByString:@" "] localizedCaseInsensitiveContainsString:@"drc"];
     }
-    if (YouModBoolFromSelector(stream, @selector(hasContentLength)) || [stream respondsToSelector:@selector(contentLength)])
+    if (YouModBoolFromSelector(stream, @selector(hasContentLength))) {
         format.contentLength = YouModUnsignedLongLongFromSelector(stream, @selector(contentLength));
-    if (format.contentLength == 0 && (YouModBoolFromSelector(formatStream, @selector(hasContentLength)) || [formatStream respondsToSelector:@selector(contentLength)]))
-        format.contentLength = YouModUnsignedLongLongFromSelector(formatStream, @selector(contentLength));
-    format.durationMs = YouModUnsignedLongLongFromSelector(stream, @selector(approxDurationMs));
-    if (format.durationMs == 0) format.durationMs = YouModUnsignedLongLongFromSelector(formatStream, @selector(approxDurationMs));
-
-    NSMutableDictionary *headers = [NSMutableDictionary dictionary];
-    NSDictionary *streamHeaders = YouModObjectFromSelector(stream, @selector(httpHeaders));
-    if (![streamHeaders isKindOfClass:NSDictionary.class]) streamHeaders = YouModObjectFromSelector(formatStream, @selector(httpHeaders));
-    if (![streamHeaders isKindOfClass:NSDictionary.class]) streamHeaders = YouModObjectFromSelector(stream, @selector(headers));
-    if (![streamHeaders isKindOfClass:NSDictionary.class]) streamHeaders = YouModObjectFromSelector(formatStream, @selector(headers));
-    if ([streamHeaders isKindOfClass:NSDictionary.class]) {
-        for (id key in streamHeaders) {
-            id value = streamHeaders[key];
-            if ([key isKindOfClass:NSString.class] && [value isKindOfClass:NSString.class])
-                headers[key] = value;
-        }
     }
-    if (!YouModHTTPHeadersContainField(headers, @"Origin"))
-        headers[@"Origin"] = @"https://www.youtube.com";
-    if (!YouModHTTPHeadersContainField(headers, @"Referer"))
-        headers[@"Referer"] = @"https://www.youtube.com/";
-    format.httpHeaders = headers;
+    format.durationMs = YouModUnsignedLongLongFromSelector(stream, @selector(approxDurationMs));
     return format;
 }
 
 static NSInteger YouModResolutionFromQuality(NSString *quality) {
-    NSScanner *scanner = [NSScanner scannerWithString:quality ?: @""];
+    NSScanner *scanner = [NSScanner scannerWithString:quality];
     NSInteger value = 0;
     [scanner scanInteger:&value];
     return value;
 }
 
 static NSInteger YouModFPSFromQuality(NSString *quality) {
-    NSString *lower = quality.lowercaseString ?: @"";
+    NSString *lower = quality.lowercaseString;
     NSRange pRange = [lower rangeOfString:@"p"];
     if (pRange.location != NSNotFound && pRange.location + 1 < lower.length) {
         NSString *afterP = [lower substringFromIndex:pRange.location + 1];
@@ -1062,30 +910,17 @@ static NSInteger YouModFPSFromQuality(NSString *quality) {
         NSInteger fps = 0;
         if ([scanner scanInteger:&fps] && fps > 0) return fps;
     }
-    if ([lower containsString:@"60fps"] || [lower containsString:@"60 fps"]) return 60;
-    if ([lower containsString:@"30fps"] || [lower containsString:@"30 fps"]) return 30;
+    if ([lower containsString:@"60"]) return 60;
+    if ([lower containsString:@"50"]) return 50;
+    if ([lower containsString:@"30"]) return 30;
     return 0;
 }
 
 static NSInteger YouModNormalizedFPS(NSInteger fps) {
-    if (fps >= 50 && fps <= 61) return 60;
+    if (fps >= 51 && fps <= 61) return 60;
+    if (fps >= 41 && fps <= 51) return 50;
     if (fps >= 24 && fps <= 31) return 30;
     return fps;
-}
-
-static NSInteger YouModDisplayHeightForVideoHeight(NSInteger height) {
-    if (height >= 900 && height < 1080) return 1080;
-    return height;
-}
-
-static NSString *YouModQualityLabel(NSInteger height, NSInteger fps, NSString *fallback) {
-    height = YouModDisplayHeightForVideoHeight(height);
-    fps = YouModNormalizedFPS(fps);
-    if (height > 0 && fps > 0) return [NSString stringWithFormat:@"%ldp%ld", (long)height, (long)fps];
-    if (height > 0) return [NSString stringWithFormat:@"%ldp", (long)height];
-    if (fallback.length && fps > 0 && ![fallback.lowercaseString containsString:@"fps"])
-        return [NSString stringWithFormat:@"%@ %ldfps", fallback, (long)fps];
-    return fallback;
 }
 
 static NSArray <YouModMediaFormat *> *YouModFormatsForPlayer(YTPlayerViewController *player, BOOL video) {
@@ -1108,9 +943,9 @@ static NSArray <YouModMediaFormat *> *YouModFormatsForPlayer(YTPlayerViewControl
         BOOL leftMP4 = YouModFormatLooksMP4Family(left);
         BOOL rightMP4 = YouModFormatLooksMP4Family(right);
         if (leftMP4 != rightMP4) return leftMP4 ? NSOrderedAscending : NSOrderedDescending;
-        
-        if (!video && IS_ENABLED(DownloadPreferDRCAudio) && left.drcAudio != right.drcAudio)
-            return left.drcAudio ? NSOrderedAscending : NSOrderedDescending;
+
+        if (!video && left.audioTrack != right.audioTrack)
+            return left.audioTrack ? NSOrderedAscending : NSOrderedDescending;
         if (left.contentLength != right.contentLength)
             return left.contentLength > right.contentLength ? NSOrderedAscending : NSOrderedDescending;
         return NSOrderedSame;
@@ -1121,8 +956,8 @@ static NSArray <YouModMediaFormat *> *YouModFormatsForPlayer(YTPlayerViewControl
     for (YouModMediaFormat *format in formats) {
         NSInteger fps = format.fps ?: YouModFPSFromQuality(format.qualityLabel);
         NSString *key = video
-            ? [NSString stringWithFormat:@"%@-%ld-%@", format.qualityLabel ?: @"", (long)fps, YouModMimeDetail(format.mimeType)]
-            : [NSString stringWithFormat:@"%@-%@-%@-%@", format.qualityLabel ?: @"", format.languageCode ?: @"", format.drcAudio ? @"drc" : @"std", YouModMimeDetail(format.mimeType)];
+            ? [NSString stringWithFormat:@"%@-%ld-%@", format.qualityLabel, (long)fps, YouModMimeDetail(format.mimeType)]
+            : [NSString stringWithFormat:@"%@-%@-%@", format.qualityLabel, format.audioTrack ? @"drc" : @"std", YouModMimeDetail(format.mimeType)];
         if ([seen containsObject:key]) continue;
         [seen addObject:key];
         [unique addObject:format];
@@ -1465,7 +1300,7 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
 
 - (void)startVideoDownloadWithVideoFormat:(YouModMediaFormat *)videoFormat audioFormat:(YouModMediaFormat *)audioFormat fileName:(NSString *)fileName videoID:(NSString *)videoID presenter:(UIViewController *)presenter {
     if (self.active) {
-        YouModSendToast(LOC(@"ALREADY_DOWNLOADING"), presenter);
+        YouModSendToast(LOC(@"ALREADY_DOWNLOADING"));
         return;
     }
     [self startDirectVideoDownloadWithVideoFormat:videoFormat audioFormat:audioFormat fileName:fileName videoID:videoID presenter:presenter];
@@ -1483,13 +1318,13 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
     self.cancelled = NO;
     self.completedBytes = 0;
     self.totalBytes = videoFormat.contentLength + audioFormat.contentLength;
-    self.videoTempURL = YouModTemporaryFileURL(YouModFileExtensionForFormat(videoFormat, @"mp4"));
-    self.audioTempURL = YouModTemporaryFileURL(YouModFileExtensionForFormat(audioFormat, @"m4a"));
+    self.videoTempURL = YouModTemporaryFileURL(YouModFileExtensionForFormat(videoFormat));
+    self.audioTempURL = YouModTemporaryFileURL(YouModFileExtensionForFormat(audioFormat));
     NSString *outputExtension = YouModMergedVideoOutputExtension(videoFormat, audioFormat);
     [self showProgressWithTitle:LOC(@"DOWNLOADING_VIDEO") presenter:presenter];
 
     __weak typeof(self) weakSelf = self;
-    [self downloadURL:videoURL toURL:self.videoTempURL expectedBytes:videoFormat.contentLength headers:videoFormat.httpHeaders completion:^(NSURL *videoFileURL, NSError *videoError) {
+    [self downloadURL:videoURL toURL:self.videoTempURL expectedBytes:videoFormat.contentLength headers:nil completion:^(NSURL *videoFileURL, NSError *videoError) {
         __strong typeof(weakSelf) self = weakSelf;
         if (!self || self.cancelled) return;
         if (videoError) {
@@ -1499,7 +1334,7 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
 
         self.completedBytes += MAX(videoFormat.contentLength, self.currentBytes);
         [self updateProgressTitle:LOC(@"DOWNLOADING_AUDIO") progress:(self.totalBytes ? (float)self.completedBytes / (float)self.totalBytes : 0.5f)];
-        [self downloadURL:audioURL toURL:self.audioTempURL expectedBytes:audioFormat.contentLength headers:audioFormat.httpHeaders completion:^(NSURL *audioFileURL, NSError *audioError) {
+        [self downloadURL:audioURL toURL:self.audioTempURL expectedBytes:audioFormat.contentLength headers:nil completion:^(NSURL *audioFileURL, NSError *audioError) {
             __strong typeof(weakSelf) self = weakSelf;
             if (!self || self.cancelled) return;
             if (audioError) {
@@ -1523,7 +1358,7 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
     self.cancelled = NO;
     self.completedBytes = 0;
     self.totalBytes = format.contentLength;
-    NSString *extension = YouModFileExtensionForFormat(format, @"mp4");
+    NSString *extension = YouModFileExtensionForFormat(format);
     BOOL canFinalizeWithAVFoundation = format.durationMs > 0 && YouModPathExtensionIsPhotosVideo(extension);
     NSURL *finalURL = YouModUniqueFileURL(fileName, extension);
     NSURL *downloadURL = canFinalizeWithAVFoundation ? YouModTemporaryFileURL(extension) : finalURL;
@@ -1531,7 +1366,7 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
     [self showProgressWithTitle:LOC(@"DOWNLOADING_VIDEO") presenter:presenter];
 
     __weak typeof(self) weakSelf = self;
-    [self downloadURL:videoURL toURL:downloadURL expectedBytes:format.contentLength headers:format.httpHeaders completion:^(NSURL *fileURL, NSError *error) {
+    [self downloadURL:videoURL toURL:downloadURL expectedBytes:format.contentLength headers:nil completion:^(NSURL *fileURL, NSError *error) {
         __strong typeof(weakSelf) self = weakSelf;
         if (!self || error) {
             [self failWithError:error ?: [NSError errorWithDomain:@"YouMod" code:8 userInfo:@{NSLocalizedDescriptionKey: @"Video download failed"}]];
@@ -1551,7 +1386,7 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
 
 - (void)startAudioDownloadWithAudioFormat:(YouModMediaFormat *)audioFormat fileName:(NSString *)fileName videoID:(NSString *)videoID outputFormat:(YouModAudioOutputFormat *)outputFormat presenter:(UIViewController *)presenter {
     if (self.active) {
-        YouModSendToast(LOC(@"ALREADY_DOWNLOADING"), presenter);
+        YouModSendToast(LOC(@"ALREADY_DOWNLOADING"));
         return;
     }
     [self startDirectAudioDownloadWithAudioFormat:audioFormat fileName:fileName videoID:videoID outputFormat:outputFormat presenter:presenter];
@@ -1569,7 +1404,7 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
     }
     outputFormat = outputFormat ?: YouModDefaultAudioOutputFormat();
     if (!outputFormat.supported) {
-        YouModSendToast([NSString stringWithFormat:@"%@ not supported", outputFormat.title ?: @"Format"], presenter);
+        YouModSendError([NSString stringWithFormat:@"%@ not supported", outputFormat.title ?: @"Format"]);
         return;
     }
 
@@ -1577,22 +1412,17 @@ static void YouModPresentMenu(NSString *title, NSArray <YouModMenuItem *> *items
     self.cancelled = NO;
     self.completedBytes = 0;
     self.totalBytes = audioFormat.contentLength;
-    BOOL passthrough = YouModAudioOutputFormatCanPassthrough(outputFormat, audioFormat);
-    if (!passthrough) {
-        self.active = NO;
-        return;
-    }
-
-    NSURL *finalURL = YouModUniqueFileURL(fileName, YouModAudioOutputFileExtension(outputFormat, audioFormat, passthrough));
-    NSURL *downloadURL = passthrough ? finalURL : YouModTemporaryFileURL(YouModFileExtensionForFormat(audioFormat, @"m4a"));
-    self.audioTempURL = passthrough ? nil : downloadURL;
+    
+    NSURL *finalURL = YouModUniqueFileURL(fileName, @"m4a");
+    NSURL *downloadURL = finalURL;
+    self.audioTempURL = nil;
     [self showProgressWithTitle:LOC(@"DOWNLOADING_AUDIO") presenter:presenter];
 
     __weak typeof(self) weakSelf = self;
-    [self downloadURL:audioURL toURL:downloadURL expectedBytes:audioFormat.contentLength headers:audioFormat.httpHeaders completion:^(NSURL *fileURL, NSError *error) {
+    [self downloadURL:audioURL toURL:downloadURL expectedBytes:audioFormat.contentLength headers:nil completion:^(NSURL *fileURL, NSError *error) {
         __strong typeof(weakSelf) self = weakSelf;
         if (!self || self.cancelled) return;
-        if (error || !passthrough) {
+        if (error) {
             [self failWithError:error ?: [NSError errorWithDomain:@"YouMod" code:4 userInfo:@{NSLocalizedDescriptionKey: @"Audio download failed"}]];
             return;
         }
@@ -1799,7 +1629,7 @@ static void YouModDownloadThumbnail(NSString *videoID, UIViewController *present
         return;
     }
 
-    YouModSendToast(LOC(@"DOWNLOADING_THUMBNAIL"), presenter);
+    YouModSendToast(LOC(@"DOWNLOADING_THUMBNAIL"));
     [[NSURLSession.sharedSession dataTaskWithURL:thumbnailURL completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         UIImage *image = data ? [UIImage imageWithData:data] : nil;
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -1839,7 +1669,7 @@ static void YouModShowVideoQualitySheet(YTPlayerViewController *player, UIViewCo
     NSString *videoID = YouModVideoIDForPlayer(player);
 
     if (videoFormats.count == 0 || !audioFormat) {
-        YouModSendToast(LOC(@"NO_VID_AUDIO_STREAM_FOUND"), presenter);
+        YouModSendError(LOC(@"NO_VID_AUDIO_STREAM_FOUND"));
         return;
     }
 
@@ -1862,7 +1692,7 @@ static void YouModShowAudioSourceSheet(YTPlayerViewController *player, YouModAud
     NSString *videoID = YouModVideoIDForPlayer(player);
 
     if (audioFormats.count == 0) {
-        YouModSendToast(LOC(@"NO_AUDIO_STREAM_FOUND"), presenter);
+        YouModSendError(LOC(@"NO_AUDIO_STREAM_FOUND"));
         return;
     }
 
@@ -1878,7 +1708,7 @@ static void YouModShowAudioSheet(YTPlayerViewController *player, UIViewControlle
 static void YouModShowCaptionsSheet(YTPlayerViewController *player, UIViewController *presenter, UIView *sender) {
     NSArray *tracks = YouModCaptionTracksForPlayer(player);
     if (tracks.count == 0) {
-        YouModSendToast(LOC(@"NO_CAPTIONS"), presenter);
+        YouModSendError(LOC(@"NO_CAPTIONS"));
         return;
     }
     
@@ -1903,14 +1733,14 @@ static void YouModShowCaptionsSheet(YTPlayerViewController *player, UIViewContro
             NSString *vttURL = [baseURL stringByAppendingString:@"&fmt=vtt"];
             NSURL *url = [NSURL URLWithString:vttURL];
             if (!url) {
-                YouModSendToast(LOC(@"NO_CAPTIONS_URL"), presenter);
+                YouModSendError(LOC(@"NO_CAPTIONS_URL"));
                 return;
             }
-            YouModSendToast(LOC(@"DOWNLOADING_CAPTIONS"), presenter);
+            YouModSendToast(LOC(@"DOWNLOADING_CAPTIONS"));
             [[NSURLSession.sharedSession dataTaskWithURL:url completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     if (error || data.length == 0) {
-                        YouModSendToast(LOC(@"CAPTIONS_FAILED"), presenter);
+                        YouModSendError(LOC(@"CAPTIONS_FAILED"));
                         return;
                     }
                     NSString *videoID = YouModVideoIDForPlayer(player) ?: @"video";
@@ -1924,7 +1754,7 @@ static void YouModShowCaptionsSheet(YTPlayerViewController *player, UIViewContro
     }
     
     if (items.count == 0) {
-        YouModSendToast(LOC(@"NO_CAPTIONS_URL"), presenter);
+        YouModSendError(LOC(@"NO_CAPTIONS_URL"));
         return;
     }
     
@@ -1933,7 +1763,7 @@ static void YouModShowCaptionsSheet(YTPlayerViewController *player, UIViewContro
 
 static void YouModShowDownloadManager(YTPlayerViewController *player, UIViewController *presenter, UIView *sender) {
     if (!player) {
-        YouModSendToast(LOC(@"OPEN_VID_BEFORE"), presenter);
+        YouModSendError(LOC(@"OPEN_VID_BEFORE"));
         return;
     }
 

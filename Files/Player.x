@@ -1,10 +1,86 @@
 #import "Headers.h"
+#import <SystemConfiguration/SystemConfiguration.h>
+#import <netinet/in.h>
+
+BOOL isWiFiConnected(void) {
+    struct sockaddr_in zeroAddress;
+    bzero(&zeroAddress, sizeof(zeroAddress));
+    zeroAddress.sin_len = sizeof(zeroAddress);
+    zeroAddress.sin_family = AF_INET;
+    
+    SCNetworkReachabilityRef reachability = SCNetworkReachabilityCreateWithAddress(kCFAllocatorDefault, (const struct sockaddr *)&zeroAddress);
+    if (!reachability) return NO;
+    
+    SCNetworkReachabilityFlags flags;
+    BOOL retrievedFlags = SCNetworkReachabilityGetFlags(reachability, &flags);
+    CFRelease(reachability);
+    
+    if (!retrievedFlags) return NO;
+    
+    BOOL isReachable = (flags & kSCNetworkReachabilityFlagsReachable) != 0;
+    BOOL needsConnection = (flags & kSCNetworkReachabilityFlagsConnectionRequired) != 0;
+    BOOL canConnect = isReachable && !needsConnection;
+    
+    if (!canConnect) return NO;
+    
+    // เช็กว่าเป็น Cellular (เน็ตมือถือ) หรือไม่
+    BOOL isCellular = (flags & kSCNetworkReachabilityFlagsIsWWAN) != 0;
+    
+    // ถ้าต่อเน็ตได้ และไม่ใช่ Cellular ก็แปลว่าเป็น WiFi
+    return !isCellular;
+}
 
 extern void YouModDownloadSetCurrentPlayer(YTPlayerViewController *player);
 
+static NSString *shortsVidID;
+
+static BOOL isShortsTab;
+
+// Audio track list
+static NSArray *getAllSystemLanguageTitles() {
+    NSMutableArray *titles = [NSMutableArray array];
+    NSArray *allLocales = [NSLocale availableLocaleIdentifiers];
+    NSMutableSet *seenLanguages = [NSMutableSet set];
+    NSLocale *currentLocale = [NSLocale currentLocale];
+    
+    for (NSString *localeId in allLocales) {
+        NSDictionary *components = [NSLocale componentsFromLocaleIdentifier:localeId];
+        NSString *langCode = components[NSLocaleLanguageCode];
+        
+        if (langCode && ![seenLanguages containsObject:langCode]) {
+            [seenLanguages addObject:langCode];
+            NSString *displayName = [currentLocale localizedStringForLocaleIdentifier:langCode];
+            if (displayName) [titles addObject:displayName];
+        }
+    }
+    return [titles sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+}
+
+static NSArray *getAllSystemLanguageValues() {
+    NSArray *sortedTitles = getAllSystemLanguageTitles();
+    NSMutableArray *sortedCodes = [NSMutableArray array];
+    NSArray *allLocales = [NSLocale availableLocaleIdentifiers];
+    NSLocale *currentLocale = [NSLocale currentLocale];
+    
+    NSMutableDictionary *titleToCodeMap = [NSMutableDictionary dictionary];
+    for (NSString *localeId in allLocales) {
+        NSDictionary *components = [NSLocale componentsFromLocaleIdentifier:localeId];
+        NSString *langCode = components[NSLocaleLanguageCode];
+        if (langCode) {
+            NSString *displayName = [currentLocale localizedStringForLocaleIdentifier:langCode];
+            if (displayName) titleToCodeMap[displayName] = langCode;
+        }
+    }
+    
+    for (NSString *title in sortedTitles) {
+        [sortedCodes addObject:titleToCodeMap[title] ? titleToCodeMap[title] : @"en"];
+    }
+    return [sortedCodes copy];
+}
+
 static float playbackRate = 1.0;
 
-static BOOL isExternal = NO;
+// static BOOL isExternal = NO;
 
 static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoController *video, YTSingleVideoTime *time) {
     if (!IS_ENABLED(ShowExtraTimeRemaining)) return;
@@ -64,11 +140,6 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     YTMainAppVideoPlayerOverlayView *mainOverlayView = (YTMainAppVideoPlayerOverlayView *)self.superview;
     YTMainAppVideoPlayerOverlayViewController *mainOverlayController = (YTMainAppVideoPlayerOverlayViewController *)mainOverlayView.delegate;
     YTPlayerViewController *playerViewController = mainOverlayController.parentViewController;
-    /*
-    YTSingleVideoController *sgvid = playerViewController.activeVideo;
-    YTSingleVideoTime *sgtime = sgvid.localTime;
-    if (visible) YouModAddEndTime(playerViewController, sgvid, sgtime);
-    */
     visible ? [playerViewController pause] : [playerViewController play];
 }
 %end
@@ -158,6 +229,7 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
 // Remove Watermarks
 %hook YTAnnotationsViewController
 - (void)loadFeaturedChannelWatermark { if (!IS_ENABLED(HideWaterMark)) %orig; }
+- (void)setWatermarkImage:(id)arg1 height:(unsigned long long)arg2 { if (!IS_ENABLED(HideWaterMark)) %orig; }
 %end
 
 // Exit Fullscreen on Finish
@@ -193,12 +265,13 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     YTPlayerView *playerview = [sgvid valueForKey:@"_playerView"];
     YTPlayerViewController *playerviewController = [playerview valueForKey:@"_playerViewDelegate"];
     YouModDownloadSetCurrentPlayer(playerviewController);
-    if (IS_ENABLED(AutoFullScreen)) [playerviewController performSelector:@selector(YouModAutoFullscreen)];
-    if (IS_ENABLED(ShortsToRegular)) [playerviewController performSelector:@selector(YouModShortsToRegular)];
-    if (IS_ENABLED(DisablesCaptions)) [playerviewController performSelector:@selector(YouModTurnOffCaptions)];
-    if (INTFORVAL(AutoSpeedIndex) != 0) [playerviewController performSelector:@selector(YouModSetAutoSpeed)];
+    if (IS_ENABLED(AutoFullScreen)) [playerviewController performSelector:@selector(YouModAutoFullscreen) withObject:nil afterDelay:0.5];
+    if (IS_ENABLED(DisablesCaptions)) [playerviewController performSelector:@selector(YouModTurnOffCaptions) withObject:nil afterDelay:0.5];
+    if (INTFORVAL(AutoSpeedIndex) != 0) [playerviewController performSelector:@selector(YouModSetAutoSpeed) withObject:nil afterDelay:0.5];
 }
 %end
+
+/*
 
 static NSString *getQualityLabel(NSArray <MLFormat *> *formats) {
     BOOL isWifi = [[%c(GCKNNetworkReachability) sharedInstance] currentStatus] == 1;
@@ -261,29 +334,6 @@ static MLQuickMenuVideoQualitySettingFormatConstraint *getConstraint(NSString *q
     return constraint;
 }
 
-%hook MLHAMPlayerItem
-
-- (void)onSelectableVideoFormats:(NSArray <MLFormat *> *)formats {
-    %orig;
-    if (INTFORVAL(WifiQualityIndex) == 0 && INTFORVAL(CellQualityIndex) == 0) return;
-    NSString *qualityLabel = getQualityLabel(formats);
-    MLQuickMenuVideoQualitySettingFormatConstraint *constraint = getConstraint(qualityLabel);
-    self.videoFormatConstraint = constraint;
-}
-
-%end
-
-%hook MLAVPlayer
-
-- (void)streamSelectorHasSelectableVideoFormats:(NSArray <MLFormat *> *)formats {
-    %orig;
-    if (INTFORVAL(WifiQualityIndex) == 0 && INTFORVAL(CellQualityIndex) == 0) return;
-    NSString *qualityLabel = getQualityLabel(formats);
-    self.videoFormatConstraint = getConstraint(qualityLabel);
-}
-
-%end
-
 %hook MLAVAssetPlayer
 
 // The changed value is not reliable but this method gets called whenever AirPlay session is started or stopped
@@ -300,6 +350,8 @@ static MLQuickMenuVideoQualitySettingFormatConstraint *getConstraint(NSString *q
 }
 
 %end
+
+*/
 
 // Disable Fullscreen Actions
 %hook YTFullscreenActionsView
@@ -457,9 +509,12 @@ static CGFloat YouModSpeedForHoldIndex(NSInteger index) {
 static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMainAppVideoPlayerOverlayViewController *delegate) {
     NSInteger speedIndex = INTFORVAL(HoldToSpeedIndex);
     CGFloat speed = YouModSpeedForHoldIndex(speedIndex);
+    YTMainAppVideoPlayerOverlayView *vidOverlay = delegate.videoPlayerOverlayView;
+    YTMainAppControlsOverlayView *controlsOverlay = vidOverlay.controlsOverlayView;
 
     if (gesture.state == UIGestureRecognizerStateBegan) {
         YouModRateBeforeHoldToSpeed = [delegate currentPlaybackRate];
+        [controlsOverlay setOverlayVisible:NO];
         [delegate setPlaybackRate:speed];
     } else if (gesture.state == UIGestureRecognizerStateEnded || gesture.state == UIGestureRecognizerStateCancelled || gesture.state == UIGestureRecognizerStateFailed) {
         [delegate setPlaybackRate:YouModRateBeforeHoldToSpeed];
@@ -470,7 +525,7 @@ static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMai
 - (void)setLongPressGestureRecognizer:(id)arg1 {
     if (INTFORVAL(HoldToSpeedIndex) != 0) {
         UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(YouModHoldToSpeed:)];
-        longPress.minimumPressDuration = 0.3;
+        longPress.minimumPressDuration = 0.4;
         [self addGestureRecognizer:longPress];
     } else {
         %orig;
@@ -482,12 +537,177 @@ static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMai
 }
 %end
 
+%hook YTReelPlayerViewController
+
+- (void)loadPlayerBar {
+    %orig;
+    if (!IS_ENABLED(ShortsToRegular)) return;
+    YTPlayerViewController *playerviewController = self.player;
+    if (shortsVidID != playerviewController.currentVideoID && !isShortsTab) {
+        [playerviewController performSelector:@selector(YouModShortsToRegular)];
+    }
+    shortsVidID = playerviewController.currentVideoID;
+}
+
+%end
+
+// Check if it's Shorts tab
+%hook YTInlinePlayerBarContainerView
+- (void)setLayout:(int)arg {
+    %orig;
+    if (![self.superview isKindOfClass:NSClassFromString(@"YTPivotBarView")]) return;
+    YTPivotBarView *pivotView = (YTPivotBarView *)self.superview;
+    YTPivotBarViewController *pivotController = [pivotView valueForKey:@"_delegate"];
+    NSString *pivotIdentifier = [pivotController valueForKey:@"_pivotIdentifier"];
+    if ([pivotIdentifier isEqualToString:@"FEshorts"]) {
+        isShortsTab = YES;
+    } else {
+        isShortsTab = NO;
+    }
+}
+%end
+
+%hook YTSingleVideoController
+
+- (void)playerItem:(id)arg1 hasSelectableVideoFormats:(id)arg2 {
+    %orig;
+    if (!arg2) return;
+    // BOOL multipleScreens = [UIScreen screens].count > 1;
+    // if (multipleScreens) return; // Prevent the app crashes
+    if (INTFORVAL(WifiQualityIndex) != 0 || INTFORVAL(CellQualityIndex) != 0) [self YouModAutoQuality];
+}
+
+%new
+- (void)YouModAutoQuality {
+    NSInteger kQualityIndex = isWiFiConnected() ? INTFORVAL(WifiQualityIndex) : INTFORVAL(CellQualityIndex);
+
+    NSString *bestQualityLabel;
+    int highestResolution = 0;
+    for (MLFormat *format in self.selectableVideoFormats) {
+        int reso = format.singleDimensionResolution;
+        if (reso > highestResolution) {
+            highestResolution = reso;
+            bestQualityLabel = format.qualityLabel;
+        }
+    }
+
+    NSArray *qualityLabels = @[@"Default", bestQualityLabel, @"2160p60", @"2160p", @"1440p60", @"1440p", @"1080p60", @"1080p", @"720p60", @"720p", @"480p", @"360p", @"240p", @"144p"];
+    NSString *qualityLabel = qualityLabels[kQualityIndex];
+
+    if (![qualityLabel isEqualToString:bestQualityLabel]) {
+        BOOL exactMatch = NO;
+        NSString *closestQualityLabel = qualityLabel;
+
+        for (MLFormat *format in self.selectableVideoFormats) {
+            if ([format.qualityLabel isEqualToString:qualityLabel]) {
+                exactMatch = YES;
+                break;
+            }
+        }
+
+        if (!exactMatch) {
+            NSInteger bestQualityDifference = NSIntegerMax;
+
+            for (MLFormat *format in self.selectableVideoFormats) {
+                NSArray *formatСomponents = [format.qualityLabel componentsSeparatedByString:@"p"];
+                NSArray *targetComponents = [qualityLabel componentsSeparatedByString:@"p"];
+                if (formatСomponents.count == 2) {
+                    NSInteger formatQuality = [formatСomponents.firstObject integerValue];
+                    NSInteger targetQuality = [targetComponents.firstObject integerValue];
+                    NSInteger difference = labs(formatQuality - targetQuality);
+                    if (difference < bestQualityDifference) {
+                        bestQualityDifference = difference;
+                        closestQualityLabel = format.qualityLabel;
+                    }
+                }
+            }
+
+            qualityLabel = closestQualityLabel;
+        }
+    }
+
+    MLQuickMenuVideoQualitySettingFormatConstraint *fc = [%c(MLQuickMenuVideoQualitySettingFormatConstraint) alloc];
+    if ([fc respondsToSelector:@selector(initWithVideoQualitySetting:formatSelectionReason:qualityLabel:resolutionCap:)]) {
+        [self setVideoFormatConstraint:[fc initWithVideoQualitySetting:3 formatSelectionReason:2 qualityLabel:qualityLabel resolutionCap:0]];
+    } else {
+        [self setVideoFormatConstraint:[fc initWithVideoQualitySetting:3 formatSelectionReason:2 qualityLabel:qualityLabel]];
+    }
+}
+
+%end
+
+// Audio track selection
+%hook YTAudioTrackSwitchController
+
+// When playing a new video, remove the old timer first
+- (void)setActiveVideo:(id)arg {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self];
+    %orig;
+}
+
+- (void)setUserSelectableFormats:(id)arg {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self];
+    %orig;
+    if (INTFORVAL(AudioTrack) == 0) return;
+    NSInteger selectedIndex = INTFORVAL(AudioTrackLangIndex);
+    NSArray *langCodes = getAllSystemLanguageValues();
+    NSString *userTargetLang = langCodes[selectedIndex];
+    NSArray *availableTracks = [self valueForKey:@"_availableAudioTracks"];
+    if (!availableTracks || availableTracks.count == 0) return;
+    // Check if the current audio track is already the same as the user perferences
+    // YTIAudioTrack *currentTrack = [self valueForKey:@"_lastSelectedAudioTrack"]; Doesn't work for some reasons
+    YTIAudioTrack *matchedTrack = nil;
+
+    if (INTFORVAL(AudioTrack) == 1) {
+        // Loop for all tracks
+        for (YTIAudioTrack *track in availableTracks) {
+            if ([track.id_p hasSuffix:@".4"]) {
+                matchedTrack = track;
+                break;
+            }
+        }
+    } else if (INTFORVAL(AudioTrack) == 2) {
+        // Loop for all tracks
+        for (YTIAudioTrack *track in availableTracks) {
+            if ([track.id_p hasPrefix:userTargetLang]) {
+                matchedTrack = track;
+                break;
+            }
+        }
+
+        // Check if it's dubbed
+        if (matchedTrack && [matchedTrack isAutoDubbed] && IS_ENABLED(NoDubbedAudioTrack)) {
+            matchedTrack = nil;
+            return;
+        }
+    }
+
+    // If found, change to it
+    if (matchedTrack) {
+        // Delay this for 1 second
+        [self performSelector:@selector(YouModChangeAudioTrackWithTrack:) withObject:matchedTrack afterDelay:1.0];
+    }
+}
+
+%new
+- (void)YouModChangeAudioTrackWithTrack:(YTIAudioTrack *)matchedTrack {
+    [self notifyObserversAudioTrackWillChange:matchedTrack source:0];
+    [self switchToAudioTrack:matchedTrack source:0];
+    [self notifyObserversAudioTrackDidChange:matchedTrack source:0];
+}
+
+%end
+
 %hook YTPlayerViewController
 
 %new
 - (void)YouModTurnOffCaptions {
     if ([self.view.superview isKindOfClass:NSClassFromString(@"YTWatchView")]) {
-        [self setActiveCaptionTrack:nil source:0];
+        @try {
+            [self setActiveCaptionTrack:nil source:0];
+        } @catch (id ex) {
+            [self setActiveCaptionTrack:nil];
+        }
     }
 }
 
@@ -499,12 +719,9 @@ static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMai
 
 %new
 - (void)YouModSetAutoSpeed {
-    if ([self.activeVideoPlayerOverlay isKindOfClass:NSClassFromString(@"YTMainAppVideoPlayerOverlayViewController")]
-        && [self.view.superview isKindOfClass:NSClassFromString(@"YTWatchView")]) {
-        YTMainAppVideoPlayerOverlayViewController *overlayVC = (YTMainAppVideoPlayerOverlayViewController *)self.activeVideoPlayerOverlay;
-
+    if ([self.view.superview isKindOfClass:NSClassFromString(@"YTWatchView")]) {
         NSArray *speedLabels = @[@0.01, @0.25, @0.5, @0.75, @1.0, @1.25, @1.5, @1.75, @2.0, @3.0, @4.0, @5.0];
-        [overlayVC setPlaybackRate:[speedLabels[INTFORVAL(AutoSpeedIndex)] floatValue]];
+        [self setPlaybackRate:[speedLabels[INTFORVAL(AutoSpeedIndex)] floatValue]];
     }
 }
 
@@ -525,7 +742,7 @@ static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMai
 
 %new
 - (void)YouModShortsToRegular {
-    if (self.contentVideoID != nil && [self.parentViewController isKindOfClass:NSClassFromString(@"YTReelPlayerViewController")]) {
+    if (self.contentVideoID != nil && ([self.parentViewController isKindOfClass:NSClassFromString(@"YTReelPlayerViewController")] || [self.parentViewController isKindOfClass:NSClassFromString(@"YTShortsPlayerViewController")])) {
         NSString *vidLink = [NSString stringWithFormat:@"vnd.youtube://%@", self.contentVideoID];
         if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:vidLink]]) {
             [[UIApplication sharedApplication] openURL:[NSURL URLWithString:vidLink] options:@{} completionHandler:nil];

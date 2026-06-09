@@ -41,8 +41,6 @@
 "DOWNLOAD_MANAGER_DESC" = "Thay thế trình tải xuống của YouTube bằng YouMod. Với khả năng tải video, âm thanh, phụ đề, và ảnh thu nhỏ";
 "DOWNLOAD_SAVE_PHOTOS" = "Tự động lưu vào Thư viện ảnh";
 "DOWNLOAD_SAVE_PHOTOS_DESC" = "Tự động lưu video và ảnh trực tiếp vào ứng dụng Ảnh.";
-"DOWNLOAD_DRC_AUDIO" = "Ưu tiên DRC";
-"DOWNLOAD_DRC_AUDIO_DESC" = "Ưu tiên tải các bản âm thanh có nén dải động (Dynamic Range Compression) để có mức âm lượng ổn định hơn.";
 "COPY_VID_INFO" = "Copy video information";
 "COPY_VID_INFO_DESC" = "Copy title and URL";
 "SAVE_THUMBNAIL" = "Save thumbnail";
@@ -132,6 +130,13 @@
 "QUALITY_CELLULAR_DESC" = "Automatically applies the selected quality when streaming over mobile data.";
 "DEFAULT" = "Default";
 "BEST" = "Best";
+"AUDIO_TRACK" = "Preferred audio track";
+"ORIGINAL" = "Original";
+"SELECT_MANUALLY" = "Select manually";
+"AUDIO_TRACK_SELECT" = "Selected audio track";
+"AUDIO_TRACK_SELECT_DESC" = "Specifies the preferred audio track language to use for playback, if available";
+"NO_AUTO_DUBBED" = "Ignore auto-dubbed tracks";
+"NO_AUTO_DUBBED_DESC" = "Skips manual selection if the preferred language track is auto-dubbed.";
 "DEFAULT_SPEED" = "Default playback rate";
 "DEFAULT_SPEED_DESC" = "Overrides the default playback speed.";
 "HOLD_TO_SPEED" = "Hold to speed";
