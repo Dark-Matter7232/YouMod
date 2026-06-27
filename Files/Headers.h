@@ -29,45 +29,42 @@
 #import <YouTubeHeader/YTVarispeedSwitchController.h>
 #import <YouTubeHeader/YTVarispeedSwitchControllerImpl.h>
 #import <YouTubeHeader/YTVarispeedSwitchControllerOption.h>
-#import <YouTubeHeader/YTMultiSizeViewController.h>
 #import <YouTubeHeader/YTInlinePlayerBarContainerView.h>
 #import <YouTubeHeader/YTSingleVideoTime.h>
 #import <YouTubeHeader/YTSingleVideoController.h>
 #import <YouTubeHeader/YTPlayerView.h>
+#import <YouTubeHeader/YTShortsPlayerViewController.h>
 #import <YouTubeHeader/YTReelPlayerViewController.h>
 #import <YouTubeHeader/YTLabel.h>
 #import <YouTubeHeader/MLFormat.h>
 #import <YouTubeHeader/MLQuickMenuVideoQualitySettingFormatConstraint.h>
-#import <YouTubeHeader/GCKNNetworkReachability.h>
 #import <YouTubeHeader/YTCommonColorPalette.h>
 #import <YouTubeHeader/YTIPivotBarSupportedRenderers.h>
 #import <YouTubeHeader/YTIBrowseRequest.h>
-#import <YouTubeHeader/MLAVPlayer.h>
-#import <YouTubeHeader/MLDefaultPlayerViewFactory.h>
-#import <YouTubeHeader/MLPlayerPool.h>
-#import <YouTubeHeader/MLPlayerPoolImpl.h>
-#import <YouTubeHeader/MLVideoDecoderFactory.h>
-#import <YouTubeHeader/YTHotConfig.h>
-#import <YouTubeHeader/MLHLSMasterPlaylist.h>
-#import <YouTubeHeader/MLHLSStreamSelector.h>
-#import <YouTubeHeader/YTIHamplayerConfig.h>
 #import <YouTubeHeader/YTAssetLoader.h>
 #import <MediaPlayer/MediaPlayer.h>
 #import <YouTubeHeader/ASCollectionView.h>
-#import <YouTubeHeader/MLHAMPlayerItem.h>
 #import <YouTubeHeader/YTColor.h>
+#import <YouTubeHeader/YTModularPlayerBarController.h>
 #import <dlfcn.h>
+#import <SystemConfiguration/SystemConfiguration.h>
+#import <netinet/in.h>
+#import <YouTubeHeader/YTAppViewControllerImpl.h>
+#import <YouTubeHeader/YTAppViewController.h>
+#import <YouTubeHeader/YTDefaultSheetController.h>
+#import <YouTubeHeader/YTIFormatStream.h>
+#import <YouTubeHeader/YTIPlayerResponse.h>
+#import <YouTubeHeader/YTPlayerResponse.h>
+#import <YouTubeHeader/YTIVideoDetails.h>
+#import <YouTubeHeader/YTIStreamingData.h>
+#import <YouTubeHeader/YTIFormattedString.h>
 
 // For Settings.x and SponsorBlockSettings.x
-#import <YouTubeHeader/YTDefaultSheetController.h>
 #import <PSHeader/Misc.h>
 #import <YouTubeHeader/YTSettingsGroupData.h>
-#import <YouTubeHeader/YTSettingsPickerViewController.h>
 #import <YouTubeHeader/YTSettingsSectionItem.h>
-#import <YouTubeHeader/YTSearchableSettingsViewController.h>
 #import <YouTubeHeader/YTSettingsSectionItemManager.h>
 #import <YouTubeHeader/YTSettingsViewController.h>
-#import <YouTubeHeader/YTToastResponderEvent.h>
 #import <YouTubeHeader/YTUIUtils.h>
 
 #define IS_ENABLED(k) [[NSUserDefaults standardUserDefaults] boolForKey:k]
@@ -76,6 +73,8 @@
 // Downloading
 #define DownloadManager @"YouModDownloadManager"
 #define DownloadSaveToPhotos @"YouModDownloadSaveToPhotos"
+#define AddDownloadToShorts @"YouModAddDownloadToShorts"
+// #define PreferDRC @"YouModDownloadPreferDRC"
 // Cache
 #define AutoClearCache @"YouModAutoClearCache"
 // Appearance
@@ -84,6 +83,7 @@
 // Navigation bar
 #define HideYTLogo @"YouModHideYTLogo"
 #define YTPremiumLogo @"YouModYTPremiumLogo"
+#define StickyNavBar @"YouModStickyNavBar"
 #define HideNoti @"YouModHideNotificationButton"
 #define HideSearch @"YouModHideSearchButton"
 #define HideVoiceSearch @"YouModHideVoiceSearchButton"
@@ -96,12 +96,10 @@
 #define HideShortsShelf @"YouModHideShortsShelf"
 #define KeepShortsSubscript @"YouModKeepShortsSubscript"
 #define HideSearchHis @"YouModHideSearchHistoryAndSuggestions"
-#define HideSubButton @"YouModHideSubscribeButton"
-#define HideShoppingButton @"YouModHideShoppingButton"
-#define HideMemberButton @"YouModHideMemberButton"
 // Player
 #define WifiQualityIndex @"YouModWifiQualityIndex"
 #define CellQualityIndex @"YouModCellQualityIndex"
+#define LowPowerQualityIndex @"YouModLowPowerQualityIndex"
 #define AudioTrack @"YouModAudioTrackSegment"
 #define AudioTrackLangIndex @"YouModAudioTrackLangIndex"
 #define NoDubbedAudioTrack @"YouModNoDubbedAudioTrack"
@@ -118,6 +116,8 @@
 #define HideSuggestedVideo @"YouModHideSuggestedVideoOnFinish"
 #define HidePaidPromoOverlay @"YouModHidePaidPromoOverlay"
 #define HideWaterMark @"YouModHideWaterMark"
+#define DisablesEngagementPanel @"YouModDisablesEngagementPanel"
+#define DontSnapToChapter @"YouModDontSnapToChapter"
 #define PauseOnOverlay @"YouModPauseOnOverlay"
 #define GestureControls @"YouModEnableGesturesControls"
 #define GestureActivationArea @"YouModGestureActivationArea"
@@ -133,6 +133,7 @@
 #define DisablesShowRemaining @"YouModDisablesShowRemainingTime"
 #define AlwaysShowRemaining @"YouModAlwaysShowRemainingTime"
 #define ShowExtraTimeRemaining @"YouModShowExtraTimeRemaining"
+#define Uses24HoursTime @"YouModUses24HoursTime"
 #define CopyWithTimestampOnPause @"YouModCopyWithTimestampOnPause"
 #define HideFullAction @"YouModHideFullScreenAction"
 #define HideFullvidTitle @"YouModHideFullscreenVideoTitle"
@@ -144,30 +145,15 @@
 #define ExtraSpeed @"YouModAddExtraSpeed"
 #define ForceMiniPlayer @"YouModForceMiniPlayer"
 #define AlwaysShowSeekbar @"YouModAlwaysShowSeekbar"
-#define HideLikeButton @"YouModHideLikeButton"
-#define HideDisLikeButton @"YouModHideDisLikeButton"
-#define HideShareButton @"YouModHideShareButton"
-#define HideDownloadButton @"YouModHideDownloadButton"
-#define HideClipButton @"YouModHideClipButton"
-#define HideRemixButton @"YouModHideRemixButton"
-#define HideSaveButton @"YouModHideSaveButton"
+#define DisablesFreeZoom @"YouModDisablesFreeZoom"
+#define TapToSeek @"YouModTapToSeek"
+#define PauseTwoFingers @"YouModPauseTwoFingers"
 // Shorts
+#define RemoveShortsLive @"YouModRemoveShortsLive"
 #define ShortsToRegular @"YouModShortsToRegular"
 #define HideShortsHeader @"YouModHideShortsHeader"
-#define HideShortsLikeButton @"YouModHideShortsLikeButton"
-#define HideShortsDisLikeButton @"YouModHideShortsDisLikeButton"
-#define HideShortsCommentButton @"YouModHideShortsCommentButton"
-#define HideShortsShareButton @"YouModHideShortsShareButton"
-#define HideShortsRemixButton @"YouModHideShortsRemixButton"
-#define HideShortsMetaButton @"YouModHideShortsMetaButton"
 #define HideShortsProducts @"YouModHideShortsProducts"
 #define HideShortsRecbar @"YouModHideShortsRecbar"
-#define HideShortsCommit @"YouModHideShortsCommit"
-#define HideShortsSubscriptButton @"YouModHideShortsSubscriptButton"
-#define HideShortsLiveButton @"YouModHideShortsLiveButton"
-#define HideShortsLensButton @"YouModHideShortsLensButton"
-#define HideShortsTrendsButton @"YouModHideShortsTrendsButton"
-#define HideShortsToVideo @"YouModHideShortsToVideo"
 #define EnablesShortsQuality @"YouModEnablesShortsQuality"
 #define ShowShortsSeekbar @"YouModShowShortsSeekbar"
 #define ShortsActionIndex @"YouModMakeAShortsAction"
@@ -179,7 +165,6 @@
 #define UseFrostedTabBar @"YouModUseFrostedTabBar"
 // Miscellaneous
 #define BackgroundPlayback @"YouModEnablesBackgroundPlayback"
-#define DisablesPiP @"YouModDisablesPiP"
 #define DisablesShortsPiP @"YouModTrytoDisablesShortsPiP"
 #define DisableHints @"YouModDisableHints"
 #define BlockUpgradeDialogs @"YouModBlockUpgradeDialogs"
@@ -188,9 +173,28 @@
 #define DisablesNewMiniPlayer @"YouModDisablesNewMiniPlayer"
 #define DisablesSnackBar @"YouModDisablesSnackBar"
 #define HideStartupAni @"YouModHideStartupAnimations"
-#define HidePlayInNextQueue @"YouModHidePlayInNextQueue"
 #define HideLikeDislikeVotes @"YouModHideLikeDislikeVotes"
 // #define CustomStartup @"YouModUseCustomVideoStartup"
+// Flyout menu
+#define RemovePlayInNextQueueOption @"YouModRemovePlayInNextQueueOption"
+#define RemoveDownloadOption @"YouModRemoveDownloadOption"
+#define RemoveWatchLaterOption @"YouModRemoveWatchLaterOption"
+#define RemoveSaveOption @"YouModRemoveSaveOption"
+#define RemoveRemoveFromPlaylistOption @"YouModRemoveRemoveFromPlaylistOption"
+#define RemoveShareOption @"YouModRemoveShareOption"
+#define RemoveNotInterestedOption @"YouModRemoveNotInterestedOption"
+#define RemoveInfoOption @"YouModRemoveInfoOption"
+#define RemoveFilterOption @"YouModRemoveFilterOption"
+#define RemoveReportOption @"YouModRemoveReportOption"
+#define RemoveYouTubeMusicOption @"YouModRemoveYouTubeMusicOption"
+#define RemoveFeedBackOption @"YouModRemoveFeedBackOption"
+#define RemoveDontRecommendOption @"YouModRemoveDontRecommendOption"
+#define RemoveCastOption @"YouModRemoveCastOption"
+#define RemoveShuffleOption @"YouModRemoveShuffleOption"
+#define RemoveUnSubOption @"YouModRemoveUnSubOption"
+#define RemoveHideFromPlaylistOption @"YouModRemoveHideFromPlaylistOption"
+#define RemoveHelpOption @"YouModRemoveHelpOption"
+#define RemoveNotifyOption @"YouModRemoveNotifyOption"
 // SponsorBlock
 #define SBEnabled @"YouModSBEnabled"
 #define SBShowButton @"YouModSBShowButton"
@@ -211,9 +215,13 @@
 #define YT_BUNDLE_ID @"com.google.ios.youtube"
 #define YT_NAME @"YouTube"
 
+@interface YTMenuItemMDCButton : UIButton
+@end
+
 @interface YTDefaultSheetController (YouMod)
-+ (instancetype)sheetControllerWithParentResponder:(id)responder;
++ (instancetype)sheetControllerWithParentResponder:(id)parentResponder;
 - (void)addAction:(YTActionSheetAction *)action;
+- (void)presentFromView:(UIView *)view animated:(BOOL)animated completion:(void (^)(void))completion;
 - (void)presentFromViewController:(UIViewController *)vc animated:(BOOL)animated completion:(void (^)(void))completion;
 @end
 
@@ -224,7 +232,24 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
     GestureSectionInvalid
 };
 
-@interface ASScrollView : UIScrollView
+@interface YTWatchController (YouMod)
+- (void)reload;
+@end
+
+@interface YTInlineScrubGestureView : UIView
+@end
+
+@interface YTPivotBarView : UIView
+@end
+
+@interface YTContextualSheetView : UIView
+@end
+
+@interface YTReelPlayerResponder : NSObject
+- (id)parentResponder;
+@end
+
+@interface YTShortsAdsPlayerViewController : YTReelPlayerViewController
 @end
 
 @interface YTIBrowseRequest (YouMod)
@@ -249,17 +274,7 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 - (void)YouModHoldToSpeed:(UILongPressGestureRecognizer *)gesture;
 @end
 
-@interface YTMainAppControlsOverlayView (YouMod)
-- (void)setOverlayVisible:(BOOL)visible;
-@end
-
-@interface YTPivotBarView : UIView
-@end
-
 @interface YTNavigationBarTitleView : UIView
-@end
-
-@interface YTChipCloudCell : UICollectionViewCell
 @end
 
 @interface YTSearchViewController : UIViewController
@@ -277,8 +292,21 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 - (void)selectItemWithPivotIdentifier:(id)pivotIndentifier;
 @end
 
+@interface YTAppViewController (YouMod)
+@property (nonatomic, assign, readonly) YTPivotBarViewController *pivotBarViewController;
+- (void)hidePivotBar;
+- (void)showPivotBar;
+@end
+
+@interface YTAppViewControllerImpl (YouMod)
+@property (nonatomic, assign, readonly) YTPivotBarViewController *pivotBarViewController;
+- (void)hidePivotBar;
+- (void)showPivotBar;
+@end
+
 @interface YTPlayerViewController (YouMod) <UIGestureRecognizerDelegate>
 @property (nonatomic, retain) UIPanGestureRecognizer *YouModPanGesture;
+@property (nonatomic, retain) UITapGestureRecognizer *YouModTapGesture;
 @property (nonatomic, retain) UILabel *YouModGestureHUD;
 @property (nonatomic, weak, readwrite) UIViewController *parentViewController;
 @property (nonatomic, assign, readonly) BOOL isInlinePlaybackActive;
@@ -293,13 +321,30 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 - (void)setPlaybackRate:(float)rate;
 - (void)play;
 - (void)pause;
+- (NSInteger)playerState;
+- (YTPlayerResponse *)contentPlayerResponse;
+- (YTPlayerResponse *)playerResponse;
 @end
 
 @interface SSOConfiguration : NSObject
 @end
 
-@interface _ASDisplayView (YouMod)
-- (BOOL)isInsideViewControllerOfClass:(NSString *)className;
+@interface YTEngagementPanelIdentifier : NSObject
+@property (nonatomic, copy, readonly) NSString *tag;
+@end
+
+@interface YTEngagementPanelHeaderView : UIView
+- (YTEngagementPanelIdentifier *)engagementPanelIdentifier;
+@end
+
+@interface YTIMySubsFilterHeaderRenderer : GPBMessage
+@end
+
+@interface YTMySubsFilterHeaderViewController : UIViewController
+@end
+
+@interface YTMainAppControlsOverlayView (YouMod)
+- (YTMainAppVideoPlayerOverlayViewController *)eventsDelegate;
 @end
 
 @interface YTVideoQualitySwitchOriginalController (YouMod)
@@ -346,60 +391,69 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 
 @interface YTIAudioTrack (YouMod)
 @property (nonatomic, assign, readwrite) BOOL isAutoDubbed;
+- (BOOL)hasId_p;
 @end
 
 // Player Gestures - @bhackel (YTLitePlus)
-@interface YTFineScrubberFilmstripView : UIView
-@end
-
-@interface YTFineScrubberFilmstripCollectionView : UICollectionView
-@end
-
-@interface YTWatchFullscreenViewController : YTMultiSizeViewController
-@end
-
-@interface YTPlayerBarController (YouMod)
-- (void)didScrub:(UIPanGestureRecognizer *)gestureRecognizer;
-- (void)startScrubbing;
-- (void)didScrubToPoint:(CGPoint)point;
-- (void)endScrubbingForSeekSource:(int)seekSource;
-@end
-
 @interface YTMainAppVideoPlayerOverlayViewController (YouMod)
-@property (nonatomic, strong, readwrite) YTPlayerBarController *playerBarController;
 @property (nonatomic, assign) YTPlayerViewController *parentViewController;
 - (NSString *)videoID;
 - (CGFloat)mediaTime;
-@end
-
-@interface YTInlinePlayerBarContainerView (YouMod)
-@property UIPanGestureRecognizer *scrubGestureRecognizer;
-@property (nonatomic, strong, readwrite) YTFineScrubberFilmstripView *fineScrubberFilmstrip;
-@property (nonatomic, strong, readwrite) NSString *endTimeString;
-- (CGFloat)scrubXForScrubRange:(CGFloat)scrubRange;
+- (void)setVideoFreeZoomOverlayController:(id)arg;
 @end
 
 @interface YTSingleVideoController (YouMod)
 @property (nonatomic, assign, readonly) CGFloat totalMediaTime;
-@property (nonatomic, readonly, strong) YTSingleVideoTime *localTime;
-@property (nonatomic, strong, readonly) id <MLVideoFormatConstraint> videoFormatConstraint;
 - (void)setVideoFormatConstraint:(id)arg;
 - (void)YouModAutoQuality;
-@end
-
-@protocol MLPlayerItemDelegate <NSObject>
-@end
-
-@interface MLHAMPlayerItem (YouMod)
-@property (nonatomic, weak, readwrite) id <MLPlayerItemDelegate> playerItemDelegate;
-@end
-
-@interface YTGLMediaPlayerViewFactory : NSObject
 @end
 
 @interface YTReelPlayerViewController (YouMod)
 - (void)reelContentViewRequestsAdvanceToNextVideo:(id)arg;
 - (void)reelContentViewRequestsPlayPauseToggle:(id)arg;
+@end
+
+@interface YTICaptionTrackEntry : GPBMessage
+- (NSString *)baseURL;
+- (NSString *)languageCode;
+- (YTIFormattedString *)name;
+@end
+
+@interface YTIPlayerCaptionsTrackListRenderer : GPBMessage
+- (NSMutableArray *)captionTracksArray;
+@end
+
+@interface YTICaptionsSupportedRenderers : GPBMessage
+- (YTIPlayerCaptionsTrackListRenderer *)playerCaptionsTracklistRenderer;
+@end
+
+@interface YTIPlayerResponse (YouMod)
+- (YTIStreamingData *)streamingData;
+- (YTICaptionsSupportedRenderers *)captions;
+@end
+
+@interface YTIFormatStream (YouMod)
+- (NSString *)mimeType;
+- (NSInteger)contentLength;
+- (NSUInteger)approxDurationMs;
+- (int)height;
+- (int)fps;
+- (YTIAudioTrack *)audioTrack;
+- (int)itag;
+@end
+
+@interface YTIFormattedString (YouMod)
+- (NSString *)dropdownOptionTitle;
+@end
+
+@interface YTIVideoDetails (YouMod)
+- (NSString *)title;
+- (NSString *)author;
+- (NSString *)shortDescription;
+@end
+
+@interface YTDataUtils : NSObject
++ (instancetype)generateClientSideNonce;
 @end
 
 // SponsorBlock action modes
@@ -444,6 +498,27 @@ typedef NS_ENUM(NSInteger, SBSegmentAction) {
 @end
 
 extern UIView *sbGetNotificationParent(void);
+extern void sbUpdateOverlayInsetForPivotBar(void);
+extern void YMPresentTabOrderModally(id parentResponder);
+
+#pragma mark - Custom Overlay Button Registry
+
+// A registered button shown in the player's controls overlay (top-right, under
+// YouTube's settings gear). Features register a spec from their own %ctor; the
+// single YTMainAppControlsOverlayView hook in OverlayButtons.x lays them all out.
+@interface YMOverlayButtonSpec : NSObject
+@property (nonatomic, copy) NSString *identifier;       // unique, e.g. @"sponsorblock.toggle"
+@property (nonatomic, copy) NSString *symbolName;       // SF Symbol name
+@property (nonatomic, strong) UIColor *tintColor;       // default tint (used if tintProvider is nil)
+@property (nonatomic, assign) NSInteger sortOrder;      // ascending; lower = closer to gear (rightmost)
+@property (nonatomic, copy) void (^onTap)(YTPlayerViewController *player, UIButton *button);
+@property (nonatomic, copy) BOOL (^isVisible)(YTPlayerViewController *player);     // nil = always visible
+@property (nonatomic, copy) UIColor *(^tintProvider)(YTPlayerViewController *player); // nil = use tintColor
+@property (nonatomic, assign) NSInteger viewTag;        // assigned by the registry; do not set
+@end
+
+extern void YMRegisterOverlayButton(YMOverlayButtonSpec *spec);
+extern NSArray<YMOverlayButtonSpec *> *YMRegisteredOverlayButtons(void);
 
 @interface YMDownloadProgressView : UIView
 @property (nonatomic, strong) UILabel *titleLabel;
@@ -461,19 +536,18 @@ extern UIView *sbGetNotificationParent(void);
 @property (nonatomic, strong) NSArray<SBSegment *> *sbSegments;
 @property (nonatomic, strong) NSMutableSet<NSString *> *sbSkippedSegments;
 @property (nonatomic, strong) SBSkipNotificationView *sbNotificationView;
-@property (nonatomic, strong) UIButton *sbOverlayButton;
 @property (nonatomic, assign) BOOL sbEnabledForVideo;
 - (void)sbPerformSkip:(SBSegment *)segment;
 - (void)sbShowAskNotification:(SBSegment *)segment;
 - (void)sbShowHighlightBannerIfNeeded:(NSArray<SBSegment *> *)segments;
 - (void)sbSkipToHighlight;
+- (void)sbRefreshMarkers:(NSArray<SBSegment *> *)segments;
 @end
 
 @interface YTSegmentableInlinePlayerBarView : UIView
-@end
-
-@interface YTSegmentableInlinePlayerBarView (SponsorBlock)
+@property (nonatomic, assign, readwrite) BOOL enableSnapToChapter;
 @property (nonatomic, strong) NSArray<UIView *> *sbMarkerViews;
 - (void)sbRenderSegments:(NSArray<SBSegment *> *)segments;
 - (void)sbClearSegments;
+- (void)sbRepositionMarkers;
 @end

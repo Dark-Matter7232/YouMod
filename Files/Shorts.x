@@ -43,10 +43,10 @@ static void YouModMakeAShortsAction(YTReelPlayerViewController *self, YTSingleVi
     if (INTFORVAL(ShortsActionIndex) == 0) return;
 
     if (floor(time.time) >= floor(video.totalMediaTime)) {
-        if ([self respondsToSelector:@selector(reelContentViewRequestsAdvanceToNextVideo:)] && INTFORVAL(ShortsActionIndex) == 1) {
-            [self performSelector:@selector(reelContentViewRequestsAdvanceToNextVideo:)];
-        } else if ([self respondsToSelector:@selector(reelContentViewRequestsPlayPauseToggle:)] && INTFORVAL(ShortsActionIndex) == 2) {
-            [self performSelector:@selector(reelContentViewRequestsPlayPauseToggle:)];
+        if (INTFORVAL(ShortsActionIndex) == 1) {
+            [self reelContentViewRequestsAdvanceToNextVideo:nil];
+        } else if (INTFORVAL(ShortsActionIndex) == 2) {
+            [self reelContentViewRequestsPlayPauseToggle:nil];
         }
     }
 }
@@ -55,5 +55,21 @@ static void YouModMakeAShortsAction(YTReelPlayerViewController *self, YTSingleVi
 - (void)singleVideo:(YTSingleVideoController *)video currentVideoTimeDidChange:(YTSingleVideoTime *)time {
     %orig;
     YouModMakeAShortsAction(self, video, time);
+}
+%end
+
+extern void YouModConfigureDownloadButton(_ASDisplayView *view);
+
+// _ASDisplayView filters
+%hook _ASDisplayView
+- (void)didMoveToWindow {
+    %orig;
+    YouModConfigureDownloadButton(self);
+    NSDictionary *elements = @{
+        @"product_sticker.main_target": @(IS_ENABLED(HideShortsProducts)),
+        @"product_sticker.secondary_target": @(IS_ENABLED(HideShortsProducts)),
+        @"id.elements.components.suggested_action": @(IS_ENABLED(HideShortsRecbar))
+    };
+    if ([elements[self.accessibilityIdentifier] boolValue]) [self removeFromSuperview]; 
 }
 %end

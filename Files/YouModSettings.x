@@ -187,14 +187,12 @@ static const void *kYMSwitchKeyAssoc = &kYMSwitchKeyAssoc;
     Class ytStyled = objc_getClass("YTStyledViewController");
     struct objc_super superStruct = { self, ytStyled ?: [UIViewController class] };
     ((void (*)(struct objc_super *, SEL))objc_msgSendSuper)(&superStruct, @selector(viewDidLayoutSubviews));
+    YTQTMButton *backButton = [self valueForKey:@"_backButton"];
 
     if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
-        @try {
-            id backButton = [self valueForKey:@"_backButton"];
-            if ([backButton respondsToSelector:@selector(setTintColor:)]) {
-                [backButton performSelector:@selector(setTintColor:) withObject:[UIColor whiteColor]];
-            }
-        } @catch (NSException *e) {}
+        backButton.tintColor = [UIColor whiteColor];
+    } else {
+        backButton.tintColor = [UIColor blackColor];
     }
 }
 
@@ -337,7 +335,7 @@ static const void *kYMSwitchKeyAssoc = &kYMSwitchKeyAssoc;
     UISegmentedControl *segment = [[UISegmentedControl alloc] initWithItems:items];
 
     for (NSInteger i = 0; i < (NSInteger)item.segmentIcons.count; i++) {
-        YTIIcon *ytIcon = [NSClassFromString(@"YTIIcon") new];
+        YTIIcon *ytIcon = [%c(YTIIcon) new];
         if (ytIcon) {
             ((void (*)(id, SEL, int))objc_msgSend)(ytIcon, @selector(setIconType:), [item.segmentIcons[i] intValue]);
             UIImage *iconImage = nil;
@@ -597,9 +595,9 @@ YMSettingsItem *YMImageSegment(NSString *title, NSString *key, NSArray<UIImage *
 #pragma mark - YMTabOrderViewController
 
 static NSString * const kYMTabIDs[] = {
-    @"home", @"shorts", @"create", @"subscriptions",  @"library", @"history", @"gaming", @"sports", @"notifications", @"news", @"music", @"watchlater", @"playlist", @"like"
+    @"home", @"shorts", @"create", @"subscriptions",  @"library", @"history", @"gaming", @"sports", @"notifications", @"news", @"music", @"watchlater", @"playlist", @"like", @"live", @"post", @"video", @"movie", @"course", @"minigame"
 };
-static const NSInteger kYMTabCount = 14;
+static const NSInteger kYMTabCount = 20;
 static const NSInteger kYMTabMaxEnabled = 6;
 
 @interface YMTabOrderViewController : UIViewController <UITableViewDelegate, UITableViewDataSource>
@@ -639,6 +637,12 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
     if ([tabID isEqualToString:@"watchlater"]) return YMLOC(@"WATCH_LATER_TAB");
     if ([tabID isEqualToString:@"playlist"]) return YMLOC(@"PLAYLIST_TAB");
     if ([tabID isEqualToString:@"like"]) return YMLOC(@"LIKE_TAB");
+    if ([tabID isEqualToString:@"live"]) return YMLOC(@"LIVE_TAB");
+    if ([tabID isEqualToString:@"post"]) return YMLOC(@"POST_TAB");
+    if ([tabID isEqualToString:@"video"]) return YMLOC(@"VIDEO_TAB");
+    if ([tabID isEqualToString:@"movie"]) return YMLOC(@"MOVIE_TAB");
+    if ([tabID isEqualToString:@"course"]) return YMLOC(@"COURSE_TAB");
+    if ([tabID isEqualToString:@"minigame"]) return YMLOC(@"MINIGAME_TAB");
     return tabID;
 }
 
@@ -646,7 +650,7 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
     static YTAssetLoader *cachedLoader = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        cachedLoader = [[NSClassFromString(@"YTAssetLoader") alloc] initWithBundle:YMSettingsBundle()];
+        cachedLoader = [[%c(YTAssetLoader) alloc] initWithBundle:YMSettingsBundle()];
     });
 
     if ([tabID isEqualToString:@"create"]) {
@@ -654,11 +658,11 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
         return [[UIImage systemImageNamed:@"plus" withConfiguration:config] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     }
     NSDictionary *ytIconTypes = @{@"home": @(65), @"shorts": @(769), @"subscriptions": @(66), @"library": @(61)};
-    NSDictionary *bundleIcons = @{@"history": @"icons/history", @"gaming": @"icons/gaming", @"sports": @"icons/sports", @"notifications": @"icons/noti", @"news": @"icons/news", @"music": @"icons/music", @"watchlater": @"icons/watchlater", @"playlist": @"icons/playlist", @"like": @"icons/like"};
+    NSDictionary *bundleIcons = @{@"history": @"icons/history", @"gaming": @"icons/gaming", @"sports": @"icons/sports", @"notifications": @"icons/noti", @"news": @"icons/news", @"music": @"icons/music", @"watchlater": @"icons/watchlater", @"playlist": @"icons/playlist", @"like": @"icons/like", @"live": @"icons/live", @"post": @"icons/post", @"video": @"icons/video", @"movie": @"icons/movie", @"course": @"icons/course", @"minigame": @"icons/minigame"};
 
     NSNumber *iconType = ytIconTypes[tabID];
     if (iconType) {
-        YTIIcon *icon = [NSClassFromString(@"YTIIcon") new];
+        YTIIcon *icon = [%c(YTIIcon) new];
         if (icon) {
             ((void (*)(id, SEL, int))objc_msgSend)(icon, @selector(setIconType:), [iconType intValue]);
             if ([icon respondsToSelector:@selector(iconImageWithColor:)]) {
@@ -685,6 +689,17 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
     [self loadTabData];
     [self takeSnapshot];
 
+    // Configure navigation bar appearance with solid color
+    UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
+    [appearance configureWithDefaultBackground];
+    if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+        appearance.backgroundColor = [%c(YTColor) black3];
+    } else {
+        appearance.backgroundColor = [UIColor systemBackgroundColor];
+    }
+    self.navigationController.navigationBar.standardAppearance = appearance;
+    self.navigationController.navigationBar.scrollEdgeAppearance = appearance;
+
     self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     self.tableView.delegate = self;
@@ -709,6 +724,18 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
         self.tableView.backgroundColor = (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark)
             ? [%c(YTColor) black3]
             : [UIColor systemBackgroundColor];
+        
+        // Update navigation bar appearance for dark/light mode
+        UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
+        [appearance configureWithDefaultBackground];
+        if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+            appearance.backgroundColor = [%c(YTColor) black3];
+        } else {
+            appearance.backgroundColor = [UIColor systemBackgroundColor];
+        }
+        self.navigationController.navigationBar.standardAppearance = appearance;
+        self.navigationController.navigationBar.scrollEdgeAppearance = appearance;
+
         [self.tableView reloadData];
     }
 }
@@ -725,18 +752,15 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
     ((void (*)(struct objc_super *, SEL, BOOL))objc_msgSendSuper)(&superStruct, @selector(viewWillDisappear:), animated);
 
     if ([self hasRealChanges]) {
-        Class alertClass = NSClassFromString(@"YTAlertView");
-        if (alertClass) {
-            YTAlertView *alert = [alertClass confirmationDialogWithAction:^{
-                [[UIApplication sharedApplication] performSelector:@selector(suspend)];
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    exit(0);
-                });
-            } actionTitle:YMLOC(@"RESTART_NOW")];
-            alert.title = YMLOC(@"RESTART_REQUIRED");
-            alert.subtitle = YMLOC(@"RESTART_REQUIRED_DESC");
-            [alert show];
-        }
+        YTAlertView *alert = [%c(YTAlertView) confirmationDialogWithAction:^{
+            [[UIApplication sharedApplication] performSelector:@selector(suspend)];
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                exit(0);
+            });
+        } actionTitle:YMLOC(@"RESTART_NOW")];
+        alert.title = YMLOC(@"RESTART_REQUIRED");
+        alert.subtitle = YMLOC(@"RESTART_REQUIRED_DESC");
+        [alert show];
     }
 }
 
@@ -744,14 +768,12 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
     Class ytStyled = objc_getClass("YTStyledViewController");
     struct objc_super superStruct = { self, ytStyled ?: [UIViewController class] };
     ((void (*)(struct objc_super *, SEL))objc_msgSendSuper)(&superStruct, @selector(viewDidLayoutSubviews));
+    YTQTMButton *backButton = [self valueForKey:@"_backButton"];
 
     if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
-        @try {
-            id backButton = [self valueForKey:@"_backButton"];
-            if ([backButton respondsToSelector:@selector(setTintColor:)]) {
-                [backButton performSelector:@selector(setTintColor:) withObject:[UIColor whiteColor]];
-            }
-        } @catch (NSException *e) {}
+        backButton.tintColor = [UIColor whiteColor];
+    } else {
+        backButton.tintColor = [UIColor blackColor];
     }
 }
 
@@ -781,7 +803,7 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
     } else {
         // Default: Home, Shorts, Create, Subscriptions, Library enabled
         for (NSInteger i = 0; i < kYMTabCount; i++) {
-            BOOL defaultEnabled = (i < 5 && i != 2);
+            BOOL defaultEnabled = i < 5;
             [data addObject:[@{@"id": kYMTabIDs[i], @"enabled": @(defaultEnabled)} mutableCopy]];
         }
     }
@@ -892,13 +914,10 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
 
     if (wantsEnabled && [self enabledCount] >= kYMTabMaxEnabled) {
         sender.on = NO;
-        Class alertClass = NSClassFromString(@"YTAlertView");
-        if (alertClass) {
-            YTAlertView *alert = [alertClass infoDialog];
-            alert.title = YMLOC(@"TAB_LIMIT");
-            alert.subtitle = YMLOC(@"TAB_LIMIT_DESC");
-            [alert show];
-        }
+        YTAlertView *alert = [%c(YTAlertView) infoDialog];
+        alert.title = YMLOC(@"TAB_LIMIT");
+        alert.subtitle = YMLOC(@"TAB_LIMIT_DESC");
+        [alert show];
         return;
     }
 
@@ -927,8 +946,34 @@ static const void *kYMTabSnapshotKey = &kYMTabSnapshotKey;
 
 #pragma mark - Section Header/Footer
 
-- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    return YMLOC(@"TAB_REORDER_HINT");
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    return UITableViewAutomaticDimension;
+}
+
+- (UIColor *)ymSecondaryColor {
+    return [UIColor colorWithWhite:0.55 alpha:1.0];
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
+    UIView *headerView = [[UIView alloc] init];
+    headerView.backgroundColor = [UIColor clearColor];
+    
+    UILabel *hintLabel = [[UILabel alloc] init];
+    hintLabel.text = YMLOC(@"TAB_REORDER_HINT");
+    hintLabel.textColor = [self ymSecondaryColor];
+    hintLabel.font = [UIFont systemFontOfSize:13];
+    hintLabel.numberOfLines = 0;
+    hintLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    [headerView addSubview:hintLabel];
+    
+    [NSLayoutConstraint activateConstraints:@[
+        [hintLabel.leadingAnchor constraintEqualToAnchor:headerView.leadingAnchor constant:16],
+        [hintLabel.trailingAnchor constraintEqualToAnchor:headerView.trailingAnchor constant:-16],
+        [hintLabel.topAnchor constraintEqualToAnchor:headerView.topAnchor constant:12],
+        [hintLabel.bottomAnchor constraintEqualToAnchor:headerView.bottomAnchor constant:-12]
+    ]];
+    
+    return headerView;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section { return 0; }
@@ -943,6 +988,32 @@ void YMPushTabOrder(id settingsVC, id parentResponder) {
     YMTabOrderViewController *vc = (YMTabOrderViewController *)((id (*)(id, SEL, id))objc_msgSend)([styledClass alloc], @selector(initWithParentResponder:), parentResponder);
     if (!vc) vc = [[styledClass alloc] init];
     [settingsVC pushViewController:vc];
+}
+
+// Modal entry point for opening Manage Tabs without a YTSettingsViewController nav stack
+// (used by the long-press gesture on the Home tab). Wraps the standard tab-order VC in
+// a UINavigationController with a Done button and presents from the topmost VC.
+void YMPresentTabOrderModally(id parentResponder) {
+    Class styledClass = objc_getClass("YMTabOrderViewControllerStyled");
+    if (!styledClass) styledClass = [YMTabOrderViewController class];
+
+    YMTabOrderViewController *vc = (YMTabOrderViewController *)((id (*)(id, SEL, id))objc_msgSend)([styledClass alloc], @selector(initWithParentResponder:), parentResponder);
+    if (!vc) vc = [[styledClass alloc] init];
+
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+    nav.modalPresentationStyle = UIModalPresentationFormSheet;
+
+    __weak UINavigationController *weakNav = nav;
+    UIAction *doneAction = [UIAction actionWithTitle:@"" image:nil identifier:nil handler:^(__unused UIAction *action) {
+        [weakNav dismissViewControllerAnimated:YES completion:nil];
+    }];
+    vc.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc]
+        initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+        primaryAction:doneAction];
+
+    UIViewController *presenter = [%c(YTUIUtils) topViewControllerForPresenting];
+    if (!presenter) return;
+    [presenter presentViewController:nav animated:YES completion:nil];
 }
 
 #pragma mark - Entry Point
@@ -961,8 +1032,7 @@ void YMPushSubSettings(NSString *title, NSArray<YMSettingsItem *> *items, id set
 #pragma mark - Runtime Class Registration
 
 static void ymRegisterStyledSubclass(Class sourceClass, const char *name) {
-    Class ytStyled = objc_getClass("YTStyledViewController");
-    if (!ytStyled) return;
+    Class ytStyled = %c(YTStyledViewController);
     Class newClass = objc_allocateClassPair(ytStyled, name, 0);
     if (!newClass) return;
 
@@ -985,6 +1055,33 @@ static void ymRegisterStyledSubclass(Class sourceClass, const char *name) {
 
     objc_registerClassPair(newClass);
 }
+
+%hook YTQTMButton
+- (void)layoutSubviews {
+    %orig;
+    if ([self.accessibilityIdentifier isEqualToString:@"id.ui.title.tab.button"]) {
+        UIColor *customTitle = [self valueForKey:@"_desiredCustomTitleColor"];
+
+        if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+            self.titleLabel.textColor = [UIColor whiteColor];
+            if (customTitle) {
+                [self setValue:[UIColor whiteColor] forKey:@"_desiredCustomTitleColor"];
+            }
+        } else {
+            self.titleLabel.textColor = [UIColor blackColor];
+            if (customTitle) {
+                [self setValue:[UIColor blackColor] forKey:@"_desiredCustomTitleColor"];
+            }
+        }
+    } else if ([self.accessibilityIdentifier isEqualToString:@"id.ui.browse.back.button"]) {
+        if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
+            self.tintColor = [UIColor whiteColor];
+        } else {
+            self.tintColor = [UIColor blackColor];
+        }
+    }
+}
+%end
 
 %ctor {
     ymRegisterStyledSubclass([YMSubSettingsViewController class], "YMSubSettingsViewControllerStyled");

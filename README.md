@@ -14,12 +14,11 @@
 <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20iPadOS%2014.0%2B-blue" alt="Badge"/>
 <a href="https://github.com/Tonwalter888/YouMod/releases/latest"><img src="https://custom-icon-badges.demolab.com/github/v/release/Tonwalter888/YouMod?color=brightgreen&label=Latest%20release" alt="Badge"></img></a>
 <a href="https://github.com/Tonwalter888/YouMod/releases/latest"><img src="https://img.shields.io/github/downloads/Tonwalter888/YouMod/total?label=Download" alt="Badge"></img></a>
-<a href=""><img src="https://api.oosmetrics.com/api/v1/badge/achievement/3f9a6594-0226-4a4e-b531-409bee6afa18.svg" alt="Badge"></img></a>
 </p>
 
 A tweak that's try to recreate features like in YTLite as much as possible. Contributors are welcome! ^^
 
-Thanks for 200 stars and 300 forks! This might be the best project I've done.
+Thanks for 300 stars and 400 forks! This might be the best project I've done.
 
 If you want to contribute this project, scroll down below for how to do it.
 
@@ -28,7 +27,7 @@ The reason is because of YTLite no longer free. So I'll try my best to recreate 
 
 ## Features
 This tweak can hide, remove elements and others in YouTube. Such as:
-- Downloading (Currently support up to 1080p60)
+- Downloading (Currently supports up to 1080p60)
 - Appearance
 - Navigation bar
 - Player

@@ -1,4 +1,5 @@
 #import "Headers.h"
+#import <objc/runtime.h>
 
 #define TweakName @"YouMod"
 
@@ -20,7 +21,7 @@ static NSBundle *YouModBundle() {
 // Tab icons
 %hook YTAppPivotBarItemStyle
 - (UIImage *)pivotBarItemIconImageWithIconType:(int)type color:(UIColor *)color useNewIcons:(BOOL)isNew selected:(BOOL)isSelected {
-    if (type == 1 || type == 2 || type == 3 || type == 4 || type == 5 || type == 6 || type == 7 || type == 8 || type == 9) {
+    if (type == 1 || type == 2 || type == 3 || type == 4 || type == 5 || type == 6 || type == 7 || type == 8 || type == 9 || type == 10 || type == 11 || type == 12 || type == 13 || type == 14 || type == 15) {
         NSString *imageName;
         if (type == 1) imageName = isSelected ? @"icons/history_selected" : @"icons/history";
         else if (type == 2) imageName = isSelected ? @"icons/gaming_selected" : @"icons/gaming";
@@ -31,6 +32,12 @@ static NSBundle *YouModBundle() {
         else if (type == 7) imageName = isSelected ? @"icons/watchlater_selected" : @"icons/watchlater";
         else if (type == 8) imageName = isSelected ? @"icons/playlist_selected" : @"icons/playlist";
         else if (type == 9) imageName = isSelected ? @"icons/like_selected" : @"icons/like";
+        else if (type == 10) imageName = isSelected ? @"icons/live_selected" : @"icons/live";
+        else if (type == 11) imageName = isSelected ? @"icons/post_selected" : @"icons/post";
+        else if (type == 12) imageName = isSelected ? @"icons/video_selected" : @"icons/video";
+        else if (type == 13) imageName = isSelected ? @"icons/movie_selected" : @"icons/movie";
+        else if (type == 14) imageName = isSelected ? @"icons/course_selected" : @"icons/course";
+        else if (type == 15) imageName = isSelected ? @"icons/minigame_selected" : @"icons/minigame";
         YTAssetLoader *al = [[%c(YTAssetLoader) alloc] initWithBundle:YouModBundle()];
         return [al imageNamed:imageName];
     }
@@ -53,6 +60,12 @@ static NSString *ymPivotIDForTabID(NSString *tabID) {
     if ([tabID isEqualToString:@"watchlater"]) return @"VLWL";
     if ([tabID isEqualToString:@"playlist"]) return @"FEplaylist_aggregation";
     if ([tabID isEqualToString:@"like"]) return @"VLLL";
+    if ([tabID isEqualToString:@"live"]) return @"UC4R8DWoMoI7CAwX8_LjQHig";
+    if ([tabID isEqualToString:@"post"]) return @"FEpost_home";
+    if ([tabID isEqualToString:@"video"]) return @"UC3qapbGAd2-S75NkBY3XWww";
+    if ([tabID isEqualToString:@"movie"]) return @"FEstorefront";
+    if ([tabID isEqualToString:@"course"]) return @"FEcourses";
+    if ([tabID isEqualToString:@"minigame"]) return @"FEmini_app_destination";
     return nil;
 }
 
@@ -66,6 +79,12 @@ static NSInteger ymIconTypeForTabID(NSString *tabID) {
     if ([tabID isEqualToString:@"watchlater"]) return 7;
     if ([tabID isEqualToString:@"playlist"]) return 8;
     if ([tabID isEqualToString:@"like"]) return 9;
+    if ([tabID isEqualToString:@"live"]) return 10;
+    if ([tabID isEqualToString:@"post"]) return 11;
+    if ([tabID isEqualToString:@"video"]) return 12;
+    if ([tabID isEqualToString:@"movie"]) return 13;
+    if ([tabID isEqualToString:@"course"]) return 14;
+    if ([tabID isEqualToString:@"minigame"]) return 15;
     return 0;
 }
 
@@ -79,6 +98,12 @@ static NSString *ymTitleForTabID(NSString *tabID) {
     if ([tabID isEqualToString:@"watchlater"]) return LOC(@"WATCH_LATER_TAB");
     if ([tabID isEqualToString:@"playlist"]) return LOC(@"PLAYLIST_TAB");
     if ([tabID isEqualToString:@"like"]) return LOC(@"LIKE_TAB");
+    if ([tabID isEqualToString:@"live"]) return LOC(@"LIVE_TAB");
+    if ([tabID isEqualToString:@"post"]) return LOC(@"POST_TAB");
+    if ([tabID isEqualToString:@"video"]) return LOC(@"VIDEO_TAB");
+    if ([tabID isEqualToString:@"movie"]) return LOC(@"MOVIE_TAB");
+    if ([tabID isEqualToString:@"course"]) return LOC(@"COURSE_TAB");
+    if ([tabID isEqualToString:@"minigame"]) return LOC(@"MINIGAME_TAB");
     return nil;
 }
 
@@ -134,7 +159,8 @@ static NSString *ymTitleForTabID(NSString *tabID) {
 - (void)setBorderColor:(id)arg1  { IS_ENABLED(HideTabIndi) ? %orig([UIColor clearColor]) : %orig; }
 %end
 
-// Hide Tab Labels
+static BOOL isGestureRegistered = NO;
+// Hide Tab Labels + long-press on the first tab to open Manage Tabs
 %hook YTPivotBarItemView
 - (void)setRenderer:(YTIPivotBarRenderer *)renderer {
     %orig;
@@ -142,6 +168,24 @@ static NSString *ymTitleForTabID(NSString *tabID) {
         [self.navigationButton setTitle:@"" forState:UIControlStateNormal];
         [self.navigationButton setSizeWithPaddingAndInsets:NO];
     }
+    // Attach long-press gesture once per view; the action handler checks the
+    // current pivotIdentifier at fire time, so cell reuse / pivot bar refresh
+    // can rebind the same view to a different tab safely.
+    static const void *kYMLongPressKey = &kYMLongPressKey;
+    if (!objc_getAssociatedObject(self, kYMLongPressKey) && !isGestureRegistered) {
+        UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc]
+            initWithTarget:self action:@selector(ymOpenManageTabs:)];
+        longPress.minimumPressDuration = 0.4;
+        [self addGestureRecognizer:longPress];
+        objc_setAssociatedObject(self, kYMLongPressKey, longPress, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        isGestureRegistered = YES;
+    }
+}
+
+%new
+- (void)ymOpenManageTabs:(UILongPressGestureRecognizer *)gesture {
+    if (gesture.state != UIGestureRecognizerStateBegan) return;
+    YMPresentTabOrderModally(nil);
 }
 %end
 
@@ -150,6 +194,7 @@ BOOL isTabSelected = NO;
 %hook YTPivotBarViewController
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
+    sbUpdateOverlayInsetForPivotBar();
     if (!isTabSelected) {
         // Build pivot identifiers from enabled tabs (skip Create — matches Settings.x segment logic)
         NSMutableArray *pivotIdentifiers = [NSMutableArray array];
@@ -182,5 +227,31 @@ BOOL isTabSelected = NO;
         return NO;
     }
     return %orig;
+}
+%end
+
+// Recompute SB overlay safe-area inset whenever YouTube shows or hides the pivot bar
+// (e.g. entering/exiting fullscreen player). This keeps the SponsorBlock skip pill
+// and download progress pill anchored above the tabbar when visible, and at the
+// device safe-area bottom when the tabbar is hidden.
+%hook YTAppViewController
+- (void)hidePivotBar {
+    %orig;
+    sbUpdateOverlayInsetForPivotBar();
+}
+- (void)showPivotBar {
+    %orig;
+    sbUpdateOverlayInsetForPivotBar();
+}
+%end
+
+%hook YTAppViewControllerImpl
+- (void)hidePivotBar {
+    %orig;
+    sbUpdateOverlayInsetForPivotBar();
+}
+- (void)showPivotBar {
+    %orig;
+    sbUpdateOverlayInsetForPivotBar();
 }
 %end

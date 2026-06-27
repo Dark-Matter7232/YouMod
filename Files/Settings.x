@@ -120,16 +120,6 @@ static NSArray *getAllSystemLanguageTitles() {
         }];
     [sectionItems addObject:tweakVersion];
 
-    // Note
-    YTSettingsSectionItem *note = [YTSettingsSectionItemClass itemWithTitle:LOC(@"NOTE")
-        titleDescription:nil
-        accessibilityIdentifier:nil
-        detailTextBlock:nil
-        selectBlock:^BOOL (YTSettingsCell *cell, NSUInteger arg1) {
-            return NO;
-        }];
-    [sectionItems addObject:note];
-
     // Section 0
     // Github
     YTSettingsSectionItem *github = [YTSettingsSectionItemClass itemWithTitle:nil
@@ -204,6 +194,7 @@ static NSArray *getAllSystemLanguageTitles() {
         YMPushSubSettings(LOC(@"DOWNLOADING"), @[
             YMToggle(LOC(@"DOWNLOAD_MANAGER"), LOC(@"DOWNLOAD_MANAGER_DESC"), DownloadManager),
             YMToggle(LOC(@"DOWNLOAD_SAVE_PHOTOS"), LOC(@"DOWNLOAD_SAVE_PHOTOS_DESC"), DownloadSaveToPhotos),
+            YMToggle(LOC(@"ADD_SHORTS_DOWNLOAD"), LOC(@"ADD_SHORTS_DOWNLOAD_DESC"), AddDownloadToShorts),
         ], settingsViewController, [self parentResponder]);
         return YES;
     }];
@@ -230,6 +221,7 @@ static NSArray *getAllSystemLanguageTitles() {
     // Navigation bar
     YTSettingsSectionItem *navbargroup = [YTSettingsSectionItemClass itemWithTitle:LOC(@"NAVBAR") accessibilityIdentifier:nil detailTextBlock:nil selectBlock:^BOOL (YTSettingsCell *cell, NSUInteger arg1) {
         YMPushSubSettings(LOC(@"NAVBAR"), @[
+            YMToggle(LOC(@"STICKY_NAVBAR"), LOC(@"STICKY_NAVBAR_DESC"), StickyNavBar),
             YMToggle(LOC(@"HIDE_YT_LOGO"), LOC(@"HIDE_YT_LOGO_DESC"), HideYTLogo),
             YMToggle(LOC(@"PREMIUM_LOGO"), LOC(@"PREMIUM_LOGO_DESC"), YTPremiumLogo),
             YMToggle(LOC(@"HIDE_NOTIFICATION_BUTTON"), LOC(@"HIDE_NOTIFICATION_BUTTON_DESC"), HideNoti),
@@ -255,9 +247,6 @@ static NSArray *getAllSystemLanguageTitles() {
             YMToggle(LOC(@"HIDE_SHORTS_SHELF"), LOC(@"HIDE_SHORTS_SHELF_DESC"), HideShortsShelf),
             YMToggle(LOC(@"KEEP_SHORTS_SUBSCRIPT"), LOC(@"KEEP_SHORTS_SUBSCRIPT_DESC"), KeepShortsSubscript),
             YMToggle(LOC(@"HIDE_SEARCH_HISTORY"), LOC(@"HIDE_SEARCH_HISTORY_DESC"), HideSearchHis),
-            YMToggle(LOC(@"HIDE_SUB_BUTTON"), LOC(@"HIDE_SUB_BUTTON_DESC"), HideSubButton),
-            YMToggle(LOC(@"HIDE_SHOP_BUTTON"), LOC(@"HIDE_SHOP_BUTTON_DESC"), HideShoppingButton),
-            YMToggle(LOC(@"HIDE_MEMBER_BUTTON"), LOC(@"HIDE_MEMBER_BUTTON_DESC"), HideMemberButton),
         ], settingsViewController, [self parentResponder]);
         return YES;
     }];
@@ -272,23 +261,51 @@ static NSArray *getAllSystemLanguageTitles() {
         YMPushSubSettings(LOC(@"PLAYER"), @[
             YMPicker(LOC(@"QUALITY_WIFI"), LOC(@"QUALITY_WIFI_DESC"), WifiQualityIndex, (@[LOC(@"DEFAULT"), LOC(@"BEST"), @"2160p60", @"2160p", @"1440p60", @"1440p", @"1080p60", @"1080p", @"720p60", @"720p", @"480p", @"360p", @"240p", @"144p"]), 0),
             YMPicker(LOC(@"QUALITY_CELLULAR"), LOC(@"QUALITY_CELLULAR_DESC"), CellQualityIndex, (@[LOC(@"DEFAULT"), LOC(@"BEST"), @"2160p60", @"2160p", @"1440p60", @"1440p", @"1080p60", @"1080p", @"720p60", @"720p", @"480p", @"360p", @"240p", @"144p"]), 0),
+            YMPicker(LOC(@"QUALITY_LOW_POWER"), LOC(@"QUALITY_LOW_POWER_DESC"), LowPowerQualityIndex, (@[LOC(@"DEFAULT"), LOC(@"BEST"), @"2160p60", @"2160p", @"1440p60", @"1440p", @"1080p60", @"1080p", @"720p60", @"720p", @"480p", @"360p", @"240p", @"144p"]), 0),
             YMTextSegment(LOC(@"AUDIO_TRACK"), AudioTrack, (@[LOC(@"DEFAULT"), LOC(@"ORIGINAL"), LOC(@"SELECT_MANUALLY")]), 0),
             YMPicker(LOC(@"AUDIO_TRACK_SELECT"), LOC(@"AUDIO_TRACK_SELECT_DESC"), AudioTrackLangIndex, getAllSystemLanguageTitles(), 0),
             YMToggle(LOC(@"NO_AUTO_DUBBED"), LOC(@"NO_AUTO_DUBBED_DESC"), NoDubbedAudioTrack),
-            YMPicker(LOC(@"DEFAULT_SPEED"), LOC(@"DEFAULT_SPEED_DESC"), AutoSpeedIndex, (@[LOC(@"DISABLED"), @"0.25x", @"0.5x", @"0.75x", @"1x", @"1.25x", @"1.5x", @"1.75x", @"2x", @"3x", @"4x", @"5x"]), 0),
+            YMHeader(LOC(@"INTERFACE")),
             YMPicker(LOC(@"HOLD_TO_SPEED"), LOC(@"HOLD_TO_SPEED_DESC"), HoldToSpeedIndex, (@[LOC(@"DEFAULT"), @"0.25x", @"0.5x", @"0.75x", @"1x", @"1.25x", @"1.5x", @"1.75x", @"2x", @"3x", @"4x", @"5x"]), 0),
             YMToggle(LOC(@"HIDE_AUTOPLAY"), LOC(@"HIDE_AUTOPLAY_DESC"), HideAutoPlayToggle),
+            YMToggle(LOC(@"HIDE_FULL_VID_TITLE"), LOC(@"HIDE_FULL_VID_TITLE_DESC"), HideFullvidTitle),
             YMToggle(LOC(@"HIDE_CAPTIONS_BUTTON"), LOC(@"HIDE_CAPTIONS_BUTTON_DESC"), HideCaptionsButton),
             YMToggle(LOC(@"HIDE_CAST_BUTTON_PLAYER"), LOC(@"HIDE_CAST_BUTTON_PLAYER_DESC"), HideCastButtonPlayer),
             YMToggle(LOC(@"HIDE_NEXT_AND_PREV_BUTTON"), LOC(@"HIDE_NEXT_AND_PREV_BUTTON_DESC"), HideNextAndPrevButtons),
             YMToggle(LOC(@"REPLACE_PREVNEXT_BUTTONS"), LOC(@"REPLACE_PREVNEXT_BUTTONS_DESC"), ReplacePrevNextButtons),
+            YMToggle(LOC(@"REMOVE_AMBIANT"), LOC(@"REMOVE_AMBIANT_DESC"), RemoveAmbiant),
             YMToggle(LOC(@"REMOVE_DARK_OVERLAY"), LOC(@"REMOVE_DARK_OVERLAY_DESC"), RemoveDarkOverlay),
             YMToggle(LOC(@"HIDE_END_SCREEN"), LOC(@"HIDE_END_SCREEN_DESC"), HideEndScreenCards),
-            YMToggle(LOC(@"REMOVE_AMBIANT"), LOC(@"REMOVE_AMBIANT_DESC"), RemoveAmbiant),
             YMToggle(LOC(@"HIDE_SUGGESTED_VIDEO"), LOC(@"HIDE_SUGGESTED_VIDEO_DESC"), HideSuggestedVideo),
             YMToggle(LOC(@"HIDE_PAID_OVERLAY"), LOC(@"HIDE_PAID_OVERLAY_DESC"), HidePaidPromoOverlay),
             YMToggle(LOC(@"HIDE_WATERMARK"), LOC(@"HIDE_WATERMARK_DESC"), HideWaterMark),
+            YMToggle(LOC(@"HIDE_FULLSCREEN_ACTIONS"), LOC(@"HIDE_FULLSCREEN_ACTIONS_DESC"), HideFullAction),
+            YMToggle(LOC(@"FORCE_SEEKBAR"), LOC(@"FORCE_SEEKBAR_DESC"), AlwaysShowSeekbar),
+            YMToggle(LOC(@"TAP_TO_SEEK"), LOC(@"TAP_TO_SEEK_DESC"), TapToSeek),
+            YMToggle(LOC(@"PORTRAIT_FULLSCREEN"), LOC(@"PORTRAIT_FULLSCREEN_DESC"), PortFull),
+            YMToggle(LOC(@"DISABLES_DOUBLE_TAP"), LOC(@"DISABLES_DOUBLE_TAP_DESC"), DisablesDoubleTap),
+            YMToggle(LOC(@"DISABLES_LONG_HOLD"), LOC(@"DISABLES_LONG_HOLD_DESC"), DisablesLongHold),
+            YMToggle(LOC(@"DISABLES_ZOOM"), LOC(@"DISABLES_ZOOM_DESC"), DisablesFreeZoom),
+            YMToggle(LOC(@"DISABLES_SNAP_TO_CHAPTER"), LOC(@"DISABLES_SNAP_TO_CHAPTER_DESC"), DontSnapToChapter),
+            YMToggle(LOC(@"DISABLES_ENGAGE_PANEL"), LOC(@"DISABLES_ENGAGE_PANEL_DESC"), DisablesEngagementPanel),
+            YMToggle(LOC(@"DISABLES_SHOW_REMAINING"), LOC(@"DISABLES_SHOW_REMAINING_DESC"), DisablesShowRemaining),
+            YMToggle(LOC(@"ALWAYS_SHOW_REMAINING"), LOC(@"ALWAYS_SHOW_REMAINING_DESC"), AlwaysShowRemaining),
+            YMToggle(LOC(@"SHOW_REMAINING_EXTRA"), LOC(@"SHOW_REMAINING_EXTRA_DESC"), ShowExtraTimeRemaining),
+            YMToggle(LOC(@"USES_24_HOURS_TIME"), LOC(@"USES_24_HOURS_TIME_DESC"), Uses24HoursTime),
+            YMToggle(LOC(@"COPY_TIMESTAMP_ON_PAUSE"), LOC(@"COPY_TIMESTAMP_ON_PAUSE_DESC"), CopyWithTimestampOnPause),
             YMToggle(LOC(@"PAUSE_ON_OVERLAY"), LOC(@"PAUSE_ON_OVERLAY_DESC"), PauseOnOverlay),
+            YMToggle(LOC(@"PAUSE_TWO_FINGERS"), LOC(@"PAUSE_TWO_FINGERS_DESC"), PauseTwoFingers),
+            YMToggle(LOC(@"OLD_QUALITY_PICKER"), LOC(@"OLD_QUALITY_PICKER_DESC"), OldQualityPicker),
+            YMToggle(LOC(@"EXTRA_SPEED"), LOC(@"EXTRA_SPEED_DESC"), ExtraSpeed),
+            YMHeader(LOC(@"PLAYER_ACTIONS")),
+            YMPicker(LOC(@"DEFAULT_SPEED"), LOC(@"DEFAULT_SPEED_DESC"), AutoSpeedIndex, (@[LOC(@"DISABLED"), @"0.25x", @"0.5x", @"0.75x", @"1x", @"1.25x", @"1.5x", @"1.75x", @"2x", @"3x", @"4x", @"5x"]), 0),
+            YMToggle(LOC(@"AUTO_DISABLES_CAPTION"), LOC(@"AUTO_DISABLES_CAPTION_DESC"), DisablesCaptions), // will get removed
+            YMToggle(LOC(@"FORCE_MINIPLAYER"), LOC(@"FORCE_MINIPLAYER_DESC"), ForceMiniPlayer),
+            YMToggle(LOC(@"HIDE_CONTENT_WARNING"), LOC(@"HIDE_CONTENT_WARNING_DESC"), HideContentWarning),
+            YMToggle(LOC(@"STOP_AUTOPLAY_VIDEO"), LOC(@"STOP_AUTOPLAY_VIDEO_DESC"), StopAutoplayVideo),
+            YMToggle(LOC(@"AUTO_FULLSCREEN"), LOC(@"AUTO_FULLSCREEN_DESC"), AutoFullScreen),
+            YMToggle(LOC(@"AUTO_EXIT_FULLSCREEN"), LOC(@"AUTO_EXIT_FULLSCREEN_DESC"), AutoExitFullScreen),
+            YMHeader(LOC(@"GESTURE_HEADER")),
             YMToggle(LOC(@"GESTURES"), LOC(@"GESTURES_DESC"), GestureControls),
             YMPicker(LOC(@"GESTURE_AREA"), LOC(@"GESTURE_AREA_DESC"), GestureActivationArea, (@[@"10%", @"15%", @"20%", @"25%", @"30%", @"35%", @"40%", @"45%", @"50%"]), 1),
             YMPicker(LOC(@"LEFT_SIDE_GESTURE"), nil, LeftSideGesture, (@[LOC(@"GESTURE_NONE"), LOC(@"GESTURE_BRIGHTNESS"), LOC(@"GESTURE_VOLUME"), LOC(@"GESTURE_SPEED")]), 1),
@@ -296,31 +313,6 @@ static NSArray *getAllSystemLanguageTitles() {
             YMToggle(LOC(@"GESTURE_HUD"), LOC(@"GESTURE_HUD_DESC"), GestureHUD),
             YMPicker(LOC(@"GESTURE_HUD_SIZE"), LOC(@"GESTURE_HUD_SIZE_DESC"), GestureHUDSize, (@[LOC(@"SMALL"), LOC(@"NORMAL"), LOC(@"LARGE"), LOC(@"EXTRALARGE"), LOC(@"MAX")]), 1),
             YMPicker(LOC(@"GESTURE_HUD_POSITION"), LOC(@"GESTURE_HUD_POSITION_DESC"), GestureHUDPosition, (@[LOC(@"TOP"), LOC(@"MIDDLE"), LOC(@"BOTTOM")]), 0),
-            YMToggle(LOC(@"DISABLES_DOUBLE_TAP"), LOC(@"DISABLES_DOUBLE_TAP_DESC"), DisablesDoubleTap),
-            YMToggle(LOC(@"DISABLES_LONG_HOLD"), LOC(@"DISABLES_LONG_HOLD_DESC"), DisablesLongHold),
-            YMToggle(LOC(@"AUTO_EXIT_FULLSCREEN"), LOC(@"AUTO_EXIT_FULLSCREEN_DESC"), AutoExitFullScreen),
-            YMToggle(LOC(@"AUTO_DISABLES_CAPTION"), LOC(@"AUTO_DISABLES_CAPTION_DESC"), DisablesCaptions),
-            YMToggle(LOC(@"DISABLES_SHOW_REMAINING"), LOC(@"DISABLES_SHOW_REMAINING_DESC"), DisablesShowRemaining),
-            YMToggle(LOC(@"ALWAYS_SHOW_REMAINING"), LOC(@"ALWAYS_SHOW_REMAINING_DESC"), AlwaysShowRemaining),
-            YMToggle(LOC(@"COPY_TIMESTAMP_ON_PAUSE"), LOC(@"COPY_TIMESTAMP_ON_PAUSE_DESC"), CopyWithTimestampOnPause),
-            YMToggle(LOC(@"SHOW_REMAINING_EXTRA"), LOC(@"SHOW_REMAINING_EXTRA_DESC"), ShowExtraTimeRemaining),
-            YMToggle(LOC(@"HIDE_FULLSCREEN_ACTIONS"), LOC(@"HIDE_FULLSCREEN_ACTIONS_DESC"), HideFullAction),
-            YMToggle(LOC(@"HIDE_FULL_VID_TITLE"), LOC(@"HIDE_FULL_VID_TITLE_DESC"), HideFullvidTitle),
-            YMToggle(LOC(@"STOP_AUTOPLAY_VIDEO"), LOC(@"STOP_AUTOPLAY_VIDEO_DESC"), StopAutoplayVideo),
-            YMToggle(LOC(@"HIDE_CONTENT_WARNING"), LOC(@"HIDE_CONTENT_WARNING_DESC"), HideContentWarning),
-            YMToggle(LOC(@"AUTO_FULLSCREEN"), LOC(@"AUTO_FULLSCREEN_DESC"), AutoFullScreen),
-            YMToggle(LOC(@"PORTRAIT_FULLSCREEN"), LOC(@"PORTRAIT_FULLSCREEN_DESC"), PortFull),
-            YMToggle(LOC(@"OLD_QUALITY_PICKER"), LOC(@"OLD_QUALITY_PICKER_DESC"), OldQualityPicker),
-            YMToggle(LOC(@"EXTRA_SPEED"), LOC(@"EXTRA_SPEED_DESC"), ExtraSpeed),
-            YMToggle(LOC(@"FORCE_MINIPLAYER"), LOC(@"FORCE_MINIPLAYER_DESC"), ForceMiniPlayer),
-            YMToggle(LOC(@"FORCE_SEEKBAR"), LOC(@"FORCE_SEEKBAR_DESC"), AlwaysShowSeekbar),
-            YMToggle(LOC(@"HIDE_LIKE_BUTTON"), LOC(@"HIDE_LIKE_BUTTON_DESC"), HideLikeButton),
-            YMToggle(LOC(@"HIDE_DISLIKE_BUTTON"), LOC(@"HIDE_DISLIKE_BUTTON_DESC"), HideDisLikeButton),
-            YMToggle(LOC(@"HIDE_SHARE_BUTTON"), LOC(@"HIDE_SHARE_BUTTON_DESC"), HideShareButton),
-            YMToggle(LOC(@"HIDE_DOWNLOAD_BUTTON"), LOC(@"HIDE_DOWNLOAD_BUTTON_DESC"), HideDownloadButton),
-            YMToggle(LOC(@"HIDE_CLIP_BUTTON"), LOC(@"HIDE_CLIP_BUTTON_DESC"), HideClipButton),
-            YMToggle(LOC(@"HIDE_REMIX_BUTTON"), LOC(@"HIDE_REMIX_BUTTON_DESC"), HideRemixButton),
-            YMToggle(LOC(@"HIDE_SAVE_BUTTON"), LOC(@"HIDE_SAVE_BUTTON_DESC"), HideSaveButton),
         ], settingsViewController, [self parentResponder]);
         return YES;
     }];
@@ -335,23 +327,13 @@ static NSArray *getAllSystemLanguageTitles() {
         YMPushSubSettings(LOC(@"SHORTS"), @[
             YMTextSegment(LOC(@"SHORTS_ACTION"), ShortsActionIndex, (@[LOC(@"LOOP"), LOC(@"SKIP_TO_NEXT_SHORTS"), LOC(@"PAUSE_SHORTS")]), 0),
             YMToggle(LOC(@"HIDE_SHORTS_HEADER"), LOC(@"HIDE_SHORTS_HEADER_DESC"), HideShortsHeader),
-            YMToggle(LOC(@"HIDE_SHORTS_LIKE_BUTTON"), LOC(@"HIDE_SHORTS_LIKE_BUTTON_DESC"), HideShortsLikeButton),
-            YMToggle(LOC(@"HIDE_SHORTS_DISLIKE_BUTTON"), LOC(@"HIDE_SHORTS_DISLIKE_BUTTON_DESC"), HideShortsDisLikeButton),
-            YMToggle(LOC(@"HIDE_SHORTS_COMMENT_BUTTON"), LOC(@"HIDE_SHORTS_COMMENT_BUTTON_DESC"), HideShortsCommentButton),
-            YMToggle(LOC(@"HIDE_SHORTS_SHARE_BUTTON"), LOC(@"HIDE_SHORTS_SHARE_BUTTON_DESC"), HideShortsShareButton),
-            YMToggle(LOC(@"HIDE_SHORTS_REMIX_BUTTON"), LOC(@"HIDE_SHORTS_REMIX_BUTTON_DESC"), HideShortsRemixButton),
-            YMToggle(LOC(@"HIDE_METADATA_BUTTON"), LOC(@"HIDE_METADATA_BUTTON_DESC"), HideShortsMetaButton),
-            YMToggle(LOC(@"HIDE_SHORTS_PRODUCT"), LOC(@"HIDE_SHORTS_PRODUCT_DESC"), HideShortsProducts),
-            YMToggle(LOC(@"HIDE_SHORTS_RECBAR"), LOC(@"HIDE_SHORTS_RECBAR_DESC"), HideShortsRecbar),
-            YMToggle(LOC(@"HIDE_SHORTS_COMMIT"), LOC(@"HIDE_SHORTS_COMMIT_DESC"), HideShortsCommit),
-            YMToggle(LOC(@"HIDE_SHORTS_SUBSCRIPT_BUTTON"), LOC(@"HIDE_SHORTS_SUBSCRIPT_BUTTON_DESC"), HideShortsSubscriptButton),
-            YMToggle(LOC(@"HIDE_SHORTS_LIVE_BUTTON"), LOC(@"HIDE_SHORTS_LIVE_BUTTON_DESC"), HideShortsLiveButton),
-            YMToggle(LOC(@"HIDE_SHORTS_LENS_BUTTON"), LOC(@"HIDE_SHORTS_LENS_BUTTON_DESC"), HideShortsLensButton),
-            YMToggle(LOC(@"HIDE_SHORTS_TRENDS_BUTTON"), LOC(@"HIDE_SHORTS_TRENDS_BUTTON_DESC"), HideShortsTrendsButton),
-            YMToggle(LOC(@"HIDE_SHORTS_TO_VIDEO"), LOC(@"HIDE_SHORTS_TO_VIDEO_DESC"), HideShortsToVideo),
             YMToggle(LOC(@"ENABLES_SHORTS_QUALITY"), LOC(@"ENABLES_SHORTS_QUALITY_DESC"), EnablesShortsQuality),
             YMToggle(LOC(@"SHOW_SHORTS_SEEKBAR"), LOC(@"SHOW_SHORTS_SEEKBAR_DESC"), ShowShortsSeekbar),
+            YMToggle(LOC(@"REMOVE_LIVE_SHORTS"), LOC(@"REMOVE_LIVE_SHORTS_DESC"), RemoveShortsLive),
             YMToggle(LOC(@"SHORTS_TO_REGULAR"), LOC(@"SHORTS_TO_REGULAR_DESC"), ShortsToRegular),
+            YMHeader(LOC(@"INTERFACE")),
+            YMToggle(LOC(@"HIDE_SHORTS_PRODUCT"), LOC(@"HIDE_SHORTS_PRODUCT_DESC"), HideShortsProducts),
+            YMToggle(LOC(@"HIDE_SHORTS_RECBAR"), LOC(@"HIDE_SHORTS_RECBAR_DESC"), HideShortsRecbar),
         ], settingsViewController, [self parentResponder]);
         return YES;
     }];
@@ -365,7 +347,7 @@ static NSArray *getAllSystemLanguageTitles() {
     YTSettingsSectionItem *tabgroup = [YTSettingsSectionItemClass itemWithTitle:LOC(@"TABBAR") accessibilityIdentifier:nil detailTextBlock:nil selectBlock:^BOOL (YTSettingsCell *cell, NSUInteger arg1) {
         // Build dynamic image list from enabled tabs (standard + custom)
         NSDictionary *tabYTIconMap = @{@"home": @(65), @"shorts": @(769), @"subscriptions": @(66), @"library": @(61)};
-        NSDictionary *tabBundleIconMap = @{@"history": @"icons/history", @"gaming": @"icons/gaming", @"sports": @"icons/sports", @"notifications": @"icons/noti", @"news": @"icons/news", @"music": @"icons/music", @"watchlater": @"icons/watchlater", @"playlist": @"icons/playlist", @"like": @"icons/like"};
+        NSDictionary *tabBundleIconMap = @{@"history": @"icons/history", @"gaming": @"icons/gaming", @"sports": @"icons/sports", @"notifications": @"icons/noti", @"news": @"icons/news", @"music": @"icons/music", @"watchlater": @"icons/watchlater", @"playlist": @"icons/playlist", @"like": @"icons/like", @"live": @"icons/live", @"post": @"icons/post", @"video": @"icons/video", @"movie": @"icons/movie", @"course": @"icons/course", @"minigame": @"icons/minigame"};
         NSBundle *ymBundle = [NSBundle bundleWithPath:[[NSBundle mainBundle] pathForResource:@"YouMod" ofType:@"bundle"]];
         YTAssetLoader *assetLoader = [[%c(YTAssetLoader) alloc] initWithBundle:ymBundle];
 
@@ -426,7 +408,6 @@ static NSArray *getAllSystemLanguageTitles() {
     YTSettingsSectionItem *othergroup = [YTSettingsSectionItemClass itemWithTitle:LOC(@"MISCELLANEOUS") accessibilityIdentifier:nil detailTextBlock:nil selectBlock:^BOOL (YTSettingsCell *cell, NSUInteger arg1) {
         YMPushSubSettings(LOC(@"MISCELLANEOUS"), @[
             YMToggle(LOC(@"BACKGROUND_PLAYBACK"), LOC(@"BACKGROUND_PLAYBACK_DESC"), BackgroundPlayback),
-            YMToggle(LOC(@"DISABLES_PIP"), LOC(@"DISABLES_PIP_DESC"), DisablesPiP),
             YMToggle(LOC(@"DISABLES_SHORTS_PIP"), LOC(@"DISABLES_SHORTS_PIP_DESC"), DisablesShortsPiP),
             YMToggle(LOC(@"DISABLE_HINTS"), LOC(@"DISABLE_HINTS_DESC"), DisableHints),
             YMToggle(LOC(@"BLOCK_UPGRADE_DIALOGS"), LOC(@"BLOCK_UPGRADE_DIALOGS_DESC"), BlockUpgradeDialogs),
@@ -435,8 +416,27 @@ static NSArray *getAllSystemLanguageTitles() {
             YMToggle(LOC(@"DISABLES_NEW_MINIPLAYER"), LOC(@"DISABLES_NEW_MINIPLAYER_DESC"), DisablesNewMiniPlayer),
             YMToggle(LOC(@"DISABLES_SNACK_BAR"), LOC(@"DISABLES_SNACK_BAR_DESC"), DisablesSnackBar),
             YMToggle(LOC(@"HIDE_STARTUP_ANIMATIONS"), LOC(@"HIDE_STARTUP_ANIMATIONS_DESC"), HideStartupAni),
-            YMToggle(LOC(@"HIDE_PLAY_IN_NEXT_QUEUE"), LOC(@"HIDE_PLAY_IN_NEXT_QUEUE_DESC"), HidePlayInNextQueue),
             YMToggle(LOC(@"HIDE_LIKE_DISLIKE_VOTES"), LOC(@"HIDE_LIKE_DISLIKE_VOTES_DESC"), HideLikeDislikeVotes),
+            YMHeader(LOC(@"FLYOUT_MENU")),
+            YMToggle(LOC(@"REMOVE_PLAY_IN_NEXT_QUEUE_OPTION"), LOC(@"REMOVE_PLAY_IN_NEXT_QUEUE_OPTION_DESC"), RemovePlayInNextQueueOption),
+            YMToggle(LOC(@"REMOVE_DOWNLOAD_OPTION"), LOC(@"REMOVE_DOWNLOAD_OPTION_DESC"), RemoveDownloadOption),
+            YMToggle(LOC(@"REMOVE_WATCH_LATER_OPTION"), LOC(@"REMOVE_WATCH_LATER_OPTION_DESC"), RemoveWatchLaterOption),
+            YMToggle(LOC(@"REMOVE_SAVE_OPTION"), LOC(@"REMOVE_SAVE_OPTION_DESC"), RemoveSaveOption),
+            YMToggle(LOC(@"REMOVE_REMOVE_FROM_PLAYLIST_OPTION"), LOC(@"REMOVE_REMOVE_FROM_PLAYLIST_OPTION_DESC"), RemoveRemoveFromPlaylistOption),
+            YMToggle(LOC(@"REMOVE_SHARE_OPTION"), LOC(@"REMOVE_SHARE_OPTION_DESC"), RemoveShareOption),
+            YMToggle(LOC(@"REMOVE_NOT_INTERESTED_OPTION"), LOC(@"REMOVE_NOT_INTERESTED_OPTION_DESC"), RemoveNotInterestedOption),
+            YMToggle(LOC(@"REMOVE_DONT_RECOMMEND_OPTION"), LOC(@"REMOVE_DONT_RECOMMEND_OPTION_DESC"), RemoveDontRecommendOption),
+            YMToggle(LOC(@"REMOVE_INFO_OPTION"), LOC(@"REMOVE_INFO_OPTION_DESC"), RemoveInfoOption),
+            YMToggle(LOC(@"REMOVE_FILTER_OPTION"), LOC(@"REMOVE_FILTER_OPTION_DESC"), RemoveFilterOption),
+            YMToggle(LOC(@"REMOVE_REPORT_OPTION"), LOC(@"REMOVE_REPORT_OPTION_DESC"), RemoveReportOption),
+            YMToggle(LOC(@"REMOVE_YOUTUBE_MUSIC_OPTION"), LOC(@"REMOVE_YOUTUBE_MUSIC_OPTION_DESC"), RemoveYouTubeMusicOption),
+            YMToggle(LOC(@"REMOVE_FEED_BACK_OPTION"), LOC(@"REMOVE_FEED_BACK_OPTION_DESC"), RemoveFeedBackOption),
+            YMToggle(LOC(@"REMOVE_CAST_OPTION"), LOC(@"REMOVE_CAST_OPTION_DESC"), RemoveCastOption),
+            YMToggle(LOC(@"REMOVE_SHUFFLE_OPTION"), LOC(@"REMOVE_SHUFFLE_OPTION_DESC"), RemoveShuffleOption),
+            YMToggle(LOC(@"REMOVE_UN_SUB_OPTION"), LOC(@"REMOVE_UN_SUB_OPTION_DESC"), RemoveUnSubOption),
+            YMToggle(LOC(@"REMOVE_HIDE_FROM_PLAYLIST_OPTION"), LOC(@"REMOVE_HIDE_FROM_PLAYLIST_OPTION_DESC"), RemoveHideFromPlaylistOption),
+            YMToggle(LOC(@"REMOVE_HELP_OPTION"), LOC(@"REMOVE_HELP_OPTION_DESC"), RemoveHelpOption),
+            YMToggle(LOC(@"REMOVE_NOTIFY_OPTION"), LOC(@"REMOVE_NOTIFY_OPTION_DESC"), RemoveNotifyOption),
         ], settingsViewController, [self parentResponder]);
         return YES;
     }];

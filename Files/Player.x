@@ -1,6 +1,4 @@
 #import "Headers.h"
-#import <SystemConfiguration/SystemConfiguration.h>
-#import <netinet/in.h>
 
 BOOL isWiFiConnected(void) {
     struct sockaddr_in zeroAddress;
@@ -23,18 +21,15 @@ BOOL isWiFiConnected(void) {
     
     if (!canConnect) return NO;
     
-    // เช็กว่าเป็น Cellular (เน็ตมือถือ) หรือไม่
     BOOL isCellular = (flags & kSCNetworkReachabilityFlagsIsWWAN) != 0;
-    
-    // ถ้าต่อเน็ตได้ และไม่ใช่ Cellular ก็แปลว่าเป็น WiFi
     return !isCellular;
 }
 
 extern void YouModDownloadSetCurrentPlayer(YTPlayerViewController *player);
 
-static NSString *shortsVidID;
+// static NSString *shortsVidID;
 
-static BOOL isShortsTab;
+// static BOOL isShortsTab;
 
 // Audio track list
 static NSArray *getAllSystemLanguageTitles() {
@@ -88,32 +83,25 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     CGFloat rate = playbackRate != 0 ? playbackRate : 1.0;
     NSTimeInterval remainingSeconds = (lround(video.totalMediaTime) - lround(time.time)) / rate;
 
-    int hours = (int)(remainingSeconds / 3600);
-    int minutes = (int)(((int)remainingSeconds % 3600) / 60);
-    int seconds = (int)((int)remainingSeconds % 60);
-
     NSString *remainingTimeText;
-    if (hours > 0) {
-        remainingTimeText = [NSString stringWithFormat:@"%d:%02d:%02d", hours, minutes, seconds];
+    if (IS_ENABLED(Uses24HoursTime)) {
+        NSDate *estimatedEndTime = [NSDate dateWithTimeIntervalSinceNow:remainingSeconds];
+
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]];
+        [dateFormatter setDateFormat:@"HH:mm"];
+
+        remainingTimeText = [dateFormatter stringFromDate:estimatedEndTime];
     } else {
-        remainingTimeText = [NSString stringWithFormat:@"%d:%02d", minutes, seconds];
+        int hours = (int)(remainingSeconds / 3600);
+        int minutes = (int)(((int)remainingSeconds % 3600) / 60);
+        int seconds = (int)((int)remainingSeconds % 60);
+        if (hours > 0) {
+            remainingTimeText = [NSString stringWithFormat:@"%d:%02d:%02d", hours, minutes, seconds];
+        } else {
+            remainingTimeText = [NSString stringWithFormat:@"%d:%02d", minutes, seconds];
+        }
     }
-    
-    /*
-    CGFloat rate = playbackRate != 0 ? playbackRate : 1.0;
-    NSTimeInterval remainingTimetext = (lround(video.totalMediaTime) - lround(time.time)) / rate;
-    NSString *remainingTime = remainingTimetext;
-
-    // NSDate *estimatedEndTime = [NSDate dateWithTimeIntervalSinceNow:remainingTime];
-
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    [dateFormatter setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"]];
-    [dateFormatter setDateFormat:@"HH:mm"];
-    // [dateFormatter setDateFormat:ytlBool(@"24hrFormat") ? @"HH:mm" : @"h:mm a"];
-    */
-
-    // NSString *formattedEndTime = [dateFormatter stringFromDate:estimatedEndTime];
-
     YTPlayerView *playerView = (YTPlayerView *)self.playerView;
     if (![playerView.overlayView isKindOfClass:%c(YTMainAppVideoPlayerOverlayView)]) return;
 
@@ -126,6 +114,90 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     }
 }
 
+%hook YTInlinePlayerBarContainerView
+- (void)layoutSubviews {
+    %orig;
+    if (!IS_ENABLED(TapToSeek)) return;
+    for (UIView *subview in self.subviews) {
+        if ([subview isKindOfClass:%c(YTInlineScrubGestureView)]) {
+            BOOL hasCustomTap = NO;
+            for (UIGestureRecognizer *gesture in subview.gestureRecognizers) {
+                if ([gesture isKindOfClass:[UITapGestureRecognizer class]] && 
+                    [gesture.name isEqualToString:@"YouModTapToSeek"]) {
+                    hasCustomTap = YES;
+                    break;
+                }
+            }
+            if (!hasCustomTap) {
+                UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleYouModScrubTap:)];
+                tap.name = @"YouModTapToSeek";
+                [subview addGestureRecognizer:tap];
+            }
+            break;
+        }
+    }
+}
+%new
+- (void)handleYouModScrubTap:(UITapGestureRecognizer *)gesture {
+    if (gesture.state == UIGestureRecognizerStateEnded) {
+        UIView *gestureView = gesture.view;
+        UIView *progressBar;
+
+        for (UIView *subview in self.subviews) {
+            if ([subview isKindOfClass:%c(YTModularPlayerBarView)]) {
+                progressBar = subview;
+                break;
+            }
+        }
+        if (!progressBar) return;
+        
+        UIWindow *keyWindow = nil;
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if (scene.activationState == UISceneActivationStateForegroundActive) {
+                for (UIWindow *window in scene.windows) {
+                    if (window.isKeyWindow) {
+                        keyWindow = window;
+                        break;
+                    }
+                }
+            }
+            if (keyWindow) break;
+        }
+
+        CGPoint touchPointInWindow = [gesture locationInView:keyWindow];
+        CGFloat barStartX = 0.0;
+        CGFloat barWidth = gestureView.bounds.size.width;
+        
+        if (progressBar) {
+            CGRect barFrameInWindow = [progressBar convertRect:progressBar.bounds toView:keyWindow];
+            barStartX = barFrameInWindow.origin.x;
+            barWidth = barFrameInWindow.size.width;
+        }
+        
+        if (barWidth > 0) {
+            CGFloat relativeX = touchPointInWindow.x - barStartX;
+            CGFloat percentage = relativeX / barWidth;
+            
+            if (percentage < 0.0) percentage = 0.0;
+            if (percentage > 1.0) percentage = 1.0;
+            
+            UIResponder *responder = self.nextResponder;
+            while (responder && ![responder isKindOfClass:%c(YTMainAppVideoPlayerOverlayViewController)]) {
+                responder = responder.nextResponder;
+            }
+            
+            if (responder) {
+                YTMainAppVideoPlayerOverlayViewController *controller = (YTMainAppVideoPlayerOverlayViewController *)responder;
+                YTPlayerViewController *controller2 = controller.parentViewController;
+                CGFloat totalDuration = [controller2 currentVideoTotalMediaTime];
+                CGFloat targetTime = totalDuration * percentage;    
+                [controller2 seekToTime:targetTime];
+            }
+        }
+    }
+}
+%end
+
 %hook YTMainAppControlsOverlayView
 // Hide autoplay Switch
 - (void)setAutoplaySwitchButtonRenderer:(id)arg1 { if (!IS_ENABLED(HideAutoPlayToggle)) %orig; }
@@ -137,8 +209,7 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
 - (void)setOverlayVisible:(BOOL)visible {
     %orig;
     if (!IS_ENABLED(PauseOnOverlay)) return;
-    YTMainAppVideoPlayerOverlayView *mainOverlayView = (YTMainAppVideoPlayerOverlayView *)self.superview;
-    YTMainAppVideoPlayerOverlayViewController *mainOverlayController = (YTMainAppVideoPlayerOverlayViewController *)mainOverlayView.delegate;
+    YTMainAppVideoPlayerOverlayViewController *mainOverlayController = (YTMainAppVideoPlayerOverlayViewController *)self.eventsDelegate;
     YTPlayerViewController *playerViewController = mainOverlayController.parentViewController;
     visible ? [playerViewController pause] : [playerViewController play];
 }
@@ -157,18 +228,9 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
 - (BOOL)isAutoplayEnabled { return IS_ENABLED(HideAutoPlayToggle) ? NO : %orig; }
 %end
 
-/* idk what is this thing does
 %hook YTColdConfig
-- (BOOL)isLandscapeEngagementPanelEnabled {
-    return NO;
-}
+- (BOOL)isLandscapeEngagementPanelEnabled { return IS_ENABLED(DisablesEngagementPanel) ? NO : %orig; }
 %end
-
-%hook YTHeaderView
-- (BOOL)stickyNavHeaderEnabled { return IS_ENABLED(YTPremiumLogo) ? YES : NO; } // idk what is this does, the nav is already sticky... Or this thing only happens in iPhone?
-- (void)setStickyNavHeaderEnabled:(BOOL)arg { IS_ENABLED(YTPremiumLogo) ? %orig(YES) : %orig(NO); }
-%end
-*/
 
 // Remove Dark Background in Overlay
 %hook YTMainAppVideoPlayerOverlayView
@@ -204,6 +266,15 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
     if (vidID.length)
         UIPasteboard.generalPasteboard.string = [NSString stringWithFormat:@"https://www.youtube.com/watch?v=%@&t=%lds", vidID, (long)mediaTimeIn];
 }
+// Disables free zoom gesture
+- (id)videoFreeZoomOverlayController {
+    id value = %orig;
+    if (value && IS_ENABLED(DisablesFreeZoom)) {
+        [self setVideoFreeZoomOverlayController:nil];
+        return nil;
+    }
+    return value;
+}
 %end
 
 %hook YTColdConfig
@@ -212,18 +283,12 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
 %end
 
 // YTNoPaidPromo (https://github.com/PoomSmart/YTNoPaidPromo)
-%group PaidPromoOverlay
 %hook YTMainAppVideoPlayerOverlayViewController
-- (void)setPaidContentWithPlayerData:(id)data {}
-- (void)playerOverlayProvider:(YTPlayerOverlayProvider *)provider didInsertPlayerOverlay:(YTPlayerOverlay *)overlay {
-    if ([[overlay overlayIdentifier] isEqualToString:@"player_overlay_paid_content"]) return;
-    %orig;
-}
+- (void)setPaidContentWithPlayerData:(id)data { if (!IS_ENABLED(HidePaidPromoOverlay)) %orig; }
 %end
 
 %hook YTInlineMutedPlaybackPlayerOverlayViewController
-- (void)setPaidContentWithPlayerData:(id)data {}
-%end
+- (void)setPaidContentWithPlayerData:(id)data { if (!IS_ENABLED(HidePaidPromoOverlay)) %orig; }
 %end
 
 // Remove Watermarks
@@ -271,88 +336,6 @@ static void YouModAddEndTime(YTPlayerViewController *self, YTSingleVideoControll
 }
 %end
 
-/*
-
-static NSString *getQualityLabel(NSArray <MLFormat *> *formats) {
-    BOOL isWifi = [[%c(GCKNNetworkReachability) sharedInstance] currentStatus] == 1;
-    NSInteger kQualityIndex = isWifi ? INTFORVAL(WifiQualityIndex) : INTFORVAL(CellQualityIndex);
-
-    NSString *bestQualityLabel;
-    int highestResolution = 0;
-    for (MLFormat *format in formats) {
-        int reso = format.singleDimensionResolution;
-        if (reso > highestResolution) {
-            highestResolution = reso;
-            bestQualityLabel = format.qualityLabel;
-        }
-    }
-
-    NSArray *qualityLabels = @[@"Default", bestQualityLabel, @"2160p60", @"2160p", @"1440p60", @"1440p", @"1080p60", @"1080p", @"720p60", @"720p", @"480p", @"360p", @"240p", @"144p"];
-    NSString *qualityLabel = qualityLabels[kQualityIndex];
-
-    if (![qualityLabel isEqualToString:bestQualityLabel]) {
-        BOOL exactMatch = NO;
-        NSString *closestQualityLabel = qualityLabel;
-
-        for (MLFormat *format in formats) {
-            if ([format.qualityLabel isEqualToString:qualityLabel]) {
-                exactMatch = YES;
-                break;
-            }
-        }
-
-        if (!exactMatch) {
-            NSInteger bestQualityDifference = NSIntegerMax;
-
-            for (MLFormat *format in formats) {
-                NSArray *formatСomponents = [format.qualityLabel componentsSeparatedByString:@"p"];
-                NSArray *targetComponents = [qualityLabel componentsSeparatedByString:@"p"];
-                if (formatСomponents.count == 2) {
-                    NSInteger formatQuality = [formatСomponents.firstObject integerValue];
-                    NSInteger targetQuality = [targetComponents.firstObject integerValue];
-                    NSInteger difference = labs(formatQuality - targetQuality);
-                    if (difference < bestQualityDifference) {
-                        bestQualityDifference = difference;
-                        closestQualityLabel = format.qualityLabel;
-                    }
-                }
-            }
-
-            qualityLabel = closestQualityLabel;
-        }
-    }
-    return qualityLabel;
-}
-
-static MLQuickMenuVideoQualitySettingFormatConstraint *getConstraint(NSString *qualityLabel) {
-    MLQuickMenuVideoQualitySettingFormatConstraint *constraint;
-    @try {
-        constraint = [[%c(MLQuickMenuVideoQualitySettingFormatConstraint) alloc] initWithVideoQualitySetting:3 formatSelectionReason:2 qualityLabel:qualityLabel];
-    } @catch (id ex) {
-        constraint = [[%c(MLQuickMenuVideoQualitySettingFormatConstraint) alloc] initWithVideoQualitySetting:3 formatSelectionReason:2 qualityLabel:qualityLabel resolutionCap:0];
-    }
-    return constraint;
-}
-
-%hook MLAVAssetPlayer
-
-// The changed value is not reliable but this method gets called whenever AirPlay session is started or stopped
-- (void)playerExternalPlaybackActiveDidChange:(NSDictionary *)change {
-    %orig;
-    if (INTFORVAL(WifiQualityIndex) == 0 && INTFORVAL(CellQualityIndex) == 0) return;
-    BOOL multipleScreens = [UIScreen screens].count > 1;
-    if (isExternal != multipleScreens) {
-        isExternal = multipleScreens;
-        MLAVPlayer *player = (MLAVPlayer *)self.delegate;
-        NSString *qualityLabel = getQualityLabel([player selectableVideoFormats]);
-        player.videoFormatConstraint = getConstraint(qualityLabel);
-    }
-}
-
-%end
-
-*/
-
 // Disable Fullscreen Actions
 %hook YTFullscreenActionsView
 - (CGSize)sizeThatFits:(CGSize)size { return IS_ENABLED(HideFullAction) ? CGSizeMake(1, 35) : %orig; }
@@ -389,15 +372,19 @@ static MLQuickMenuVideoQualitySettingFormatConstraint *getConstraint(NSString *q
 - (unsigned long long)allowedFullScreenOrientations { return IS_ENABLED(PortFull) ? UIInterfaceOrientationMaskAllButUpsideDown : %orig; }
 %end
 
-/* Disable Snap To Chapter (https://github.com/qnblackcat/uYouPlus/blob/main/uYouPlus.xm#L457-464) - GOT REMOVED
+// Disable Snap To Chapter (https://github.com/qnblackcat/uYouPlus/blob/main/uYouPlus.xm#L457-464) - GOT REMOVED
 %hook YTSegmentableInlinePlayerBarView
-- (void)didMoveToWindow { %orig; if (ytlBool(@"dontSnapToChapter")) self.enableSnapToChapter = NO; }
+- (void)didMoveToWindow { 
+    %orig; 
+    if (IS_ENABLED(DontSnapToChapter)) self.enableSnapToChapter = NO;
+}
 %end
 
-%hook YTModularPlayerBarController
-- (void)setEnableSnapToChapter:(BOOL)arg { %orig(NO); } // idk this works or not
+%hook YTInlinePlayerBarContainerView
+- (void)inlinePlayerBarView:(id)arg1 didScrubToChapteredTime:(CGFloat)arg2 shouldSnap:(BOOL)arg3 { 
+    IS_ENABLED(DontSnapToChapter) ? %orig(arg1, arg2, NO) : %orig;
+}
 %end
-*/
 
 // Replace previous/next buttons with back and forward
 %hook YTColdConfig
@@ -509,12 +496,9 @@ static CGFloat YouModSpeedForHoldIndex(NSInteger index) {
 static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMainAppVideoPlayerOverlayViewController *delegate) {
     NSInteger speedIndex = INTFORVAL(HoldToSpeedIndex);
     CGFloat speed = YouModSpeedForHoldIndex(speedIndex);
-    YTMainAppVideoPlayerOverlayView *vidOverlay = delegate.videoPlayerOverlayView;
-    YTMainAppControlsOverlayView *controlsOverlay = vidOverlay.controlsOverlayView;
 
     if (gesture.state == UIGestureRecognizerStateBegan) {
         YouModRateBeforeHoldToSpeed = [delegate currentPlaybackRate];
-        [controlsOverlay setOverlayVisible:NO];
         [delegate setPlaybackRate:speed];
     } else if (gesture.state == UIGestureRecognizerStateEnded || gesture.state == UIGestureRecognizerStateCancelled || gesture.state == UIGestureRecognizerStateFailed) {
         [delegate setPlaybackRate:YouModRateBeforeHoldToSpeed];
@@ -536,6 +520,8 @@ static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMai
     YouModManageHoldToSpeed(gesture, self.delegate);
 }
 %end
+
+/*
 
 %hook YTReelPlayerViewController
 
@@ -567,19 +553,21 @@ static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMai
 }
 %end
 
+*/
+
 %hook YTSingleVideoController
 
 - (void)playerItem:(id)arg1 hasSelectableVideoFormats:(id)arg2 {
     %orig;
     if (!arg2) return;
-    // BOOL multipleScreens = [UIScreen screens].count > 1;
-    // if (multipleScreens) return; // Prevent the app crashes
-    if (INTFORVAL(WifiQualityIndex) != 0 || INTFORVAL(CellQualityIndex) != 0) [self YouModAutoQuality];
+    [self YouModAutoQuality];
 }
 
 %new
 - (void)YouModAutoQuality {
     NSInteger kQualityIndex = isWiFiConnected() ? INTFORVAL(WifiQualityIndex) : INTFORVAL(CellQualityIndex);
+    if ([NSProcessInfo processInfo].lowPowerModeEnabled) kQualityIndex = INTFORVAL(LowPowerQualityIndex);
+    if (kQualityIndex == 0) return;
 
     NSString *bestQualityLabel;
     int highestResolution = 0;
@@ -806,16 +794,21 @@ static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMai
 %end
 
 // Gestures - @bhackel (YTLitePlus)
-%group Gestures
 %hook YTWatchLayerViewController
 // invoked when the player view controller is either created or destroyed
 - (void)watchController:(YTWatchController *)watchController didSetPlayerViewController:(YTPlayerViewController *)playerViewController {
     if (playerViewController) {
         // check to see if the pan gesture is already created
-        if (!playerViewController.YouModPanGesture) {
+        if (!playerViewController.YouModPanGesture && IS_ENABLED(GestureControls)) {
             playerViewController.YouModPanGesture = [[UIPanGestureRecognizer alloc] initWithTarget:playerViewController action:@selector(YouModHandlePanGesture:)];
             playerViewController.YouModPanGesture.delegate = playerViewController;
             [playerViewController.playerView addGestureRecognizer:playerViewController.YouModPanGesture];
+        }
+        if (!playerViewController.YouModTapGesture && IS_ENABLED(PauseTwoFingers)) {
+            playerViewController.YouModTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:playerViewController action:@selector(YouModHandleTapGesture:)];
+            playerViewController.YouModTapGesture.numberOfTouchesRequired = 2;
+            playerViewController.YouModTapGesture.delegate = playerViewController;
+            [playerViewController.playerView addGestureRecognizer:playerViewController.YouModTapGesture];
         }        
     }
     %orig;
@@ -824,6 +817,7 @@ static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMai
 
 %hook YTPlayerViewController
 %property (nonatomic, retain) UIPanGestureRecognizer *YouModPanGesture;
+%property (nonatomic, retain) UITapGestureRecognizer *YouModTapGesture;
 %property (nonatomic, retain) UILabel *YouModGestureHUD;
 %new
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
@@ -1030,7 +1024,17 @@ static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMai
     }
     return YES;
 }
-%end
+// Pause using Two fingers
+%new
+- (void)YouModHandleTapGesture:(UITapGestureRecognizer *)tapGestureRecognizer {
+    if (tapGestureRecognizer.state == UIGestureRecognizerStateEnded) {
+        if (self.playerState == 3) {
+            [self pause];
+        } else if (self.playerState == 4) {
+            [self play];
+        }
+    }
+}
 %end
 
 %ctor {
@@ -1040,12 +1044,6 @@ static void YouModManageHoldToSpeed(UILongPressGestureRecognizer *gesture, YTMai
     }
     if (IS_ENABLED(ExtraSpeed) || IS_ENABLED(GestureControls) || INTFORVAL(HoldToSpeedIndex) >= 9 || INTFORVAL(AutoSpeedIndex) >= 9) {
         %init(Speed);
-    }
-    if (IS_ENABLED(HidePaidPromoOverlay)) {
-        %init(PaidPromoOverlay);
-    }
-    if (IS_ENABLED(GestureControls)) {
-        %init(Gestures);
     }
     if (IS_ENABLED(ForceMiniPlayer)) {
         %init(ForceMiniPlayer);

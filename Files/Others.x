@@ -3,13 +3,6 @@
 Class YTILikeResponseClass, YTIDislikeResponseClass, YTIRemoveLikeResponseClass;
 
 // Background playback
-%group BackgroundPlayback
-%hook YTIBackgroundOfflineSettingCategoryEntryRenderer
-%new(B@:)
-- (BOOL)isBackgroundEnabled { return YES; }
-%end
-%end
-
 %hook MLVideo
 - (BOOL)playableInBackground { return IS_ENABLED(BackgroundPlayback) ? YES : %orig; }
 %end
@@ -24,15 +17,6 @@ Class YTILikeResponseClass, YTIDislikeResponseClass, YTIRemoveLikeResponseClass;
 
 %hook YTIPlayerResponse
 - (BOOL)isPlayableInBackground { return IS_ENABLED(BackgroundPlayback) ? YES : %orig; }
-%end
-
-// Disables PiP
-%hook YTIPlayabilityStatus
-- (BOOL)isPlayableInPictureInPicture { return IS_ENABLED(DisablesPiP) ? NO : %orig; }
-%end
-
-%hook YTPlayerResponse
-- (BOOL)isPlayableInPictureInPicture { return IS_ENABLED(DisablesPiP) ? NO : %orig; }
 %end
 
 // Try to disable Shorts PiP
@@ -123,42 +107,75 @@ Class YTILikeResponseClass, YTIDislikeResponseClass, YTIRemoveLikeResponseClass;
 // Remove "Play next in queue" from the menu @PoomSmart (https://github.com/qnblackcat/uYouPlus/issues/1138#issuecomment-1606415080)
 %hook YTMenuItemVisibilityHandler
 - (BOOL)shouldShowServiceItemRenderer:(YTIMenuConditionalServiceItemRenderer *)renderer {
-    if (renderer.icon.iconType == 251 && IS_ENABLED(HidePlayInNextQueue)) {
+    if (renderer.icon.iconType == 251 && IS_ENABLED(RemovePlayInNextQueueOption)) {
         return NO;
-    } return %orig;
+    }
+    return %orig;
 }
 %end
 
 %hook YTMenuItemVisibilityHandlerImpl
 - (BOOL)shouldShowServiceItemRenderer:(YTIMenuConditionalServiceItemRenderer *)renderer {
-    if (renderer.icon.iconType == 251 && IS_ENABLED(HidePlayInNextQueue)) {
+    if (renderer.icon.iconType == 251 && IS_ENABLED(RemovePlayInNextQueueOption)) {
         return NO;
-    } return %orig;
+    }
+    return %orig;
 }
 %end
 
-/* untested
-// Remove Download button from the menu
+// Remove flyout menu options
 %hook YTDefaultSheetController
 - (void)addAction:(YTActionSheetAction *)action {
-    NSString *identifier = [action valueForKey:@"_accessibilityIdentifier"];
-
-    NSDictionary *actionsToRemove = @{
-        @"7": @(ytlBool(@"removeDownloadMenu")),
-        @"1": @(ytlBool(@"removeWatchLaterMenu")),
-        @"3": @(ytlBool(@"removeSaveToPlaylistMenu")),
-        @"5": @(ytlBool(@"removeShareMenu")),
-        @"12": @(ytlBool(@"removeNotInterestedMenu")),
-        @"31": @(ytlBool(@"removeDontRecommendMenu")),
-        @"58": @(ytlBool(@"removeReportMenu"))
-    };
-
-    if (![actionsToRemove[identifier] boolValue]) {
+    if (![action.button isKindOfClass:%c(YTMenuItemMDCButton)]) {
         %orig;
+        return;
     }
+    YTMenuItemMDCButton *button = (YTMenuItemMDCButton *)action.button;
+    NSString *iden = button.accessibilityIdentifier;
+    NSString *imageName = [button.currentImage description];
+
+    // Method 1: Filter from accessibilityIdentifier
+    NSDictionary *actionsToRemove = @{
+        @"7": @(IS_ENABLED(RemoveDownloadOption)),
+        @"1": @(IS_ENABLED(RemoveWatchLaterOption)),
+        @"3": @(IS_ENABLED(RemoveSaveOption)),
+        @"4": @(IS_ENABLED(RemoveRemoveFromPlaylistOption)),
+        @"5": @(IS_ENABLED(RemoveShareOption)),
+        @"6": @(IS_ENABLED(RemoveShareOption)),
+        @"12": @(IS_ENABLED(RemoveNotInterestedOption)),
+        @"22": @(IS_ENABLED(RemoveInfoOption)),
+        @"36": @(IS_ENABLED(RemoveFilterOption)),
+        @"40": @(IS_ENABLED(RemoveNotifyOption)),
+        @"58": @(IS_ENABLED(RemoveReportOption))
+    };
+    if ([actionsToRemove[iden] boolValue]) return;
+
+    // Method 2: Filter from imageName
+    NSDictionary *imageNameToRemove = @{
+        @"youtube_music": @(IS_ENABLED(RemoveYouTubeMusicOption)),
+        @"flag": @(IS_ENABLED(RemoveReportOption)),
+        @"alert_bubble": @(IS_ENABLED(RemoveFeedBackOption)),
+        @"bookmark": @(IS_ENABLED(RemoveSaveOption)),
+        @"circle_slash": @(IS_ENABLED(RemoveNotInterestedOption)),
+        @"x_circle": @(IS_ENABLED(RemoveDontRecommendOption)),
+        @"chromecast": @(IS_ENABLED(RemoveCastOption)),
+        @"shuffle": @(IS_ENABLED(RemoveShuffleOption)),
+        @"person_x": @(IS_ENABLED(RemoveUnSubOption)),
+        @"help_circle": @(IS_ENABLED(RemoveHelpOption)),
+        @"eye_slash": @(IS_ENABLED(RemoveHideFromPlaylistOption)),
+        @"info_circle": @(IS_ENABLED(RemoveInfoOption))
+    };
+    for (NSString *key in imageNameToRemove) {
+        if ([imageName containsString:key]) {
+            if ([imageNameToRemove[key] boolValue]) {
+                return;
+            }
+            break;
+        }
+    }
+    %orig;
 }
 %end
-*/
 
 // YTSlientVote (https://github.com/PoomSmart/YTSilentVote)
 %group SlientVote
@@ -179,8 +196,5 @@ Class YTILikeResponseClass, YTIDislikeResponseClass, YTIRemoveLikeResponseClass;
     %init;
     if (IS_ENABLED(HideLikeDislikeVotes)) {
         %init(SlientVote);
-    }
-    if (IS_ENABLED(BackgroundPlayback)) {
-        %init(BackgroundPlayback);
     }
 }

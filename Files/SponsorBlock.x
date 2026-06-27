@@ -29,6 +29,101 @@ BOOL useBackwardIconForButton;
 
 static SBPassthroughWindow *sbOverlayWindow = nil;
 
+void sbUpdateOverlayInsetForPivotBar() {
+    if (!sbOverlayWindow) return;
+    UIViewController *rootVC = sbOverlayWindow.rootViewController;
+    if (!rootVC) return;
+
+    // Look up YouTube's root view controller in the SAME scene as our overlay
+    // window — on iPad multi-window the app delegate's window may belong to a
+    // different scene, so [delegate window] is not safe here.
+    UIWindow *ytWindow = nil;
+    for (UIWindow *win in sbOverlayWindow.windowScene.windows) {
+        if ([win.rootViewController isKindOfClass:NSClassFromString(@"YTAppViewController")] || [win.rootViewController isKindOfClass:NSClassFromString(@"YTAppViewControllerImpl")]) {
+            ytWindow = win;
+            break;
+        }
+    }
+    YTAppViewController *appVC = (YTAppViewController *)ytWindow.rootViewController;
+    YTAppViewControllerImpl *appVC2 = (YTAppViewControllerImpl *)ytWindow.rootViewController;
+    YTPivotBarViewController *pivotVC;
+    @try {
+        pivotVC = (YTPivotBarViewController *)appVC.pivotBarViewController;
+    } @catch (id ex) {
+        pivotVC = (YTPivotBarViewController *)appVC2.pivotBarViewController;
+    }
+    YTPivotBarView *pivot = (YTPivotBarView *)pivotVC.viewIfLoaded;
+
+    // Measure the pivot bar's visible top edge in our overlay window's coords
+    // and convert it into the inset our pills need above the device safe area.
+    // This avoids reading pivot.bounds.size.height directly — that value
+    // includes home-indicator padding on notched devices and would over-correct
+    // the safe area, leaving the pill floating too high above the tabbar.
+    CGFloat tabH = 0.0;
+    if (pivot && pivot.window != nil && !pivot.hidden && pivot.alpha > 0.01) {
+        UIView *overlayView = rootVC.view;
+        CGRect pivotInOverlay = [overlayView convertRect:pivot.bounds fromView:pivot];
+        CGFloat pivotTop = CGRectGetMinY(pivotInOverlay);
+        CGFloat overlayHeight = overlayView.bounds.size.height;
+        CGFloat deviceSafeBottom = sbOverlayWindow.safeAreaInsets.bottom;
+        // Clamp to [0, overlayHeight] in case convertRect returns a stale
+        // value during scene transitions (e.g. iPad split-view drag) — without
+        // an upper bound, an absurd tabH would push the pill off-screen.
+        tabH = MAX(0.0, MIN(overlayHeight, overlayHeight - deviceSafeBottom - pivotTop));
+    }
+    UIEdgeInsets current = rootVC.additionalSafeAreaInsets;
+    if (current.bottom != tabH) {
+        rootVC.additionalSafeAreaInsets = UIEdgeInsetsMake(0, 0, tabH, 0);
+    }
+}
+
+// Tracks which scene's lifecycle is currently observed. When sbOverlayWindow is
+// recreated for a different scene (after the original goes Unattached), we
+// re-bind observers to the new scene rather than leaving stale registrations.
+static UIWindowScene *sbObservedScene = nil;
+static id sbBackgroundObserver = nil;
+static id sbForegroundObserver = nil;
+static id sbAppBackgroundObserver = nil;
+static id sbAppForegroundObserver = nil;
+static id sbOrientationObserver = nil;
+
+static void sbRegisterOverlayLifecycleObservers(UIWindowScene *targetScene) {
+    if (!targetScene || sbObservedScene == targetScene) return;
+    NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
+
+    if (sbBackgroundObserver) [nc removeObserver:sbBackgroundObserver];
+    if (sbForegroundObserver) [nc removeObserver:sbForegroundObserver];
+    if (sbAppBackgroundObserver) [nc removeObserver:sbAppBackgroundObserver];
+    if (sbAppForegroundObserver) [nc removeObserver:sbAppForegroundObserver];
+    if (sbOrientationObserver) [nc removeObserver:sbOrientationObserver];
+
+    sbObservedScene = targetScene;
+
+    // Hide on background — synchronous change before the app-switcher snapshot
+    // is captured (Apple QA1838). queue:nil delivers on the posting thread
+    // without enqueuing, so the hide happens before iOS captures the snapshot.
+    sbBackgroundObserver = [nc addObserverForName:UISceneDidEnterBackgroundNotification object:targetScene queue:nil usingBlock:^(__unused NSNotification *note) {
+        if (sbOverlayWindow) sbOverlayWindow.hidden = YES;
+    }];
+    sbForegroundObserver = [nc addObserverForName:UISceneWillEnterForegroundNotification object:targetScene queue:nil usingBlock:^(__unused NSNotification *note) {
+        if (sbOverlayWindow) sbOverlayWindow.hidden = NO;
+    }];
+    sbAppBackgroundObserver = [nc addObserverForName:UIApplicationDidEnterBackgroundNotification object:nil queue:nil usingBlock:^(__unused NSNotification *note) {
+        if (sbOverlayWindow) sbOverlayWindow.hidden = YES;
+    }];
+    sbAppForegroundObserver = [nc addObserverForName:UIApplicationWillEnterForegroundNotification object:nil queue:nil usingBlock:^(__unused NSNotification *note) {
+        if (sbOverlayWindow) sbOverlayWindow.hidden = NO;
+    }];
+
+    // Recompute pivot-bar inset on rotation / dynamic tabbar height changes.
+    // UIDeviceOrientationDidChangeNotification only fires when device-orientation
+    // generation is enabled; this call is idempotent.
+    [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+    sbOrientationObserver = [nc addObserverForName:UIDeviceOrientationDidChangeNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(__unused NSNotification *note) {
+        sbUpdateOverlayInsetForPivotBar();
+    }];
+}
+
 UIView *sbGetNotificationParent(void) {
     if (sbOverlayWindow && sbOverlayWindow.windowScene.activationState == UISceneActivationStateUnattached) {
         sbOverlayWindow = nil;
@@ -57,6 +152,9 @@ UIView *sbGetNotificationParent(void) {
         rootVC.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         rootVC.view.backgroundColor = [UIColor clearColor];
         sbOverlayWindow.rootViewController = rootVC;
+
+        sbRegisterOverlayLifecycleObservers(activeScene);
+        sbUpdateOverlayInsetForPivotBar();
     }
     return sbOverlayWindow.rootViewController.view;
 }
@@ -192,127 +290,92 @@ UIColor *SBColorFromHex(NSString *hexString) {
 %property (nonatomic, strong) NSArray *sbSegments;
 %property (nonatomic, strong) NSMutableSet *sbSkippedSegments;
 %property (nonatomic, strong) SBSkipNotificationView *sbNotificationView;
-%property (nonatomic, strong) UIButton *sbOverlayButton;
 %property (nonatomic, assign) BOOL sbEnabledForVideo;
-
-// Alternative: fires when video content changes (works in newer YT versions)
-- (void)setContentVideoID:(NSString *)videoID {
-    %orig;
-    @try {
-        if (!IS_ENABLED(SBEnabled) || self.isInlinePlaybackActive || !videoID || videoID.length == 0) return;
-        if ([self.sbLastVideoID isEqualToString:videoID] && self.sbSegments.count > 0) return;
-        self.sbLastVideoID = videoID;
-
-        self.sbEnabledForVideo = YES;
-        self.sbSkippedSegments = [NSMutableSet set];
-        self.sbSegments = nil;
-        [self.sbNotificationView dismiss];
-
-        __weak typeof(self) weakSelf = self;
-        [SBRequest fetchSegmentsForVideoID:videoID completion:^(NSArray<SBSegment *> *segments) {
-            __strong typeof(weakSelf) strongSelf = weakSelf;
-            if (!strongSelf) return;
-            strongSelf.sbSegments = segments;
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"SBSegmentsDidLoad"
-                                                                object:strongSelf
-                                                              userInfo:@{@"segments": segments ?: @[]}];
-
-            [strongSelf sbShowHighlightBannerIfNeeded:segments];
-        }];
-    } @catch (NSException *e) {}
-}
 
 - (void)playbackController:(id)playbackController didActivateVideo:(id)video withPlaybackData:(id)playbackData {
     %orig;
-    @try {
-        if (!IS_ENABLED(SBEnabled) || self.isInlinePlaybackActive || self.isPlayingAd) return;
+    if (!IS_ENABLED(SBEnabled) || self.isInlinePlaybackActive || self.isPlayingAd) return;
 
-        self.sbEnabledForVideo = YES;
-        self.sbSkippedSegments = [NSMutableSet set];
-        self.sbSegments = nil;
+    self.sbEnabledForVideo = YES;
+    self.sbSkippedSegments = [NSMutableSet set];
+    self.sbSegments = nil;
 
-        [self.sbNotificationView dismiss];
+    [self.sbNotificationView dismiss];
 
-        NSString *videoID = [self contentVideoID];
-        if (!videoID) return;
-        if ([self.sbLastVideoID isEqualToString:videoID] && self.sbSegments.count > 0) return;
-        self.sbLastVideoID = videoID;
+    NSString *videoID = [self contentVideoID];
+    if ([self.sbLastVideoID isEqualToString:videoID] && self.sbSegments.count > 0) return;
+    self.sbLastVideoID = videoID;
 
-        __weak typeof(self) weakSelf = self;
-        [SBRequest fetchSegmentsForVideoID:videoID completion:^(NSArray<SBSegment *> *segments) {
-            __strong typeof(weakSelf) strongSelf = weakSelf;
-            if (!strongSelf) return;
-            strongSelf.sbSegments = segments;
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"SBSegmentsDidLoad"
-                                                                object:strongSelf
-                                                              userInfo:@{@"segments": segments ?: @[]}];
+    __weak typeof(self) weakSelf = self;
+    [SBRequest fetchSegmentsForVideoID:videoID completion:^(NSArray<SBSegment *> *segments) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        strongSelf.sbSegments = segments;
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"SBSegmentsDidLoad"
+                                                            object:strongSelf
+                                                            userInfo:@{@"segments": segments ?: @[]}];
 
-            [strongSelf sbShowHighlightBannerIfNeeded:segments];
-        }];
-    } @catch (NSException *e) {}
+        [strongSelf sbShowHighlightBannerIfNeeded:segments];
+    }];
 }
 
 - (void)singleVideo:(id)video currentVideoTimeDidChange:(id)time {
     %orig;
-    @try {
-        if (!IS_ENABLED(SBEnabled) || !self.sbEnabledForVideo || self.isInlinePlaybackActive || self.isPlayingAd) return;
+    if (!IS_ENABLED(SBEnabled) || !self.sbEnabledForVideo || self.isInlinePlaybackActive || self.isPlayingAd) return;
 
-        CGFloat currentTime = [self currentVideoMediaTime];
-        float minDuration = FLOAT_FOR_KEY(SBMinDuration);
+    CGFloat currentTime = [self currentVideoMediaTime];
+    float minDuration = FLOAT_FOR_KEY(SBMinDuration);
 
-        for (SBSegment *segment in self.sbSegments) {
-            SBSegmentAction action = [segment configuredAction];
-            if (action == SBSegmentActionDisable || action == SBSegmentActionDisplay) continue;
-            if (action == SBSegmentActionSkipTo) continue;
+    for (SBSegment *segment in self.sbSegments) {
+        SBSegmentAction action = [segment configuredAction];
+        if (action == SBSegmentActionDisable || action == SBSegmentActionDisplay) continue;
+        if (action == SBSegmentActionSkipTo) continue;
 
-            float duration = segment.endTime - segment.startTime;
-            if (duration < minDuration) continue;
+        float duration = segment.endTime - segment.startTime;
+        if (duration < minDuration) continue;
 
-            if (currentTime >= segment.startTime && currentTime < segment.endTime - 0.5) {
-                NSString *segID = segment.UUID;
-                if ([self.sbSkippedSegments containsObject:segID]) continue;
+        if (currentTime >= segment.startTime && currentTime < segment.endTime - 0.5) {
+            NSString *segID = segment.UUID;
+            if ([self.sbSkippedSegments containsObject:segID]) continue;
 
-                if (action == SBSegmentActionAutoSkip) {
-                    [self sbPerformSkip:segment];
-                } else if (action == SBSegmentActionAsk) {
-                    [self sbShowAskNotification:segment];
-                }
-                break;
+            if (action == SBSegmentActionAutoSkip) {
+                [self sbPerformSkip:segment];
+            } else if (action == SBSegmentActionAsk) {
+                [self sbShowAskNotification:segment];
             }
+            break;
         }
-    } @catch (NSException *e) {}
+    }
 }
 
 // Alternative hook for newer YouTube versions where method was renamed
 - (void)potentiallyMutatedSingleVideo:(id)video currentVideoTimeDidChange:(id)time {
     %orig;
-    @try {
-        if (!IS_ENABLED(SBEnabled) || !self.sbEnabledForVideo || self.isInlinePlaybackActive || self.isPlayingAd) return;
+    if (!IS_ENABLED(SBEnabled) || !self.sbEnabledForVideo || self.isInlinePlaybackActive || self.isPlayingAd) return;
 
-        CGFloat currentTime = [self currentVideoMediaTime];
-        float minDuration = FLOAT_FOR_KEY(SBMinDuration);
+    CGFloat currentTime = [self currentVideoMediaTime];
+    float minDuration = FLOAT_FOR_KEY(SBMinDuration);
 
-        for (SBSegment *segment in self.sbSegments) {
-            SBSegmentAction action = [segment configuredAction];
-            if (action == SBSegmentActionDisable || action == SBSegmentActionDisplay) continue;
-            if (action == SBSegmentActionSkipTo) continue;
+    for (SBSegment *segment in self.sbSegments) {
+        SBSegmentAction action = [segment configuredAction];
+        if (action == SBSegmentActionDisable || action == SBSegmentActionDisplay) continue;
+        if (action == SBSegmentActionSkipTo) continue;
 
-            float duration = segment.endTime - segment.startTime;
-            if (duration < minDuration) continue;
+        float duration = segment.endTime - segment.startTime;
+        if (duration < minDuration) continue;
 
-            if (currentTime >= segment.startTime && currentTime < segment.endTime - 0.5) {
-                NSString *segID = segment.UUID;
-                if ([self.sbSkippedSegments containsObject:segID]) continue;
+        if (currentTime >= segment.startTime && currentTime < segment.endTime - 0.5) {
+            NSString *segID = segment.UUID;
+            if ([self.sbSkippedSegments containsObject:segID]) continue;
 
-                if (action == SBSegmentActionAutoSkip) {
-                    [self sbPerformSkip:segment];
-                } else if (action == SBSegmentActionAsk) {
-                    [self sbShowAskNotification:segment];
-                }
-                break;
+            if (action == SBSegmentActionAutoSkip) {
+                [self sbPerformSkip:segment];
+            } else if (action == SBSegmentActionAsk) {
+                [self sbShowAskNotification:segment];
             }
+            break;
         }
-    } @catch (NSException *e) {}
+    }
 }
 
 %new
@@ -443,7 +506,39 @@ UIColor *SBColorFromHex(NSString *hexString) {
 
 %end
 
+// SponsorBlock's accent blue, reused for the toggle button's enabled state.
+static UIColor *SBAccentColor() {
+    return [UIColor colorWithRed:0.4 green:0.8 blue:1.0 alpha:1.0];
+}
+
 %ctor {
     sbSegmentCache = [NSMutableDictionary dictionary];
     %init;
+
+    // Register the SponsorBlock toggle in the player overlay's custom button row.
+    // sortOrder 100 keeps it right-most (directly under YouTube's settings gear).
+    YMOverlayButtonSpec *toggle = [[YMOverlayButtonSpec alloc] init];
+    toggle.identifier = @"sponsorblock.toggle";
+    toggle.symbolName = @"shield.fill";
+    toggle.tintColor = SBAccentColor();
+    toggle.sortOrder = 100;
+    toggle.isVisible = ^BOOL(YTPlayerViewController *player) {
+        return IS_ENABLED(SBEnabled) && IS_ENABLED(SBShowButton);
+    };
+    toggle.tintProvider = ^UIColor *(YTPlayerViewController *player) {
+        return (player && player.sbEnabledForVideo) ? SBAccentColor() : [UIColor grayColor];
+    };
+    toggle.onTap = ^(YTPlayerViewController *player, UIButton *button) {
+        if (!player) return;
+        BOOL newState = !player.sbEnabledForVideo;
+        player.sbEnabledForVideo = newState;
+        button.tintColor = newState ? SBAccentColor() : [UIColor grayColor];
+
+        NSArray *segments = newState ? (player.sbSegments ?: @[]) : @[];
+        if (newState && segments.count == 0) return;
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"SBSegmentsDidLoad"
+                                                            object:player
+                                                          userInfo:@{@"segments": segments}];
+    };
+    YMRegisterOverlayButton(toggle);
 }

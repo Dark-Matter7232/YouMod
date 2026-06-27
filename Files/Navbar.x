@@ -65,8 +65,13 @@
 %hook YTNavigationBarTitleView
 - (void)layoutSubviews {
     %orig;
-    if (self.subviews.count > 1 && [self.subviews[1].accessibilityIdentifier isEqualToString:@"id.yoodle.logo"] && IS_ENABLED(HideYTLogo)) {
+    if (self.subviews.count > 1 && [self.subviews[1].accessibilityIdentifier isEqualToString:@"id.youtube.logo"] && IS_ENABLED(HideYTLogo)) {
         self.subviews[1].hidden = YES;
     }
 }
+%end
+
+%hook YTHeaderView
+- (BOOL)stickyNavHeaderEnabled { return IS_ENABLED(StickyNavBar) ? YES : %orig; }
+- (void)setStickyNavHeaderEnabled:(BOOL)arg { IS_ENABLED(StickyNavBar) ? %orig(YES) : %orig; }
 %end

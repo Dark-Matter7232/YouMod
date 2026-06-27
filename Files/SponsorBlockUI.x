@@ -430,8 +430,7 @@ extern BOOL useBackwardIconForButton;
 - (void)layoutSubviews {
     %orig;
     if (self.sbMarkerViews.count > 0) {
-        // Call %new method via objc_msgSend to avoid compiler warning
-        ((void (*)(id, SEL))objc_msgSend)(self, @selector(sbRepositionMarkers));
+        [self sbRepositionMarkers];
     }
 }
 
@@ -518,17 +517,13 @@ extern BOOL useBackwardIconForButton;
 
 - (void)layoutSubviews {
     %orig;
+    UIView *playerBar;
 
-    // Find the player bar view and reposition markers
-    UIView *playerBar = nil;
-    if ([self respondsToSelector:@selector(modularPlayerBar)]) {
-        id modular = self.modularPlayerBar;
-        if ([modular respondsToSelector:@selector(view)]) {
-            playerBar = [modular view];
+    for (UIView *subview in self.subviews) {
+        if ([subview isKindOfClass:%c(YTModularPlayerBarView)]) {
+            playerBar = subview;
+            break;
         }
-    }
-    if (!playerBar && [self respondsToSelector:@selector(segmentablePlayerBar)]) {
-        playerBar = (UIView *)self.segmentablePlayerBar;
     }
     if (!playerBar) return;
 
@@ -594,187 +589,118 @@ extern BOOL useBackwardIconForButton;
 
 %new
 - (void)sbSegmentsDidLoad:(NSNotification *)notification {
-    @try {
-        NSArray<SBSegment *> *segments = notification.userInfo[@"segments"];
-
-        id overlay = [self activeVideoPlayerOverlay];
-        if (!overlay) return;
-
-        YTPlayerBarController *barController = nil;
-        if ([overlay respondsToSelector:@selector(playerBarController)]) {
-            barController = [overlay playerBarController];
-        }
-        if (!barController) return;
-
-        YTInlinePlayerBarContainerView *containerView = barController.playerBar;
-        if (!containerView) return;
-
-        // Find the actual player bar view (try modularPlayerBar first, then segmentablePlayerBar)
-        UIView *playerBar = nil;
-        if ([containerView respondsToSelector:@selector(modularPlayerBar)]) {
-            id modular = containerView.modularPlayerBar;
-            if ([modular respondsToSelector:@selector(view)]) {
-                playerBar = [modular view];
-            }
-        }
-        if (!playerBar && [containerView respondsToSelector:@selector(segmentablePlayerBar)]) {
-            playerBar = (UIView *)containerView.segmentablePlayerBar;
-        }
-        if (!playerBar) playerBar = containerView; // Fallback
-
-        // Remove old markers (tag 9900)
-        for (UIView *sub in [playerBar.subviews copy]) {
-            if (sub.tag == 9900) [sub removeFromSuperview];
-        }
-
-        if (!segments || segments.count == 0) return;
-
-        CGFloat totalTime = [self currentVideoTotalMediaTime];
-        if (totalTime <= 0) return;
-
-        CGFloat barWidth = playerBar.bounds.size.width;
-        if (barWidth <= 0) return;
-
-        // Find reference track view for Y position and height
-        UIView *referenceView = nil;
-        UIView *scrubberView = nil;
-        for (UIView *sub in playerBar.subviews) {
-            if ([sub isKindOfClass:%c(YTPlayerBarRectangleDecorationView)]) {
-                referenceView = sub;
-            } else if ([sub isKindOfClass:%c(YTPlayerBarProgressDecorationView)]) {
-                if (!referenceView) referenceView = sub;
-            } else if ([sub isKindOfClass:%c(YTPlayerBarScrubberDotDecorationView)]) {
-                scrubberView = sub;
-            }
-        }
-
-        // Fallback Y/height if reference view not found
-        CGFloat markerY = referenceView ? referenceView.frame.origin.y : (playerBar.bounds.size.height - 3.0);
-        CGFloat markerHeight = referenceView ? referenceView.frame.size.height : 3.0;
-        if (markerHeight < 2.0) markerHeight = 3.0;
-
-        for (SBSegment *segment in segments) {
-            SBSegmentAction action = [segment configuredAction];
-            if (action == SBSegmentActionDisable) continue;
-
-            CGFloat startFrac = segment.startTime / totalTime;
-            CGFloat endFrac = segment.endTime / totalTime;
-            CGFloat x = startFrac * barWidth;
-            CGFloat w = (endFrac - startFrac) * barWidth;
-
-            // poi_highlight is a point, not a range — give it fixed width
-            BOOL isPoi = [segment.category isEqualToString:@"poi_highlight"];
-            if (isPoi) {
-                w = 3.0;
-                x = MAX(0, x - 1.5);
-            } else {
-                if (w < 2.0) w = 2.0;
-            }
-
-            UIView *marker = [[UIView alloc] initWithFrame:CGRectMake(x, markerY, w, markerHeight)];
-            marker.backgroundColor = [segment segmentColor];
-            marker.userInteractionEnabled = NO;
-            marker.tag = 9900;
-            objc_setAssociatedObject(marker, @selector(sbSegmentData), @[@(startFrac), @(endFrac), @(isPoi)], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-            if (referenceView) {
-                [playerBar insertSubview:marker aboveSubview:referenceView];
-            } else {
-                [playerBar addSubview:marker];
-            }
-        }
-
-        // Keep scrubber dot on top
-        if (scrubberView) {
-            [playerBar bringSubviewToFront:scrubberView.superview ?: scrubberView];
-        }
-    } @catch (NSException *e) {}
+    [self sbRefreshMarkers:notification.userInfo[@"segments"]];
 }
 
-%end
-%end
-
-#pragma mark - YTMainAppControlsOverlayView Hook (Toggle Button)
-
-%hook YTMainAppControlsOverlayView
-
-- (void)layoutSubviews {
-    %orig;
-
-    if (!IS_ENABLED(SBEnabled) || !IS_ENABLED(SBShowButton)) {
-        UIView *existing = [self viewWithTag:9901];
-        if (existing) [existing removeFromSuperview];
-        return;
-    }
-
-    UIButton *btn = (UIButton *)[self viewWithTag:9901];
-    if (!btn) {
-        btn = [UIButton buttonWithType:UIButtonTypeCustom];
-        btn.tag = 9901;
-        btn.frame = CGRectMake(0, 0, 40, 40);
-
-        UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:20 weight:UIImageSymbolWeightMedium];
-        UIImage *icon = [UIImage systemImageNamed:@"shield.fill" withConfiguration:config];
-        [btn setImage:icon forState:UIControlStateNormal];
-        btn.tintColor = [UIColor colorWithRed:0.4 green:0.8 blue:1.0 alpha:1.0];
-
-        [btn addTarget:self action:@selector(sbButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-        [self addSubview:btn];
-    }
-
-    // Position: top-right
-    CGFloat rightPad = 12.0;
-    CGFloat topPad = 52.0;
-    btn.frame = CGRectMake(self.bounds.size.width - 40 - rightPad, topPad, 40, 40);
-}
-
-- (void)setOverlayVisible:(BOOL)visible {
-    %orig;
-    UIButton *btn = (UIButton *)[self viewWithTag:9901];
-    if (btn) btn.hidden = !visible;
-}
-
+// Re-resolves the current player bar view fresh and re-creates segment markers
+// on it. Called whenever the player layout might have changed (initial load,
+// fullscreen enter/exit, viewport resize) so markers always live on the
+// currently-visible bar instead of an old detached one.
 %new
-- (void)sbButtonTapped:(UIButton *)sender {
-    YTPlayerViewController *pvc = nil;
-    if ([self respondsToSelector:@selector(playerViewController)]) {
-        pvc = [self performSelector:@selector(playerViewController)];
-    }
-    if (!pvc) {
-        // Try to find player VC via responder chain
-        UIResponder *responder = self;
-        while (responder) {
-            if ([responder isKindOfClass:%c(YTPlayerViewController)]) {
-                pvc = (YTPlayerViewController *)responder;
-                break;
-            }
-            responder = [responder nextResponder];
+- (void)sbRefreshMarkers:(NSArray<SBSegment *> *)segments {
+    if (!segments) segments = self.sbSegments;
+
+    if (![[self activeVideoPlayerOverlay] isKindOfClass:%c(YTMainAppVideoPlayerOverlayViewController)]) return;
+    YTMainAppVideoPlayerOverlayViewController *overlay = [self activeVideoPlayerOverlay];
+    YTPlayerBarController *barController = [overlay playerBarController];
+    YTInlinePlayerBarContainerView *containerView = barController.playerBar;
+    UIView *playerBar;
+
+    for (UIView *subview in containerView.subviews) {
+        if ([subview isKindOfClass:%c(YTModularPlayerBarView)]) {
+            playerBar = subview;
+            break;
         }
     }
-    if (!pvc) {
-        NSLog(@"[YouMod SponsorBlock] Unable to find YTPlayerViewController from button tap");
-        return;
+    if (!playerBar) return;
+
+    // Remove old markers (tag 9900)
+    for (UIView *sub in [playerBar.subviews copy]) {
+        if (sub.tag == 9900) [sub removeFromSuperview];
     }
 
-    BOOL newState = !pvc.sbEnabledForVideo;
-    pvc.sbEnabledForVideo = newState;
+    if (!segments || segments.count == 0) return;
 
-    sender.tintColor = newState ? [UIColor colorWithRed:0.4 green:0.8 blue:1.0 alpha:1.0] : [UIColor grayColor];
+    CGFloat totalTime = [self currentVideoTotalMediaTime];
+    if (totalTime <= 0) return;
 
-    if (!newState) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"SBSegmentsDidLoad"
-                                                            object:pvc
-                                                          userInfo:@{@"segments": @[]}];
-    } else {
-        NSArray *segments = pvc.sbSegments;
-        if (segments.count > 0) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"SBSegmentsDidLoad"
-                                                                object:pvc
-                                                              userInfo:@{@"segments": segments}];
+    CGFloat barWidth = playerBar.bounds.size.width;
+    if (barWidth <= 0) return;
+
+    // Find reference track view for Y position and height
+    UIView *referenceView = nil;
+    UIView *scrubberView = nil;
+    for (UIView *sub in playerBar.subviews) {
+        if ([sub isKindOfClass:%c(YTPlayerBarRectangleDecorationView)]) {
+            referenceView = sub;
+        } else if ([sub isKindOfClass:%c(YTPlayerBarProgressDecorationView)]) {
+            if (!referenceView) referenceView = sub;
+        } else if ([sub isKindOfClass:%c(YTPlayerBarScrubberDotDecorationView)]) {
+            scrubberView = sub;
         }
     }
+
+    // Fallback Y/height if reference view not found
+    CGFloat markerY = referenceView ? referenceView.frame.origin.y : (playerBar.bounds.size.height - 3.0);
+    CGFloat markerHeight = referenceView ? referenceView.frame.size.height : 3.0;
+    if (markerHeight < 2.0) markerHeight = 3.0;
+
+    for (SBSegment *segment in segments) {
+        SBSegmentAction action = [segment configuredAction];
+        if (action == SBSegmentActionDisable) continue;
+
+        CGFloat startFrac = segment.startTime / totalTime;
+        CGFloat endFrac = segment.endTime / totalTime;
+        CGFloat x = startFrac * barWidth;
+        CGFloat w = (endFrac - startFrac) * barWidth;
+
+        // poi_highlight is a point, not a range — give it fixed width
+        BOOL isPoi = [segment.category isEqualToString:@"poi_highlight"];
+        if (isPoi) {
+            w = 3.0;
+            x = MAX(0, x - 1.5);
+        } else {
+            if (w < 2.0) w = 2.0;
+        }
+
+        UIView *marker = [[UIView alloc] initWithFrame:CGRectMake(x, markerY, w, markerHeight)];
+        marker.backgroundColor = [segment segmentColor];
+        marker.userInteractionEnabled = NO;
+        marker.tag = 9900;
+        objc_setAssociatedObject(marker, @selector(sbSegmentData), @[@(startFrac), @(endFrac), @(isPoi)], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+        [playerBar addSubview:marker];
+        [playerBar bringSubviewToFront:marker];
+    }
+
+    // Keep scrubber dot on top
+    [playerBar bringSubviewToFront:scrubberView];
 }
 
+// On fullscreen enter/exit and other layout transitions, YouTube swaps the
+// player bar instance. Re-render markers on the current bar (matches
+// iSponsorBlock's approach). Deferred to the next runloop so YouTube's own
+// layout pass finishes first — otherwise the new bar's bounds.size.width can
+// still be 0 and the refresh early-returns without inserting markers.
+- (void)setPlayerViewLayout:(NSInteger)layout {
+    %orig;
+    __weak typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{ 
+        [weakSelf sbRefreshMarkers:nil];
+        sbUpdateOverlayInsetForPivotBar();
+    });
+}
+
+- (void)updateViewportSizeProvider {
+    %orig;
+    __weak typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{ 
+        [weakSelf sbRefreshMarkers:nil];
+        sbUpdateOverlayInsetForPivotBar();
+    });
+}
+
+%end
 %end
 
 #pragma mark - Constructor

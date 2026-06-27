@@ -164,14 +164,12 @@ static const void *kSBColorIndexPathKey = &kSBColorIndexPathKey;
     Class ytStyled = objc_getClass("YTStyledViewController");
     struct objc_super superStruct = { self, ytStyled ?: [UIViewController class] };
     ((void (*)(struct objc_super *, SEL))objc_msgSendSuper)(&superStruct, @selector(viewDidLayoutSubviews));
+    YTQTMButton *backButton = [self valueForKey:@"_backButton"];
 
     if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
-        @try {
-            id backButton = [self valueForKey:@"_backButton"];
-            if ([backButton respondsToSelector:@selector(setTintColor:)]) {
-                [backButton performSelector:@selector(setTintColor:) withObject:[UIColor whiteColor]];
-            }
-        } @catch (NSException *e) {}
+        backButton.tintColor = [UIColor whiteColor];
+    } else {
+        backButton.tintColor = [UIColor blackColor];
     }
 }
 
@@ -564,10 +562,7 @@ static const void *kSBColorIndexPathKey = &kSBColorIndexPathKey;
         SBEnabled: @YES,
         SBShowButton: @YES,
         SBShowNotifications: @YES,
-        SBAudioNotification: @NO,
-        SBSegmentsInFeed: @NO,
         SBSegmentsInMiniPlayer: @YES,
-        SBShowDuration: @NO,
         SBSkipAlertDuration: @4.0,
         SBUnskipAlertDuration: @4.0,
         SB_ACTION_KEY(@"sponsor"): @(SBSegmentActionAutoSkip),
@@ -578,15 +573,15 @@ static const void *kSBColorIndexPathKey = &kSBColorIndexPathKey;
         SB_ACTION_KEY(@"music_offtopic"): @(SBSegmentActionAutoSkip),
         SB_ACTION_KEY(@"preview"): @(SBSegmentActionAutoSkip),
         SB_ACTION_KEY(@"poi_highlight"): @(SBSegmentActionSkipTo),
-        SB_ACTION_KEY(@"filler"): @(SBSegmentActionDisplay),
+        SB_ACTION_KEY(@"filler"): @(SBSegmentActionAutoSkip),
         SB_COLOR_KEY(@"sponsor"): @"#00D400",
         SB_COLOR_KEY(@"intro"): @"#00FFFF",
         SB_COLOR_KEY(@"outro"): @"#0202ED",
-        SB_COLOR_KEY(@"interaction"): @"#CC00FF",
+        SB_COLOR_KEY(@"interaction"): @"#FF00F7",
         SB_COLOR_KEY(@"selfpromo"): @"#FFFF00",
         SB_COLOR_KEY(@"music_offtopic"): @"#FF9900",
-        SB_COLOR_KEY(@"preview"): @"#008FD6",
-        SB_COLOR_KEY(@"poi_highlight"): @"#FFFFFF",
+        SB_COLOR_KEY(@"preview"): @"#0084D6",
+        SB_COLOR_KEY(@"poi_highlight"): @"#FF006A",
         SB_COLOR_KEY(@"filler"): @"#7300FF",
     }];
     %init;
