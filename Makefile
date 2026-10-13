@@ -9,6 +9,11 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = YouMod
 $(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation AVFoundation AVKit AudioToolbox MediaPlayer LocalAuthentication PhotosUI
 $(TWEAK_NAME)_CFLAGS = -fobjc-arc -Wno-unguarded-availability-new
+ifeq ($(THEOS_PACKAGE_SCHEME),roothide)
+$(TWEAK_NAME)_CFLAGS += -DYM_ROOTHIDE
+else ifeq ($(THEOS_PACKAGE_SCHEME),rootless)
+$(TWEAK_NAME)_CFLAGS += -DYM_ROOTLESS
+endif
 $(TWEAK_NAME)_FILES = $(wildcard Files/*.x)
 
 include $(THEOS_MAKE_PATH)/tweak.mk

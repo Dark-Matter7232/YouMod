@@ -79,8 +79,16 @@
 #import <YouTubeHeader/GPBMessage.h>
 #import <YouTubeHeader/YTReelNonVideoContentModel.h>
 
-// For Settings.x and SponsorBlockSettings.x
+// For Settings.x and SponsorBlockSettings.x. roothide.h is only available
+// when building with the roothide SDK; standard rootless/rootful builds use
+// their conventional jailbreak paths instead.
+#if defined(YM_ROOTHIDE)
 #import <roothide.h>
+#elif defined(YM_ROOTLESS)
+#define jbroot(path) (@"/var/jb" path)
+#else
+#define jbroot(path) (@"" path)
+#endif
 #import <YouTubeHeader/YTSettingsGroupData.h>
 #import <YouTubeHeader/YTSettingsSectionItem.h>
 #import <YouTubeHeader/YTSettingsSectionItemManager.h>
